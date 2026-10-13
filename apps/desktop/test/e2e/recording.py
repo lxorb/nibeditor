@@ -229,12 +229,12 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     # The account's own routes, answered here. Everything else the app would ask of
-    # nibeditor.com is refused rather than answered: syncing is not what is under test,
+    # The service is refused rather than answered: syncing is not what is under test,
     # and it is written to carry on when the service cannot be reached.
     #
     # The refusal is registered first on purpose: Playwright tries the newest route
     # first, so the one that answers has to be added after the one that refuses.
-    page.route("https://nibeditor.com/**", lambda route: route.abort())
+    page.route("https://orden.so/**", lambda route: route.abort())
     page.route("**/v1/ask/heard*", whisper.listen)
 
     DRIVE.open(page)

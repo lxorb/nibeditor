@@ -29,7 +29,7 @@ function info(): string {
       version: 2,
       type: TYPE,
       transient: false,
-      creatorIdentifier: 'dev.nibeditor.nib',
+      creatorIdentifier: 'so.orden',
     },
     null,
     2,

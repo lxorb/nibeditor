@@ -129,11 +129,11 @@ describe('the page a card may frame', () => {
   })
 
   test('and never one on the page’s own origin, however it is spelled', () => {
-    const own = 'https://nibeditor.com'
+    const own = 'https://orden.so'
     for (const address of [
-      'https://nibeditor.com/',
-      'https://NIBEDITOR.com/v1/me',
-      'https://nibeditor.com:443/anything?at=1',
+      'https://orden.so/',
+      'https://ORDEN.so/v1/me',
+      'https://orden.so:443/anything?at=1',
     ]) {
       expect(framedPage(address, own), address).toBe(null)
     }
@@ -143,6 +143,6 @@ describe('the page a card may frame', () => {
     expect(framedPage('https://www.youtube.com/embed/a', own)).toBe(
       'https://www.youtube.com/embed/a',
     )
-    expect(framedPage('https://field.nibeditor.com/', own)).toBe('https://field.nibeditor.com/')
+    expect(framedPage('https://field.orden.so/', own)).toBe('https://field.orden.so/')
   })
 })

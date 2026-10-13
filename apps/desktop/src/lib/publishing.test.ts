@@ -54,7 +54,7 @@ vi.mock('./api', async (importOriginal) => {
       publish: (_token: string, id: string, settings: Record<string, unknown>) =>
         answer(`publish ${id} ${JSON.stringify(settings)}`, {
           space: {},
-          dns: [{ type: 'CNAME', name: 'notes', value: 'nibeditor.com' }],
+          dns: [{ type: 'CNAME', name: 'notes', value: 'cname.orden.so' }],
         }),
       unpublish: (_token: string, id: string) => answer(`unpublish ${id}`, { ok: true }),
       site: (_token: string, id: string, settings: Record<string, unknown>) =>
@@ -275,7 +275,7 @@ describe('the Publish sheet', () => {
 
   test('takes a space back off the web, and forgets its records', async () => {
     publish.show(local('Notes'))
-    publish.dns = [{ type: 'CNAME', name: 'notes', value: 'nibeditor.com' }]
+    publish.dns = [{ type: 'CNAME', name: 'notes', value: 'cname.orden.so' }]
     await publish.unpublish()
 
     expect(world.asked).toEqual(['unpublish space-1'])

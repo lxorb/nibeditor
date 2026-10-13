@@ -68,4 +68,9 @@ interface ImportMetaEnv {
    *  before it is published: a local folder, or the registry's raw files.
    *  Unset in a normal build, which reads it through the sync service. */
   readonly VITE_NIB_THEMES?: string
+  /** Where the browser build lives, and where it lived before the rename: the two
+   *  ends of taking its notes over (lib/web/handoff.ts). Set only by a drive, which
+   *  plays both on local origins; a normal build has orden.so and nibeditor.com. */
+  readonly VITE_NIB_WEB?: string
+  readonly VITE_NIB_LEGACY_WEB?: string
 }

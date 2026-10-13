@@ -6,7 +6,7 @@
  *  Which models may be chosen is not here any more, and neither is any way of
  *  reaching OpenAI. The account's key is written and never read back, so the request
  *  that lists the models is made by the Worker, which is the only thing that can
- *  open the key; the pane asks Nib for the list. See services/sync/src/ask and
+ *  open the key; the pane asks Orden for the list. See services/sync/src/ask and
  *  offered.svelte.ts. */
 
 export const EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const

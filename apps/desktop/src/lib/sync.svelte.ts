@@ -741,7 +741,7 @@ class Sync {
 
       // A browser opens the welcome note because on a first visit there is
       // nothing else to read. Once an account has brought its own notes down
-      // there is, and leaving somebody looking at "Welcome to Nib" beside their
+      // there is, and leaving somebody looking at "Welcome to Orden" beside their
       // own writing is the app failing to notice it has been introduced.
       if (moved) await workspace.leaveTheWelcomeNote()
 

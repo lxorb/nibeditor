@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'أصبح nibeditor الآن Orden',
+  'Notes from nibeditor.com': 'ملاحظات من nibeditor.com',
+  'Nothing there': 'لا يوجد شيء هناك',
   // Tasks: Upcoming's weeks
   'Previous week': 'الأسبوع السابق',
   // Tasks: projects placed in the panel, and their folder
@@ -601,8 +605,8 @@ export const ar: Dictionary = {
   'Asking OpenAI which models this key can use':
     'سؤال OpenAI عن النماذج التي يستطيع هذا المفتاح استخدامها',
   'Could not reach OpenAI': 'تعذّر الوصول إلى OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'هذا المفتاح لا يستطيع استخدام أي من النماذج التي يطلبها nibeditor.',
+  'That key cannot use any of the models Orden asks for.':
+    'هذا المفتاح لا يستطيع استخدام أي من النماذج التي يطلبها Orden.',
   'No reasoning': 'بلا استدلال',
   Minimal: 'أدنى',
   Low: 'منخفض',
@@ -624,7 +628,7 @@ export const ar: Dictionary = {
   Mode: 'الوضع',
   // The window's own edges; see appearance.rs
   Window: 'النافذة',
-  'nibeditor’s own': 'الخاص بـ nibeditor',
+  'Orden’s own': 'الخاص بـ Orden',
   'The system’s': 'الخاص بالنظام',
   'Window frame': 'إطار النافذة',
   System: 'النظام',
@@ -758,7 +762,7 @@ export const ar: Dictionary = {
   '{used} of {limit} used.': 'استُخدم {used} من {limit}.',
   'That image does not fit in your storage.': 'لا تتسع هذه الصورة في تخزينك.',
   'out of space': 'نفدت مساحة التخزين',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} جاهز للتثبيت.',
+  'Orden {version} is ready to install.': 'Orden {version} جاهز للتثبيت.',
   'Restart now': 'إعادة التشغيل الآن',
   Later: 'لاحقًا',
   More: 'المزيد',
@@ -838,13 +842,13 @@ export const ar: Dictionary = {
   'Reads your notes.': 'يقرأ ملاحظاتك.',
   'Reads and writes your notes.': 'يقرأ ملاحظاتك ويكتب فيها.',
   Other: 'أخرى',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'يستطيع مساعد ذكي قراءة ملاحظاتك - وتغييرها، إن سمحت له. يسجّل الدخول ببريد nibeditor الخاص بك؛ ولا شيء يُلصق.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'يستطيع مساعد ذكي قراءة ملاحظاتك - وتغييرها، إن سمحت له. يسجّل الدخول ببريد Orden الخاص بك؛ ولا شيء يُلصق.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'في Claude، افتح الإعدادات → الروابط واضغط إضافة رابط مخصص.',
   'Open Claude’s connectors': 'فتح روابط Claude',
   'Fill in the two fields and click Add.': 'املأ الحقلين واضغط إضافة.',
-  'Click Connect and sign in with your nibeditor email.': 'اضغط ربط وسجّل الدخول ببريد nibeditor.',
+  'Click Connect and sign in with your Orden email.': 'اضغط ربط وسجّل الدخول ببريد Orden.',
   'Using Claude Code instead?': 'تستخدم Claude Code بدلًا من ذلك؟',
   Command: 'أمر',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -855,15 +859,15 @@ export const ar: Dictionary = {
   'Open ChatGPT’s plugins': 'فتح إضافات ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'لا قسم للإضافات أو لا زر جمع؟ شغّل وضع المطوّر أولًا، من الإعدادات → الأمان وتسجيل الدخول.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'سجّل الدخول ببريد nibeditor عندما يطلب ChatGPT ذلك.',
-  'To use it in a chat, type @ and pick nibeditor.': 'لاستخدامه في محادثة، اكتب @ واختر nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'سجّل الدخول ببريد Orden عندما يطلب ChatGPT ذلك.',
+  'To use it in a chat, type @ and pick Orden.': 'لاستخدامه في محادثة، اكتب @ واختر Orden.',
   'Server URL': 'عنوان الخادم',
   Authentication: 'المصادقة',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'اترك إعدادات OAuth المتقدمة كما هي وحدّد “أفهم وأريد المتابعة”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'أي عميل MCP يتحدث Streamable HTTP مع OAuth. أعطه العنوان: يسجّل نفسه ويفتح صفحة تسجيل الدخول في nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'أي عميل MCP يتحدث Streamable HTTP مع OAuth. أعطه العنوان: يسجّل نفسه ويفتح صفحة تسجيل الدخول في Orden.',
   'Show config': 'إظهار الإعداد',
   'For a client that takes a JSON block instead of a URL.': 'لعميل يأخذ كتلة JSON بدلًا من عنوان.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -929,7 +933,7 @@ export const ar: Dictionary = {
   'Display name': 'الاسم المعروض',
   'Your name': 'اسمك',
   Email: 'البريد',
-  'On nibeditor.com': 'على nibeditor.com',
+  'On orden.so': 'على orden.so',
   'Your own domain': 'نطاقك الخاص',
   'Switching gives up {name}.': 'التبديل يتخلّى عن {name}.',
   Page: 'صفحة',
@@ -1334,8 +1338,8 @@ export const ar: Dictionary = {
     'لا توجد ملاحظات في Apple Notes على هذا الـ Mac.',
   'Those notes could not be read.': 'تعذّرت قراءة تلك الملاحظات.',
   'Read them from this Mac': 'اقرأها من هذا الـ Mac',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'شغّل nibeditor في الوصول الكامل للقرص ثم أعد المحاولة.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'شغّل Orden في الوصول الكامل للقرص ثم أعد المحاولة.',
   'Open the setting': 'فتح الإعداد',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'يُصدّر Apple Journal نفسه: Journal، الإعدادات، تصدير. أما Apple Notes فلا تصدير فيه، فبعيداً عن الـ Mac الذي يحويه، ما يُسحب هنا هو مجلد كتبه مُصدّر.',
@@ -1718,7 +1722,8 @@ export const ar: Dictionary = {
   'that is not a theme': 'هذه ليست سمة',
   'no such theme': 'لا سمة كهذه',
   'choose a model first': 'اختر نموذجًا أولًا',
-  'set an OpenAI key in nibeditor’s settings first': 'عيّن مفتاح OpenAI في إعدادات nibeditor أولًا',
+  'set an OpenAI key in Orden’s settings first': 'عيّن مفتاح OpenAI في إعدادات Orden أولًا',
+  'set an OpenAI key in nibeditor’s settings first': 'عيّن مفتاح OpenAI في إعدادات Orden أولًا',
   'that is a lot of questions - try again later': 'أسئلة كثيرة - حاول لاحقًا',
   'that is too much audio': 'هذا صوت أكثر من اللازم',
   'that is more than a spoken command': 'هذا أكثر من أمر منطوق',
@@ -1883,7 +1888,7 @@ export const ar: Dictionary = {
     many: 'لصق {count} سطرًا؟',
     other: 'لصق {count} سطر؟',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'المتصفح الافتراضي',
   // The engine web tabs run on
   Engine: 'المحرك',
@@ -2001,7 +2006,7 @@ export const ar: Dictionary = {
   'Always on this site': 'دائمًا على هذا الموقع',
   'Agents stopped': 'تم إيقاف الوكلاء',
   'Agent tabs closed': 'أُغلقت علامات تبويب الوكلاء',
-  'nibeditor is still running for your agents': 'لا يزال nibeditor يعمل لوكلائك',
+  'Orden is still running for your agents': 'لا يزال Orden يعمل لوكلائك',
   '{client} wants to connect': '{client} يريد الاتصال',
   // Web logins that travel, and the devices of an account
   'no such device': 'لا يوجد جهاز كهذا',
@@ -2016,8 +2021,7 @@ export const ar: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'الوكلاء على هذا الحاسوب',
   'Your account’s connector': 'موصّل حسابك',
-  'nibeditor asks you once, the first time it connects.':
-    'يسألك nibeditor مرة واحدة، عند أول اتصال.',
+  'Orden asks you once, the first time it connects.': 'يسألك Orden مرة واحدة، عند أول اتصال.',
   'A client on another machine?': 'عميل على جهاز آخر؟',
   'Shown only once.': 'يُعرض مرة واحدة فقط.',
   'Remove {name}?': 'إزالة {name}؟',
@@ -2146,7 +2150,7 @@ export const ar: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'غفوة',
   Reminders: 'التذكيرات',
-  'Reminders ring while nibeditor is open': 'ترن التذكيرات ما دام nibeditor مفتوحًا',
+  'Reminders ring while Orden is open': 'ترن التذكيرات ما دام Orden مفتوحًا',
   Automatic: 'تلقائي',
   'Stay in the tray': 'البقاء في شريط النظام',
   'Exact alarms': 'منبهات دقيقة',

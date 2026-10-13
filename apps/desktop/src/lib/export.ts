@@ -138,7 +138,7 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
 <head>
 ${meta}
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="generator" content="nibeditor">
+<meta name="generator" content="Orden">
 <style>
 ${styles}
 </style>
@@ -309,7 +309,7 @@ export async function importDocument(): Promise<{ name: string; markdown: string
 }
 
 /** The formats that are pandoc's rather than ours, for a machine that has it.
- *  Nib writes its own Word, RTF and ePub, so those are not here: two roads to
+ *  Orden writes its own Word, RTF and ePub, so those are not here: two roads to
  *  one format would mean a note came out differently depending on the machine. */
 export async function exportPandoc(source: string, name: string, format: PandocFormat) {
   if (!isDesktop) return

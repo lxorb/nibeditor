@@ -442,7 +442,7 @@ function remindersGroup(): Group {
   return {
     title: t('Reminders'),
     ...(isDesktop && platform() === 'linux'
-      ? { caption: { text: t('Reminders ring while nibeditor is open') } }
+      ? { caption: { text: t('Reminders ring while Orden is open') } }
       : {}),
     fields: [
       {
@@ -1177,7 +1177,7 @@ export function preferences(view?: EditorView): Pane[] {
         },
 
         // The window itself: who draws its frame. Desktop only, because a browser tab
-        // has none - and on a phone the system draws everything. Nib's own frame stays
+        // has none - and on a phone the system draws everything. Orden's own frame stays
         // the default: the bar it draws holds the menu, the sidebar toggle, the tabs
         // and the window's three buttons, and it is the shape the whole shell is
         // measured from. See appearance.rs.
@@ -1196,7 +1196,7 @@ export function preferences(view?: EditorView): Pane[] {
                     label: t('Frame'),
                     words: ['title bar', 'window'],
                     options: [
-                      { value: 'nib', label: t('nibeditor’s own') },
+                      { value: 'nib', label: t('Orden’s own') },
                       { value: 'system', label: t('The system’s') },
                     ],
                     initial: 'nib',

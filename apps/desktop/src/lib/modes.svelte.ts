@@ -122,7 +122,7 @@ export function glassesBreak(value: unknown): GlassesBreak | null {
 
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 
-/** Who draws the window's frame. Nib's own is the whole shape of the shell - one bar
+/** Who draws the window's frame. Orden's own is the whole shape of the shell - one bar
  *  holding the menu, the sidebar toggle, the tabs and the window's three buttons - and
  *  the system's is for somebody who would rather every window on their desk agreed. */
 export const FRAMES = ['nib', 'system'] as const
@@ -309,7 +309,7 @@ class Modes {
    *  window is on rather than about the notes in it. Somebody with a Mac and a Linux
    *  laptop wants their system's titlebar on one and not the other.
    *
-   *  Nib's own frame is the default and stays the default: the bar it draws holds the
+   *  Orden's own frame is the default and stays the default: the bar it draws holds the
    *  menu, the sidebar toggle, the tabs and the window's three buttons, and every
    *  measurement in the shell is taken from it. The other choice is for somebody who
    *  asked for it. See appearance.rs, and Titlebar.svelte for the three buttons that

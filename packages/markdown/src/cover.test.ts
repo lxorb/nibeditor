@@ -31,8 +31,8 @@ describe('the cover a note names', () => {
   })
 
   test('keeps an address as the address it is', () => {
-    expect(coverOf(withCover('cover: https://nibeditor.com/wide.jpg'))?.src).toBe(
-      'https://nibeditor.com/wide.jpg',
+    expect(coverOf(withCover('cover: https://orden.so/wide.jpg'))?.src).toBe(
+      'https://orden.so/wide.jpg',
     )
   })
 

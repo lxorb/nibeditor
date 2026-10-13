@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor artık Orden',
+  'Notes from nibeditor.com': 'nibeditor.com’daki notlar',
+  'Nothing there': 'Orada hiçbir şey yok',
   // Tasks: Upcoming's weeks
   'Previous week': 'Önceki hafta',
   // Tasks: projects placed in the panel, and their folder
@@ -566,8 +570,8 @@ export const tr: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Bu anahtarın hangi modelleri kullanabileceği OpenAI’ye soruluyor',
   'Could not reach OpenAI': 'OpenAI’ye ulaşılamadı',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Bu anahtar nibeditor’un istediği modellerin hiçbirini kullanamıyor.',
+  'That key cannot use any of the models Orden asks for.':
+    'Bu anahtar Orden’in istediği modellerin hiçbirini kullanamıyor.',
   'No reasoning': 'Akıl yürütme yok',
   Minimal: 'En az',
   Low: 'Düşük',
@@ -589,7 +593,7 @@ export const tr: Dictionary = {
   Mode: 'Kip',
   // The window's own edges; see appearance.rs
   Window: 'Pencere',
-  'nibeditor’s own': 'nibeditor’un kendi',
+  'Orden’s own': 'Orden’in kendi',
   'The system’s': 'Sistemin',
   'Window frame': 'Pencere çerçevesi',
   System: 'Sistem',
@@ -713,7 +717,7 @@ export const tr: Dictionary = {
   '{used} of {limit} used.': '{limit} içinde {used} kullanıldı.',
   'That image does not fit in your storage.': 'Bu resim depolamanıza sığmıyor.',
   'out of space': 'yer kalmadı',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} kurulmaya hazır.',
+  'Orden {version} is ready to install.': 'Orden {version} kurulmaya hazır.',
   'Restart now': 'Şimdi yeniden başlat',
   Later: 'Sonra',
   More: 'Daha',
@@ -790,14 +794,14 @@ export const tr: Dictionary = {
   'Reads your notes.': 'Notlarınızı okur.',
   'Reads and writes your notes.': 'Notlarınızı okur ve yazar.',
   Other: 'Diğer',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Bir yapay zekâ yardımcısı notlarınızı okuyabilir - izin verirseniz değiştirebilir de. nibeditor e-postanızla oturum açar; yapıştırılacak bir şey yok.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Bir yapay zekâ yardımcısı notlarınızı okuyabilir - izin verirseniz değiştirebilir de. Orden e-postanızla oturum açar; yapıştırılacak bir şey yok.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude’da Settings → Connectors açın ve Add custom connector’a tıklayın.',
   'Open Claude’s connectors': 'Claude’un bağlayıcılarını aç',
   'Fill in the two fields and click Add.': 'İki alanı doldurup Add’e tıklayın.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect’e tıklayıp nibeditor e-postanızla oturum açın.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect’e tıklayıp Orden e-postanızla oturum açın.',
   'Using Claude Code instead?': 'Bunun yerine Claude Code mu kullanıyorsunuz?',
   Command: 'Komut',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -808,16 +812,16 @@ export const tr: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT’nin eklentilerini aç',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins bölümü veya artı düğmesi yok mu? Önce Settings → Security and login altında Developer mode’u açın.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT sorduğunda nibeditor e-postanızla oturum açın.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Bir sohbette kullanmak için @ yazıp nibeditor’u seçin.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT sorduğunda Orden e-postanızla oturum açın.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Bir sohbette kullanmak için @ yazıp Orden’i seçin.',
   'Server URL': 'Sunucu URL’si',
   Authentication: 'Kimlik doğrulama',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Gelişmiş OAuth ayarlarını olduğu gibi bırakıp “I understand and want to continue”ı işaretleyin.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth ile Streamable HTTP konuşan her MCP istemcisi. URL’yi verin: kendini kaydeder ve nibeditor’un oturum açma sayfasını açar.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth ile Streamable HTTP konuşan her MCP istemcisi. URL’yi verin: kendini kaydeder ve Orden’in oturum açma sayfasını açar.',
   'Show config': 'Yapılandırmayı göster',
   'For a client that takes a JSON block instead of a URL.':
     'URL yerine bir JSON bloğu alan istemciler için.',
@@ -884,7 +888,7 @@ export const tr: Dictionary = {
   'Display name': 'Görünen ad',
   'Your name': 'Adınız',
   Email: 'E-posta',
-  'On nibeditor.com': 'nibeditor.com üzerinde',
+  'On orden.so': 'orden.so üzerinde',
   'Your own domain': 'Kendi alan adınız',
   'Switching gives up {name}.': 'Değiştirmek {name} adresinden vazgeçmek demektir.',
   Page: 'Sayfa',
@@ -1271,8 +1275,8 @@ export const tr: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'Bu Mac’te Apple Notlar’da not yok.',
   'Those notes could not be read.': 'Bu notlar okunamadı.',
   'Read them from this Mac': 'Bu Mac’ten oku',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor’ü Tüm Disk Erişimi’nde açıp yeniden deneyin.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden’i Tüm Disk Erişimi’nde açıp yeniden deneyin.',
   'Open the setting': 'Ayarı aç',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Günlük kendini dışa aktarır: Günlük, Ayarlar, Dışa Aktar. Apple Notlar’da dışa aktarma yoktur; bu yüzden notların bulunduğu Mac’ten uzaktayken buraya bırakılacak olan, bir dışa aktarıcının yazdığı klasördür.',
@@ -1632,8 +1636,10 @@ export const tr: Dictionary = {
   'that is not a theme': 'bu bir tema değil',
   'no such theme': 'böyle bir tema yok',
   'choose a model first': 'önce bir model seçin',
+  'set an OpenAI key in Orden’s settings first':
+    'önce Orden ayarlarında bir OpenAI anahtarı ayarlayın',
   'set an OpenAI key in nibeditor’s settings first':
-    'önce nibeditor ayarlarında bir OpenAI anahtarı ayarlayın',
+    'önce Orden ayarlarında bir OpenAI anahtarı ayarlayın',
   'that is a lot of questions - try again later': 'bu çok soru - sonra yine deneyin',
   'that is too much audio': 'bu çok fazla ses',
   'that is more than a spoken command': 'bu bir sesli komuttan fazlası',
@@ -1793,7 +1799,7 @@ export const tr: Dictionary = {
     one: '{count} satır yapıştırılsın mı?',
     other: '{count} satır yapıştırılsın mı?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Öntanımlı tarayıcı',
   // The engine web tabs run on
   Engine: 'Motor',
@@ -1907,7 +1913,7 @@ export const tr: Dictionary = {
   'Always on this site': 'Bu sitede her zaman',
   'Agents stopped': 'Ajanlar durduruldu',
   'Agent tabs closed': 'Ajan sekmeleri kapatıldı',
-  'nibeditor is still running for your agents': 'nibeditor ajanlarınız için çalışmaya devam ediyor',
+  'Orden is still running for your agents': 'Orden ajanlarınız için çalışmaya devam ediyor',
   '{client} wants to connect': '{client} bağlanmak istiyor',
   // Web logins that travel, and the devices of an account
   'no such device': 'böyle bir cihaz yok',
@@ -1923,8 +1929,7 @@ export const tr: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Bu bilgisayardaki ajanlar',
   'Your account’s connector': 'Hesabının bağlayıcısı',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor ilk bağlandığında sana bir kez sorar.',
+  'Orden asks you once, the first time it connects.': 'Orden ilk bağlandığında sana bir kez sorar.',
   'A client on another machine?': 'Başka bir makinedeki bir istemci mi?',
   'Shown only once.': 'Yalnızca bir kez gösterilir.',
   'Remove {name}?': '{name} kaldırılsın mı?',
@@ -2045,7 +2050,7 @@ export const tr: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Ertele',
   Reminders: 'Hatırlatıcılar',
-  'Reminders ring while nibeditor is open': 'Hatırlatıcılar nibeditor açıkken çalar',
+  'Reminders ring while Orden is open': 'Hatırlatıcılar Orden açıkken çalar',
   Automatic: 'Otomatik',
   'Stay in the tray': 'Sistem tepsisinde kal',
   'Exact alarms': 'Tam zamanlı alarmlar',

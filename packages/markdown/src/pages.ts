@@ -14,7 +14,7 @@
  *  boxes follow from it, which is also what makes reordering a page a matter of
  *  moving one entry.
  *
- *  Here rather than in the app because three parts of Nib read it: the surface
+ *  Here rather than in the app because three parts of Orden read it: the surface
  *  somebody writes on, the merge that puts two copies of a file together, and the
  *  export that puts one page on one sheet of paper.
  *

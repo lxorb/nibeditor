@@ -26,8 +26,9 @@ import {
   type ToolHeard,
 } from './heard'
 
-/** The prefix Claude Code gives the tools of the server called `nib`. */
-const NIB = 'mcp__nib__'
+/** The prefix Claude Code gives the tools of the app's own server: `orden`, or `nib`
+ *  where the crate still names it as it did before the rename. */
+const OWN = /^mcp__(?:orden|nib)__/
 
 /** A reader for one run or session, which remembers whether the message being read
  *  streamed and what the request so far has counted. */
@@ -147,7 +148,7 @@ function toolUse(content: unknown): ToolHeard | null {
     const one = record(block)
     if (one?.type !== 'tool_use' || typeof one.id !== 'string' || typeof one.name !== 'string')
       continue
-    return { id: one.id, name: one.name.replace(NIB, ''), args: one.input ?? {} }
+    return { id: one.id, name: one.name.replace(OWN, ''), args: one.input ?? {} }
   }
   return null
 }

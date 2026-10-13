@@ -87,7 +87,7 @@ const WORLD = world({
   commands: appCommands(),
   pages: [
     visit(MOODLE, 'Moodle', { visits: 30, typed: 4 }),
-    visit('https://github.com/lxorb/nibeditor', 'lxorb/nibeditor: a Typora-style editor', {
+    visit('https://github.com/lxorb/orden', 'lxorb/orden: a Typora-style editor', {
       visits: 12,
     }),
     visit('https://chatgpt.com/', 'ChatGPT', { visits: 20, typed: 2 }),
@@ -144,7 +144,7 @@ const CASES: [string, string, 1 | 3][] = [
   ['dark', '> Mode: Dark', 1],
   ['export pdf', '> Export as PDF', 1],
   // Pages from the history.
-  ['github', 'page lxorb/nibeditor: a Typora-style editor', 1],
+  ['github', 'page lxorb/orden: a Typora-style editor', 1],
   ['chatgpt', 'page ChatGPT', 1],
   ['polybox', 'page polybox', 1],
   ['tauri', 'page tauri - Rust', 3],

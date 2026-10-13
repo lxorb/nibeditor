@@ -31,7 +31,7 @@ const SETTINGS: Record<InkMode, CanvasRenderingContext2DSettings> = {
 
 /** Platforms that hand a desynchronised layer a surface of their own whose alpha
  *  may not survive being composited. Android does, in Chrome and in every
- *  WebView an app embeds, which is where Nib runs on a tablet. */
+ *  WebView an app embeds, which is where Orden runs on a tablet. */
 const OVERLAID = /android/i
 
 /** The user agent, where there is one. A server rendering the page and a test

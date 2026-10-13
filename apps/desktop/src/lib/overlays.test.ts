@@ -200,6 +200,7 @@ describe('what hides a web page', () => {
   /** What stays up without being asked for, and so may never hide a page. */
   const FURNITURE = [
     'lib/UpdateNotice.svelte',
+    'lib/RenameNotice.svelte',
     'lib/StorageWarning.svelte',
     'lib/RecordingPill.svelte',
   ]
@@ -235,7 +236,13 @@ describe('what hides a web page', () => {
     const end = row.indexOf('{/snippet}')
 
     expect(end).toBeGreaterThan(0)
-    for (const name of ['StorageWarning', 'RecordingPill', 'UpdateNotice', 'UndoToast']) {
+    for (const name of [
+      'StorageWarning',
+      'RecordingPill',
+      'UpdateNotice',
+      'RenameNotice',
+      'UndoToast',
+    ]) {
       expect(row.slice(0, end), name).toContain(`<${name}`)
       expect(app.split(`<${name}`).length - 1, name).toBe(1)
     }

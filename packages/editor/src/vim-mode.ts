@@ -57,7 +57,7 @@ const CARET_KEYS = [
   '<PageDown>',
 ]
 
-/** Everything Nib keeps for itself, taken off Vim's keymap, and which of them
+/** Everything Orden keeps for itself, taken off Vim's keymap, and which of them
  *  were actually there. Run once as this module loads, because the keymap is the
  *  library's own table and there is one of it; run again by the test, which is how a
  *  chord the library adds in a later version is caught rather than quietly
@@ -134,7 +134,7 @@ const modeReporter = ViewPlugin.define((view: EditorView) => {
   }
 })
 
-/** The two things modal editing puts on screen, in Nib's own colours.
+/** The two things modal editing puts on screen, in Orden's own colours.
  *
  *  The library paints its block cursor pink and its command line in whatever
  *  the browser's default monospace is, neither of which belongs to any theme

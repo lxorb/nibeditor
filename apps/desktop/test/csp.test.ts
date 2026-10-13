@@ -43,6 +43,7 @@ const PAGES: Record<string, string> = {
   'presenter.html': read('../presenter.html'),
   'quick-add.html': read('../quick-add.html'),
   'even.html': read('../even.html'),
+  'handoff.html': read('../handoff.html'),
 }
 
 /** The dev and preview servers, which are the carriers that send a header. Read as

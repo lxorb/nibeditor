@@ -1,6 +1,6 @@
 /** Whether the HTML in a document is markup or is words.
  *
- *  Nib renders a note the way Typora does: raw HTML in it is markup, and it runs.
+ *  Orden renders a note the way Typora does: raw HTML in it is markup, and it runs.
  *  That is a feature of a local document, and the reasoning behind it holds
  *  exactly as far as "you wrote it". A note that came from somebody else - a
  *  member of a shared space, a peer typing in a room, a guest a link let in, a

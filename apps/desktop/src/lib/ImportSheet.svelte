@@ -158,7 +158,7 @@
           </button>
         </div>
         {#if importing.noAccess}
-          <p class="hint">{t('Turn nibeditor on under Full Disk Access, then ask again.')}</p>
+          <p class="hint">{t('Turn Orden on under Full Disk Access, then ask again.')}</p>
           <button class="nib-chip" onclick={() => void importing.openAccess()}>
             {t('Open the setting')}
           </button>

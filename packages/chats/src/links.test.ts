@@ -16,7 +16,7 @@ describe('a chat link', () => {
   })
 
   it.each([
-    'https://nibeditor.com',
+    'https://orden.so',
     'nib://chat/',
     'nib://chat/c_123',
     `nib://chat/${CHAT}/`,

@@ -1,9 +1,9 @@
 import { WidgetType } from '@codemirror/view'
 
-/** The base every widget Nib renders extends, for the one thing they all owe
+/** The base every widget Orden renders extends, for the one thing they all owe
  *  the editor: giving back what they took.
  *
- *  Nib's widgets are not passive markup. A run panel counts up in an interval,
+ *  Orden's widgets are not passive markup. A run panel counts up in an interval,
  *  a fence header listens on the editor's own content element so it can tell
  *  which block the pointer is over, a table keeps a live view object, an image
  *  holds a resize observer. CodeMirror announces the end of a widget exactly

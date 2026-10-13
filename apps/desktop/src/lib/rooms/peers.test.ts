@@ -276,7 +276,7 @@ describe('the faces of who else is in a note', () => {
         {
           key: 'u-lucile',
           name: 'Lucile',
-          face: `https://nibeditor.com/i/${FACE}.webp`,
+          face: `https://orden.so/i/${FACE}.webp`,
           fill: '#33c7ba',
         },
       ],
@@ -284,7 +284,7 @@ describe('the faces of who else is in a note', () => {
     })
     expect(found.carets[0]).toMatchObject({
       name: 'Lucile',
-      face: `https://nibeditor.com/i/${FACE}.webp`,
+      face: `https://orden.so/i/${FACE}.webp`,
     })
   })
 

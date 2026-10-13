@@ -29,6 +29,7 @@
   import MigrateRows from './MigrateRows.svelte'
   import { spaceChooser } from './space-chooser.svelte'
   import { firstVisit } from './first-visit.svelte'
+  import { takingOver } from './web/taking-over.svelte'
   import { isDesktop, isNative } from './tauri'
   import { trap } from './trap'
 
@@ -49,18 +50,38 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label="nibeditor"
+    aria-label="Orden"
     transition:scale|global={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <div class="head">
       <img class="mark" src="/icon-256.png" alt="" draggable="false" />
-      <h1 class="title">nibeditor</h1>
+      <h1 class="title">Orden</h1>
       <p class="version">{version}</p>
     </div>
 
     <div class="rows">
       <!-- Where the notes come from first, the way the iPhone's setup asks about
-           the old phone before anything else; Create is the fresh start under them. -->
+           the old phone before anything else; Create is the fresh start under them.
+           At the browser build's new address the old address comes first of all,
+           because that is where somebody who wrote in a browser left their notes;
+           see web/taking-over.svelte.ts. -->
+      {#if takingOver.offered && !migrating.vaults}
+        <div class="nib-setting">
+          <span class="name">{t('Notes from nibeditor.com')}</span>
+          {#if takingOver.state === 'nothing'}
+            <span class="said">{t('Nothing there')}</span>
+          {:else}
+            <button
+              class="nib-button is-quiet is-soft"
+              type="button"
+              disabled={takingOver.state === 'asking' || migrating.working}
+              onclick={() => takingOver.bring()}
+            >
+              {t('Import')}
+            </button>
+          {/if}
+        </div>
+      {/if}
       <MigrateRows />
 
       {#if !migrating.vaults}
@@ -192,6 +213,14 @@
     font-size: var(--text-row);
     font-weight: var(--weight-row);
     color: var(--text);
+  }
+
+  /* What the old address answered, where its button was. */
+  .said {
+    flex: none;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
   }
 
   .pair {

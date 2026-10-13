@@ -47,14 +47,14 @@ describe('reading bytes back and forth', () => {
 
   test('anything that is not a data URI is not one', () => {
     expect(parseDataUri('assets/pic.png')).toBeNull()
-    expect(parseDataUri('https://nibeditor.com/a.png')).toBeNull()
+    expect(parseDataUri('https://orden.so/a.png')).toBeNull()
   })
 })
 
 describe('telling one kind of source from another', () => {
   test('knows a remote picture from a local one', () => {
-    expect(isRemote('https://nibeditor.com/a.png')).toBe(true)
-    expect(isRemote('//nibeditor.com/a.png')).toBe(true)
+    expect(isRemote('https://orden.so/a.png')).toBe(true)
+    expect(isRemote('//orden.so/a.png')).toBe(true)
     expect(isRemote('assets/a.png')).toBe(false)
     expect(isRemote('C:/notes/a.png')).toBe(false)
   })
@@ -88,9 +88,7 @@ describe('the pictures a page names', () => {
   })
 
   test('include the remote ones, because a page that stands alone carries those too', () => {
-    expect(sourcesIn('<img src="https://nibeditor.com/a.png">')).toEqual([
-      'https://nibeditor.com/a.png',
-    ])
+    expect(sourcesIn('<img src="https://orden.so/a.png">')).toEqual(['https://orden.so/a.png'])
   })
 
   test('a page with no pictures names none', () => {
@@ -163,18 +161,18 @@ describe('naming the pictures inside a package', () => {
       ),
     )
 
-    const read = await readPictures(['https://nibeditor.com/odd.png'])
+    const read = await readPictures(['https://orden.so/odd.png'])
     expect(read[0]?.mime).toBe('image/jpeg')
   })
 
   test('leaves out a remote picture that cannot be fetched', async () => {
     vi.stubGlobal('fetch', () => Promise.reject(new Error('offline')))
-    expect(await readPictures(['https://nibeditor.com/a.png'])).toEqual([])
+    expect(await readPictures(['https://orden.so/a.png'])).toEqual([])
   })
 
   test('leaves out one the server answered with an error page', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('nope', { status: 404 })))
-    expect(await readPictures(['https://nibeditor.com/a.png'])).toEqual([])
+    expect(await readPictures(['https://orden.so/a.png'])).toEqual([])
   })
 
   test('decodes the pictures a note already carries inline', async () => {
@@ -227,7 +225,7 @@ describe('naming the pictures inside a package', () => {
 
     const read = await readPictures([
       inline('image/png'),
-      'https://nibeditor.com/gone.png',
+      'https://orden.so/gone.png',
       inline('image/gif'),
     ])
 

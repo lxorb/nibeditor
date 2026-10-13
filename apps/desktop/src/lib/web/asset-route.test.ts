@@ -34,7 +34,7 @@ describe('the address a picture has in a browser', () => {
 
   test('a whole address off a rendered page comes back too', () => {
     expect(assetStorePath('http://localhost:1420/asset/Work/pic.png')).toBe('/Work/pic.png')
-    expect(assetStorePath('https://nibeditor.com/asset/Work/pic.png')).toBe('/Work/pic.png')
+    expect(assetStorePath('https://orden.so/asset/Work/pic.png')).toBe('/Work/pic.png')
   })
 
   test('anything that is not one of ours is not one of ours', () => {

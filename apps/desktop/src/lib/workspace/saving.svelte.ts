@@ -421,7 +421,7 @@ export class Saving {
     // knows a canvas from a note by its name.
     links.noteSaved(path, content)
 
-    // Editing the config files in Nib should take effect as they are written.
+    // Editing the config files in Orden should take effect as they are written.
     if (/\.css$|snippets\.json$/.test(path)) {
       const { settings } = await import('../settings.svelte')
       const { theme } = await import('../theme.svelte')

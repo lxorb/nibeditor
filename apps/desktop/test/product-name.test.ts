@@ -3,44 +3,59 @@ import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** The name a reader sees is nibeditor.
+/** The name a reader sees is Orden.
  *
- *  Emil renamed the product on 2026-09-08 (docs/backlog.md, Q18), and the old name
- *  stayed on in the welcome note, the Mac's menu, a window's title and a dozen
- *  sentences, because nothing said where it was. This does: every string in the
- *  app's source and in every catalogue is read, comments left out, and one that
- *  calls the app Nib fails.
+ *  The product was Nib, then nibeditor (2026-09-08, docs/backlog.md Q18), and is
+ *  Orden since 2026-10-12. After the first rename the old name stayed on in the
+ *  welcome note, the Mac's menu, a window's title and a dozen sentences, because
+ *  nothing said where it was. This does: every string in the app's source and in
+ *  every catalogue is read, comments left out, and one that calls the app Nib or
+ *  nibeditor fails.
  *
- *  What still says Nib on purpose is an identifier, and changing one breaks an
- *  install somebody already has: the folder the notes live in (`Documents/Nib`),
- *  the folder an install from before the rename keeps (`AppData\Local\Nib`, and
- *  `Nib.app` until it renames itself; see src-tauri/src/bundle_name.rs), the
- *  keys a `.url` shortcut carries (`Nib-Icon`), and the welcome note an older
- *  version wrote, which has to be recognised word for word. Those are told apart
- *  below by where the word sits, or named one by one. */
+ *  What still says an old name on purpose is an identifier, and changing one breaks
+ *  an install somebody already has: the folder the notes live in (`Documents/Nib`),
+ *  the folder an install from before a rename keeps (`AppData\Local\Nib`, and
+ *  `Nib.app` until it renames itself; see src-tauri/src/bundle_name.rs), the keys a
+ *  `.url` shortcut carries (`Nib-Icon`), the address the service had (`nibeditor.com`,
+ *  which goes on answering), and the welcome note an older version wrote, which has
+ *  to be recognised word for word. Those are told apart below by where the word
+ *  sits, or named one by one. And one sentence says both names, because saying the
+ *  old one is its whole point: the notice that the name changed. */
 
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')
 
-/** The old name, as a word of its own. Letters of another script may touch it -
- *  a Gujarati suffix, an Amharic prefix - and it is still the name. */
-const OLD_NAME = /(?<![A-Za-z])Nib(?![A-Za-z])/g
+/** Either old name, as a word of its own. Letters of another script may touch it -
+ *  a Gujarati suffix, an Amharic prefix, a Korean particle - and it is still the
+ *  name. `NibEditor` is how some people wrote the second one. */
+const OLD_NAME = /(?<![A-Za-z])(?:Nib|[Nn]ib[Ee]ditor)(?![A-Za-z])/g
 
 /** Where the word is an identifier rather than a name: a segment of a path, a file
- *  of the installed app, or one of a `.url` shortcut's own keys. */
-function identifier(text: string, at: number): boolean {
+ *  of the installed app, a host (`nibeditor.com`), or one of a `.url` shortcut's own
+ *  keys. */
+function identifier(text: string, at: number, length: number): boolean {
   const before = text[at - 1] ?? ''
-  const after = text.slice(at + 3)
+  const after = text.slice(at + length)
   return /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon|Data)\b)/.test(after)
 }
 
-/** Strings that say Nib because they have to, by the file that holds them. */
+/** Strings that say an old name because they have to, by the file that holds them. */
 const NAMED: Record<string, string[]> = {
-  // The seed as the app wrote it before the rename, recognised so it never syncs.
-  'lib/welcome.ts': ['# Welcome to Nib'],
+  // The seeds as the app wrote them under each earlier name, recognised so they
+  // never sync.
+  'lib/welcome.ts': ['# Welcome to Nib', '# Welcome to nibeditor'],
   // The browser's stand-in for the folder every desktop keeps its spaces in.
   'lib/web/commands.ts': ['Nib'],
 }
+
+/** Rows every catalogue holds under an old name, because a server that has not been
+ *  renamed yet sends these words and they are looked up as sent. Their translations
+ *  say Orden. */
+const SENT: string[] = ['set an OpenAI key in nibeditor’s settings first']
+
+/** The one sentence that says the old name and the new one together, in whatever
+ *  language: the notice that the name changed. Nothing else names both. */
+const renaming = (text: string) => text.includes('Orden')
 
 /** The string literals in a script, its comments left out: everything in it a
  *  person could be shown. A template's `${}` is read as script again, so a string
@@ -135,11 +150,11 @@ function sources(dir: string, found: string[] = []): string[] {
   return found
 }
 
-/** Each place `text` calls the app Nib, the identifiers left out. */
+/** Each place `text` calls the app by an old name, the identifiers left out. */
 function oldNames(text: string): number[] {
   return [...text.matchAll(OLD_NAME)]
+    .filter((match) => !identifier(text, match.index, match[0].length))
     .map((match) => match.index)
-    .filter((at) => !identifier(text, at))
 }
 
 describe('reading a script for its strings', () => {
@@ -156,15 +171,15 @@ describe('reading a script for its strings', () => {
 })
 
 describe('the name a reader sees', () => {
-  test('is nibeditor in every string of the app and every catalogue', () => {
+  test('is Orden in every string of the app and every catalogue', () => {
     const offenders: string[] = []
 
     for (const path of sources(SOURCE)) {
       const where = relative(SOURCE, path).replace(/\\/g, '/')
-      const named = NAMED[where] ?? []
+      const named = [...(NAMED[where] ?? []), ...(where.startsWith('locales/') ? SENT : [])]
 
       for (const text of readable(path, readFileSync(path, 'utf8'))) {
-        if (named.includes(text)) continue
+        if (named.includes(text) || renaming(text)) continue
         for (const at of oldNames(text)) {
           offenders.push(`${where}: ${text.slice(Math.max(0, at - 50), at + 50).trim()}`)
         }
@@ -174,18 +189,19 @@ describe('the name a reader sees', () => {
     expect(offenders).toEqual([])
   })
 
-  test('is nibeditor in the pages the app is served in and on its manifests', () => {
+  test('is Orden in the pages the app is served in and on its manifests', () => {
     for (const name of [
       'index.html',
       'presenter.html',
       'quick-add.html',
       'even.html',
+      'handoff.html',
       'public/manifest.webmanifest',
       'even.app.json',
     ]) {
       const text = readFileSync(join(APP, name), 'utf8').replace(/<!--[\s\S]*?-->/g, '')
       expect(oldNames(text), name).toEqual([])
-      expect(text, name).toContain('nibeditor')
+      expect(text, name).toContain('Orden')
     }
   })
 
@@ -195,9 +211,17 @@ describe('the name a reader sees', () => {
     expect(oldNames('/Applications/Nib.app')).toEqual([])
     expect(oldNames('Nib-Icon=https://a.example/favicon.ico')).toEqual([])
     expect(oldNames('Nib-Data=3f9a0c17e2b4d685')).toEqual([])
+    expect(oldNames('https://nibeditor.com/handoff')).toEqual([])
+    expect(oldNames('Notes from nibeditor.com')).toEqual([])
+    expect(oldNames('github.com/lxorb/nibeditor')).toEqual([])
 
     expect(oldNames('Welcome to Nib')).toEqual([11])
     expect(oldNames('Nib-E-Mail')).toEqual([0])
     expect(oldNames('Nibનું')).toEqual([0])
+    expect(oldNames('Welcome to nibeditor')).toEqual([11])
+    expect(oldNames('NibEditor is now Orden')).toEqual([0])
+    expect(oldNames('nibeditor-E-Mail')).toEqual([0])
+    expect(oldNames('nibeditor가')).toEqual([0])
+    expect(oldNames('Orden')).toEqual([])
   })
 })

@@ -197,10 +197,10 @@ describe('the welcome note, on its way to an account', () => {
     expect(moved).toBe(false)
   })
 
-  test('nor the one a device was seeded with before the name was nibeditor', async () => {
-    const asNib = WELCOME.replace('# Welcome to nibeditor', '# Welcome to Nib')
-    expect(asNib).not.toBe(WELCOME)
-    fake.disk.set(`${ROOT}/${WELCOME_NAME}`, asNib)
+  test.each(['Nib', 'nibeditor'])('nor the one a device was seeded with as %s', async (name) => {
+    const earlier = WELCOME.replace('# Welcome to Orden', `# Welcome to ${name}`)
+    expect(earlier).not.toBe(WELCOME)
+    fake.disk.set(`${ROOT}/${WELCOME_NAME}`, earlier)
     const mirror = newMirror('s-one', ROOT)
 
     await push(mirror, 'token', NOBODY)

@@ -47,7 +47,7 @@ describe('the note a widget row named', () => {
     // Which is the shape the hole had: an exported activity could name any file
     // the app itself may read, and the page handed it straight to the crate. The
     // judgement itself is insideAnyOf, in space-paths.test.ts.
-    expect(openable('/data/data/com.nibeditor.app/databases/notes.db')).toBeNull()
+    expect(openable('/data/data/so.orden.app/databases/notes.db')).toBeNull()
     expect(openable('/sdcard/Download/whatever.md')).toBeNull()
   })
 })
