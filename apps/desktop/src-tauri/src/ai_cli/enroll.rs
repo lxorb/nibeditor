@@ -1,17 +1,24 @@
-//! The agents on this computer, connected to nib with nothing to set up (docs/agent-native.md
-//! 10, "Connected on their own").
+//! The agents on this computer, connected to the app with nothing to set up
+//! (docs/agent-native.md 10, "Connected on their own").
 //!
 //! Emil, 2026-10-12: "[Claude Code] running on my machine should be able to connect to nib
 //! without me having to set up anything." So the installed app adds itself to each agent
 //! program it finds, the way the program itself adds a server - `claude mcp add --scope
-//! user nib -- <nib> mcp`, `codex mcp add nib -- <nib> mcp` - which is the line Settings >
-//! AI > Access offers to paste, run for the reader. The program writes its own config;
-//! nib never opens it. Then the agent finds `nib mcp` in every folder it starts in, and
-//! its first call is the pairing the reader allows once (mcp/pairing.rs).
+//! user orden -- <nib> mcp`, `codex mcp add orden -- <nib> mcp` - which is the line
+//! Settings > AI > Access offers to paste, run for the reader. The program writes its own
+//! config; the app never opens it. Then the agent finds `nib mcp` in every folder it
+//! starts in, and its first call is the pairing the reader allows once (mcp/pairing.rs).
 //!
-//! **Never over the reader's own.** A program that already has a server called `nib` -
+//! **Never over the reader's own.** A program that already has a server called `orden` -
 //! added by hand, pointing anywhere - is left as it is. Turning it off in Access removes
-//! the entry only where it names this app's own program.
+//! an entry only where it names this app's own program.
+//!
+//! **The old name carried over.** Until the product was renamed Orden the server was
+//! called `nib`. An entry under that name that names this app's own program - added by an
+//! earlier version or pasted from its Access page - is given the new name on launch,
+//! through the program's own `remove` and `add`, whether or not the switch is on: it was
+//! there already, and renaming it is not adding one. One that names another program is
+//! the reader's, and stays. A program never ends with two entries for this app.
 //!
 //! **Only the app somebody installed**: a release under the shipped identifier, not a
 //! probe and not a development build, whose program would be a copy about to be deleted.
@@ -33,7 +40,10 @@ use super::{Tool, TELLING};
 const SHIPPED: &str = "ch.emilvinu.nib";
 
 /// What the server is called in each program.
-const NAME: &str = "nib";
+const NAME: &str = "orden";
+
+/// What it was called until the product was renamed Orden.
+const OLD_NAME: &str = "nib";
 
 /// A home of a test's own, where the programs' configs are read and written instead of
 /// the reader's.
@@ -73,9 +83,9 @@ fn offered(app: &AppHandle) -> bool {
             && crate::placement::away().is_none())
 }
 
-/// The program's arguments for one of the three.
-fn get_args() -> Vec<OsString> {
-    ["mcp", "get", NAME].map(OsString::from).to_vec()
+/// The program's arguments for one of the three, for the server called `name`.
+fn get_args(name: &str) -> Vec<OsString> {
+    ["mcp", "get", name].map(OsString::from).to_vec()
 }
 
 fn add_args(tool: Tool, nib: &Path) -> Vec<OsString> {
@@ -90,10 +100,10 @@ fn add_args(tool: Tool, nib: &Path) -> Vec<OsString> {
     args
 }
 
-fn remove_args(tool: Tool) -> Vec<OsString> {
+fn remove_args(tool: Tool, name: &str) -> Vec<OsString> {
     match tool {
-        Tool::ClaudeCode => vec!["mcp", "remove", "--scope", "user", NAME],
-        Tool::Codex => vec!["mcp", "remove", NAME],
+        Tool::ClaudeCode => vec!["mcp", "remove", "--scope", "user", name],
+        Tool::Codex => vec!["mcp", "remove", name],
     }
     .into_iter()
     .map(OsString::from)
@@ -114,26 +124,74 @@ fn homed(program: &Program, args: &[OsString], folder: &Path, home: Option<&Path
     command
 }
 
-/// What a program says it has under nib's name: `None` for none, else what it said.
-fn entry(program: &Program, folder: &Path, home: Option<&Path>) -> Option<String> {
-    let said = run_to_end(homed(program, &get_args(), folder, home), TELLING).ok()?;
+/// What a program says it has under the server name `name`: `None` for none, else what
+/// it said.
+fn entry(program: &Program, name: &str, folder: &Path, home: Option<&Path>) -> Option<String> {
+    let said = run_to_end(homed(program, &get_args(name), folder, home), TELLING).ok()?;
     (said.ended.code == Some(0)).then_some(said.out)
 }
 
-/// Adds nib to one program, where it has no server of that name.
+/// What a program says about an entry, as whose it is.
+#[derive(Debug, PartialEq, Eq)]
+enum Held {
+    /// No server by that name.
+    None,
+    /// One that starts this app's own program.
+    Ours,
+    /// One that starts something else: the reader's.
+    Theirs,
+}
+
+fn held(program: &Program, name: &str, folder: &Path, nib: &Path, home: Option<&Path>) -> Held {
+    match entry(program, name, folder, home) {
+        None => Held::None,
+        Some(said) if said.contains(nib.to_string_lossy().as_ref()) => Held::Ours,
+        Some(_) => Held::Theirs,
+    }
+}
+
+fn remove(program: &Program, tool: Tool, name: &str, folder: &Path, home: Option<&Path>) {
+    let _ = run_to_end(
+        homed(program, &remove_args(tool, name), folder, home),
+        TELLING,
+    );
+}
+
+/// Gives this app's entry under the old name the new one, where the program has one: the
+/// new entry added first and the old one taken away once the new one is there, so the
+/// agent is never left without the app. Where the new name is the reader's own, the old
+/// entry stays as it is, the one way left to reach the app.
+pub fn carry_over(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
+    if held(program, OLD_NAME, folder, nib, home) != Held::Ours {
+        return;
+    }
+    if held(program, NAME, folder, nib, home) == Held::None {
+        let _ = run_to_end(homed(program, &add_args(tool, nib), folder, home), TELLING);
+    }
+    if held(program, NAME, folder, nib, home) == Held::Ours {
+        remove(program, tool, OLD_NAME, folder, home);
+    }
+}
+
+/// Adds the app to one program, where it has no server of that name, after carrying an
+/// entry under the old name over.
 pub fn enroll(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
-    if entry(program, folder, home).is_some() {
+    carry_over(program, tool, folder, nib, home);
+    if entry(program, NAME, folder, home).is_some()
+        || held(program, OLD_NAME, folder, nib, home) == Held::Ours
+    {
         return;
     }
     let _ = run_to_end(homed(program, &add_args(tool, nib), folder, home), TELLING);
 }
 
-/// Takes nib out of one program, where the entry names this app's own program.
+/// Takes the app out of one program, under either name, where the entry names this app's
+/// own program.
 pub fn unenroll(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
-    let ours = entry(program, folder, home)
-        .is_some_and(|said| said.contains(nib.to_string_lossy().as_ref()));
-    if ours {
-        let _ = run_to_end(homed(program, &remove_args(tool), folder, home), TELLING);
+    for name in [NAME, OLD_NAME] {
+        if held(program, name, folder, nib, home) == Held::Ours {
+            remove(program, tool, name, folder, home);
+        }
     }
 }
 
@@ -158,11 +216,11 @@ fn each(app: &AppHandle, act: fn(&Program, Tool, &Path, &Path, Option<&Path>)) {
         });
 }
 
-/// After the window: nib added to every agent program on this computer, unless the reader
-/// turned it off.
+/// After the window: the app added to every agent program on this computer, unless the
+/// reader turned it off, and an entry under the old name carried over either way.
 pub fn keep_enrolled(app: &AppHandle) {
-    if offered(app) && is_on(app) {
-        each(app, enroll);
+    if offered(app) {
+        each(app, if is_on(app) { enroll } else { carry_over });
     }
 }
 
@@ -209,17 +267,18 @@ mod tests {
         };
         assert_eq!(
             line(add_args(Tool::ClaudeCode, nib)),
-            "mcp add --scope user nib -- C:/nib/nib.exe mcp"
+            "mcp add --scope user orden -- C:/nib/nib.exe mcp"
         );
         assert_eq!(
             line(add_args(Tool::Codex, nib)),
-            "mcp add nib -- C:/nib/nib.exe mcp"
+            "mcp add orden -- C:/nib/nib.exe mcp"
         );
         assert_eq!(
-            line(remove_args(Tool::ClaudeCode)),
+            line(remove_args(Tool::ClaudeCode, OLD_NAME)),
             "mcp remove --scope user nib"
         );
-        assert_eq!(line(remove_args(Tool::Codex)), "mcp remove nib");
+        assert_eq!(line(remove_args(Tool::Codex, NAME)), "mcp remove orden");
+        assert_eq!(line(get_args(OLD_NAME)), "mcp get nib");
     }
 
     #[test]

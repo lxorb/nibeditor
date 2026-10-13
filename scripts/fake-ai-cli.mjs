@@ -236,10 +236,10 @@ function claudeServers() {
   if (!file) return []
   const config = JSON.parse(readFileSync(file, 'utf8'))
   const names = Object.keys(config.mcpServers ?? {})
-  if (names.length !== 1 || names[0] !== 'nib') throw new Error(`servers ${names.join(', ')}`)
-  const nib = config.mcpServers.nib
+  if (names.length !== 1 || names[0] !== 'orden') throw new Error(`servers ${names.join(', ')}`)
+  const nib = config.mcpServers.orden
   if (nib.args?.join(' ') !== 'mcp' || nib.env) throw new Error('nib is not run as nib mcp')
-  return has('--safe-mode') ? [] : [{ name: 'nib', status: 'connected' }]
+  return has('--safe-mode') ? [] : [{ name: 'orden', status: 'connected' }]
 }
 
 /** A Claude Code kept open: a `user` message per turn, control requests between. */
@@ -251,7 +251,7 @@ function claudeSession() {
     return refuse(`asked with ${error.message}`)
   }
   const allowed = (after('--allowedTools') ?? '').split(',').filter(Boolean)
-  if (allowed.some((one) => !one.startsWith('mcp__nib'))) return refuse('asked with tools')
+  if (allowed.some((one) => !one.startsWith('mcp__orden'))) return refuse('asked with tools')
   if (after('--permission-mode') !== 'dontAsk') return refuse('asked with a permission mode')
   if (has('--safe-mode') || has('--dangerously-skip-permissions')) return refuse('asked unsafely')
 
@@ -389,7 +389,7 @@ function claudeSession() {
         message: {
           model: state.model,
           content: [
-            { type: 'tool_use', id, name: 'mcp__nib__read_note', input: { path: 'Herons.md' } },
+            { type: 'tool_use', id, name: 'mcp__orden__read_note', input: { path: 'Herons.md' } },
           ],
         },
       })
@@ -508,12 +508,12 @@ function appServer() {
     if (params.approvalPolicy !== 'never') return fail(id, 'asks somebody')
     if (params.ephemeral !== true) return fail(id, 'kept on disk')
     const config = params.config ?? {}
-    if (Object.keys(config).some((key) => !key.startsWith('mcp_servers.nib.')))
+    if (Object.keys(config).some((key) => !key.startsWith('mcp_servers.orden.')))
       return fail(id, 'configured beyond nib')
-    if (config['mcp_servers.nib.command']) {
-      if (config['mcp_servers.nib.args']?.join(' ') !== 'mcp') return fail(id, 'not nib mcp')
+    if (config['mcp_servers.orden.command']) {
+      if (config['mcp_servers.orden.args']?.join(' ') !== 'mcp') return fail(id, 'not nib mcp')
       if (
-        !config['mcp_servers.nib.env_vars']?.includes('NIB_MCP_TOKEN') ||
+        !config['mcp_servers.orden.env_vars']?.includes('NIB_MCP_TOKEN') ||
         !process.env.NIB_MCP_TOKEN
       )
         return fail(id, 'nib mcp has no token')
@@ -522,7 +522,7 @@ function appServer() {
     reply(id, {
       thread,
       model: params.model ?? 'gpt-fake',
-      told: { enabled_tools: config['mcp_servers.nib.enabled_tools'] ?? null },
+      told: { enabled_tools: config['mcp_servers.orden.enabled_tools'] ?? null },
     })
     tell('thread/started', { thread })
   }
