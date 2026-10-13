@@ -178,7 +178,7 @@ def nothing(browser: Browser) -> None:
     chooser(new)
     with new.expect_popup():
         new.locator(ROW).locator("button").click()
-    said = new.locator(ROW).locator(".said")
+    said = new.locator(ROW).locator(".value")
     said.wait_for(timeout=30_000)
     if said.text_content() != "Nothing there":
         wrong(f"the row said {said.text_content()!r} for an old address that held nothing")

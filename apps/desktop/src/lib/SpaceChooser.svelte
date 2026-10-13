@@ -69,7 +69,7 @@
         <div class="nib-setting">
           <span class="name">{t('Notes from nibeditor.com')}</span>
           {#if takingOver.state === 'nothing'}
-            <span class="said">{t('Nothing there')}</span>
+            <span class="value">{t('Nothing there')}</span>
           {:else}
             <button
               class="nib-button is-quiet is-soft"
@@ -215,8 +215,8 @@
     color: var(--text);
   }
 
-  /* What the old address answered, where its button was. */
-  .said {
+  /* What the old address answered, where its button was: the row's value. */
+  .value {
     flex: none;
     color: var(--muted);
     font-family: var(--font-ui);
