@@ -507,6 +507,18 @@ class Themes {
   /** Shows a look and keeps nothing: what the picker points at. Leaving it is this
    *  again, with what was kept; see theme-picker/picking.svelte.ts. */
   preview(id: string, scheme: SchemeChoice, accent: string) {
+    // The look already on is not put on again. The palette tries on the row under its
+    // arrows whenever its rows are worked out again, and a theme's own rows are worked
+    // out from what it wears: wearing it afresh worked them out afresh, which tried it
+    // on again, until Svelte gave up on the page - Wallpaper did it on every hover.
+    const tried = Object.keys(this.trying)
+    if (
+      this.id === id &&
+      this.scheme === scheme &&
+      tried.length === 1 &&
+      this.trying.accent === accent
+    )
+      return
     this.id = id
     this.scheme = scheme
     this.trying = { accent }

@@ -574,6 +574,22 @@ describe('a look shown and not kept', () => {
     // Following the system again, which is asking for the dark.
     expect(dataset.theme).toBe('dark')
   })
+
+  // The palette tries on the row under its arrows each time its rows are worked out,
+  // and a theme's rows are worked out from what it wears: a preview that wore the look
+  // again looped until Svelte gave up on the page.
+  test('the look already on is not put on again', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+
+    theme.preview('file:rose', 'dark', 'teal')
+    await settled(() => injected().includes('--bg: #000'))
+    style!.textContent = 'worn once'
+    theme.preview('file:rose', 'dark', 'teal')
+    await Promise.resolve()
+
+    expect(injected()).toBe('worn once')
+  })
 })
 
 describe('an installed theme across a restart', () => {
