@@ -132,7 +132,7 @@ if (!edge) {
   ])
 
   edit('scoop/nib.json', [
-    [/^(    "version": )"[^"]*",$/m, `$1"${version}",`],
+    [/^( {4}"version": )"[^"]*",$/m, `$1"${version}",`],
     ...['x64', 'arm64'].map((arch) => [
       new RegExp(
         String.raw`(            "url": "https://github\.com/[^/]+/[^/]+/)${OLD}(-windows-${arch}-setup\.exe#/dl\.7z",\n            "hash": )"[0-9a-f]{64}"`,
@@ -157,8 +157,8 @@ if (!edge) {
   ])
 
   edit('homebrew/orden.rb', [
-    [/^(  version )"[^"]*"$/m, `$1"${version}"`],
-    [/^(  sha256 )"[0-9a-f]{64}"$/m, `$1"${digest(file('macos-universal', '.dmg'))}"`],
+    [/^( {2}version )"[^"]*"$/m, `$1"${version}"`],
+    [/^( {2}sha256 )"[0-9a-f]{64}"$/m, `$1"${digest(file('macos-universal', '.dmg'))}"`],
   ])
 }
 
