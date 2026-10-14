@@ -54,35 +54,61 @@
             inherit hash;
           };
 
-          # Unpacked once so the .desktop entry and the icons can be installed
-          # into the profile, which is what makes Orden show up in a launcher.
+          # Unpacked once, and run from here, so the AppImage's own start script can
+          # be corrected and the .desktop entry and the icons installed into the
+          # profile, which is what makes Orden show up in a launcher.
+          #
+          # The script forces GDK_BACKEND=x11 on everyone, which puts a Wayland
+          # session on Xwayland; without it GTK takes Wayland when there is one and
+          # X11 when there is not, and a GDK_BACKEND the user set still counts.
+          #
+          # The GStreamer it bundles is Ubuntu 22.04's 1.20, which refuses every
+          # plugin newer than itself, and it bundles no plugins: taking it out lets
+          # WebKit load nixpkgs' GStreamer and plugins, the same version as each
+          # other.
           contents = pkgs.appimageTools.extract {
             pname = "orden";
             inherit version src;
+            postExtract = ''
+              chmod -R u+w $out
+              substituteInPlace $out/apprun-hooks/linuxdeploy-plugin-gtk.sh \
+                --replace-fail 'export GDK_BACKEND=x11' ':'
+              rm $out/usr/lib/libgst*-1.0.so*
+            '';
           };
         in
-        pkgs.appimageTools.wrapType2 {
+        pkgs.appimageTools.wrapAppImage {
           pname = "orden";
-          inherit version src;
+          inherit version;
+          src = contents;
 
-          # WebKitGTK plays audio and video through GStreamer, and the AppImage
-          # bundles the library but none of its plugins.
+          # WebKitGTK plays audio and video through GStreamer. Wayland, EGL and
+          # D-Bus are in appimageTools' own list already, and named here as well
+          # because a window depends on them.
           #
           # pandoc is deliberately not pulled in: it is only needed for importing
           # and exporting DOCX and friends, Orden hides that when it is missing, and
           # it would roughly double the closure. Anyone who wants it can add pandoc
           # to their own profile.
           extraPkgs =
-            pkgs: with pkgs.gst_all_1; [
+            pkgs:
+            (with pkgs.gst_all_1; [
               gstreamer
               gst-plugins-base
               gst-plugins-good
               gst-plugins-bad
               gst-libav
-            ];
+            ])
+            ++ (with pkgs; [
+              wayland
+              libxkbcommon
+              libGL
+              libglvnd
+              dbus
+            ]);
 
-          # The FHS environment keeps GStreamer's plugins in /usr/lib, not where the
-          # AppImage's own GStreamer (built on Ubuntu) looks for them.
+          # GStreamer looks for its plugins in its own store path; in the FHS
+          # environment they are all in /usr/lib.
           #
           # WebKitGTK's DMA-BUF renderer wants a libgbm that matches the bundled
           # WebKit, and nixpkgs' Mesa is not that one: the window comes up blank on
