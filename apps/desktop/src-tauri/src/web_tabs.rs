@@ -3051,7 +3051,8 @@ mod shot {
             SnapshotOptions::NONE,
             None::<&gtk::gio::Cancellable>,
             move |taken| {
-                let Some(pixels) = taken.ok().and_then(copied) else {
+                let taken = taken.map_err(|error| eprintln!("web_shot: {error}")).ok();
+                let Some(pixels) = taken.and_then(copied) else {
                     let _ = done.try_send(None);
                     return;
                 };
@@ -3111,6 +3112,8 @@ mod shot {
             let mut encoder = ::png::Encoder::new(&mut out, pixels.width, pixels.height);
             encoder.set_color(::png::ColorType::Rgba);
             encoder.set_depth(::png::BitDepth::Eight);
+            // A picture that stands in for a moment under a menu: fast over small.
+            encoder.set_compression(::png::Compression::Fastest);
             let mut writer = encoder.write_header().ok()?;
             writer.write_image_data(&rgba).ok()?;
         }

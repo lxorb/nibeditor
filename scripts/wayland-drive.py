@@ -146,9 +146,10 @@ def share(shot, box):
     return hits / max(1, seen)
 
 
-def shoot(output, name):
+def shoot(output, name, scale):
+    """The output in its own pixels: grim's default is the biggest scale of any output."""
     path = OUT / f"{name}-{output}.png"
-    subprocess.run(["grim", "-o", output, str(path)], check=True)
+    subprocess.run(["grim", "-s", str(scale), "-o", output, str(path)], check=True)
     return path
 
 
@@ -180,7 +181,12 @@ def look(output):
         )
 
     want = on_screen(pane)
-    got = bounding(shoot(output, "page"))
+    # The page drawn, which on the first screen is the page still loading.
+    for _ in range(40):
+        got = bounding(shoot(output, "page", scale))
+        if got is not None:
+            break
+        time.sleep(0.5)
     print(f"{output} at {scale}: the hole is {tuple(round(v) for v in want)}, the page is {got}")
     if not near(got, want, scale):
         fail(f"{output} at {scale}: the page is at {got}, its hole at {tuple(round(v) for v in want)}")
@@ -205,7 +211,7 @@ def look(output):
         if not opened or not isinstance(layer, dict):
             fail(f"{output}: {name} did not open")
         else:
-            shot = shoot(output, slug)
+            shot = shoot(output, slug, scale)
             covered = share(shot, on_screen(layer, 4))
             under = share(shot, want)
             print(
@@ -218,7 +224,7 @@ def look(output):
                 fail(f"{output}: under {name} the page is gone ({under:.0%} of its hole)")
         run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
         time.sleep(1.0)
-        back = bounding(shoot(output, f"after-{slug}"))
+        back = bounding(shoot(output, f"after-{slug}", scale))
         if not near(back, want, scale):
             fail(f"{output}: the page did not come back whole after {name} ({back})")
 

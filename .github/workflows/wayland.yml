@@ -88,8 +88,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build the app and its Linux packages
+        # Optimised, so what is timed against a frame - a page's still picture under a
+        # menu has 300 ms - is timed against code that runs the way a release runs it.
         env:
           CARGO_PROFILE_DEV_DEBUG: line-tables-only
+          CARGO_PROFILE_DEV_OPT_LEVEL: '2'
         run: >-
           pnpm --filter @nib/desktop exec tauri build --debug --bundles deb,rpm,appimage
           --config '{"bundle":{"createUpdaterArtifacts":false}}'
