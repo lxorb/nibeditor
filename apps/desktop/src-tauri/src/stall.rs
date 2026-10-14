@@ -449,7 +449,7 @@ pub fn watch_page(app: &AppHandle, webview: &tauri::Webview, whose: &'static str
     let app = app.clone();
     let label = webview.label().to_owned();
     let _ = webview.with_webview(move |platform| {
-        platform
+        let _ = platform
             .inner()
             .connect_web_process_terminated(move |_, reason| {
                 gone(&label);

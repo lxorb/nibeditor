@@ -3089,7 +3089,9 @@ mod shot {
         image.with_data(|bytes| data.extend_from_slice(bytes)).ok()?;
         // A picture with no alpha leaves the fourth byte to chance.
         if opaque {
-            data.iter_mut().skip(3).step_by(4).for_each(|alpha| *alpha = 255);
+            for alpha in data.iter_mut().skip(3).step_by(4) {
+                *alpha = 255;
+            }
         }
         Some(Pixels {
             width: u32::try_from(image.width()).ok()?,

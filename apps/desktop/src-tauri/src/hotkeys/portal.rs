@@ -163,8 +163,9 @@ impl Portal {
         let version = u32::try_from(body.deserialize::<OwnedValue>()?)?;
         let sender = bus
             .unique_name()
-            .map(|name| name.as_str().trim_start_matches(':').replace('.', "_"))
-            .unwrap_or_default();
+            .map_or_else(String::new, |name| {
+                name.as_str().trim_start_matches(':').replace('.', "_")
+            });
         Ok(Self {
             bus,
             sender,
@@ -241,8 +242,7 @@ impl Portal {
                 session,
                 results
                     .get("shortcuts")
-                    .map(|value| triggers(value))
-                    .unwrap_or_default(),
+                    .map_or_else(BTreeMap::new, |value| triggers(value)),
             )),
             Ok((code, _)) => {
                 self.close(&session);

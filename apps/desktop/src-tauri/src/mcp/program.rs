@@ -12,7 +12,7 @@
 //! replaces and the garbage collector then deletes, and through a wrapper that sets the
 //! libraries' paths, so the binary itself is `.nib-wrapped` beside the wrapper. The
 //! program to name is the one on the path outside the store that leads to this same
-//! copy - a NixOS system's `/run/current-system/sw/bin/orden`, a profile's
+//! copy - a `NixOS` system's `/run/current-system/sw/bin/orden`, a profile's
 //! `~/.nix-profile/bin/orden` - which every update moves along with it. Run with
 //! `nix run`, there is none, and the wrapper beside the binary is the answer.
 
@@ -32,8 +32,7 @@ pub fn program() -> Result<PathBuf, String> {
         return Ok(exe);
     }
     let path: Vec<PathBuf> = std::env::var_os("PATH")
-        .map(|path| std::env::split_paths(&path).collect())
-        .unwrap_or_default();
+        .map_or_else(Vec::new, |path| std::env::split_paths(&path).collect());
     Ok(chosen(
         &exe,
         std::env::var_os("APPIMAGE").map(PathBuf::from),
@@ -155,7 +154,7 @@ mod tests {
 
     const NOW: &str = "/nix/store/aaa-orden-0.15.0/bin/.nib-wrapped";
 
-    /// What a NixOS system's links lead to: its own path into this copy, and a profile's
+    /// What a `NixOS` system's links lead to: its own path into this copy, and a profile's
     /// into another.
     fn links(candidate: &Path) -> Option<PathBuf> {
         match candidate.to_str()?.replace('\\', "/").as_str() {
