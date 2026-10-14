@@ -2,11 +2,14 @@
   # Orden for Nix: the program out of the release's .deb, run on nixpkgs' own
   # WebKitGTK, GTK and GStreamer, the way the AUR package runs it on Arch's.
   #
-  # Not the AppImage. It bundles Ubuntu 22.04's GLib and GStreamer, which nixpkgs'
-  # GStreamer plugins cannot load into, and it forces GTK onto X11 even in a Wayland
-  # session. The .deb is the bare program, so everything it links is nixpkgs', the
-  # same version as everything else on the system: native Wayland, the graphics
-  # driver NixOS provides, GStreamer with its plugins, and a fraction of the size.
+  # Not the AppImage, which this flake wrapped up to 0.13. Its own libwayland-client
+  # does not match NixOS' Mesa and libglvnd, so WebKit's web process died with
+  # "Could not create default EGL display: EGL_BAD_PARAMETER"; its start script
+  # forces GTK onto X11 even in a Wayland session; and its GStreamer 1.20 refuses
+  # nixpkgs' plugins. The .deb is the bare program, so everything it links is
+  # nixpkgs', the same version as everything else on the system: native Wayland,
+  # the graphics driver NixOS provides, GStreamer with its plugins, and a fraction
+  # of the size.
   #
   # This is not the nixpkgs package - it is a flake anyone can install from
   # directly, without waiting on a nixpkgs review:

@@ -5,7 +5,7 @@ name: packaging-bump
 # current as main is, and with it the Scoop, Chocolatey, Homebrew, snap and AUR
 # files, which the publishers rewrite in flight but which validate-linux-packaging
 # checks as committed. scripts/bump-packaging.mjs does the rewriting, from the
-# digests the release page reports.
+# digests the release page reports, and the flake's nixpkgs moves on with it.
 #
 # release.yml dispatches it at the end of a stable release, the same way it hands
 # the release to publish.yml; `edge` never comes here. The rewritten flake is
@@ -44,6 +44,17 @@ jobs:
       changed: ${{ steps.bump.outputs.changed }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      # The flake's nixpkgs moves with every release, so what `nix run` builds
+      # Orden against is never older than the release itself. Checked with
+      # everything else below before it lands.
+      - name: The flake's nixpkgs, current
+        run: nix flake update --flake ./packaging/nix
 
       - name: Rewrite the packaging
         id: bump

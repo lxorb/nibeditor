@@ -327,14 +327,19 @@ anything unusual; this one does not, so it should pass automatically.
 
 ## Nix
 
-`nix/flake.nix` wraps the AppImage with `appimageTools.wrapType2`, which is the
-short path for a Tauri app: the AppImage already carries WebKitGTK and its web
-process. What the FHS environment adds is GStreamer's plugins, which the AppImage
-leaves to the system, and two variables: where those plugins are, and
-`WEBKIT_DISABLE_DMABUF_RENDERER=1` unless it is set already, the usual cure for a
-blank window on NVIDIA. The command is `orden`, with `nib` beside it as a second
-name; the desktop entry and icons are installed alongside, so it shows up in a
-launcher rather than only on `$PATH`.
+`nix/flake.nix` takes the program out of the release `.deb` and runs it on
+nixpkgs' own WebKitGTK, GTK and GStreamer, with `autoPatchelfHook` and
+`wrapGAppsHook3`, the way nixpkgs packages other Tauri apps and the way the AUR
+package runs it on Arch's. Up to 0.13 it wrapped the AppImage instead, which broke
+on NixOS: the AppImage's own libwayland-client and GLib do not match the system's
+Mesa and libglvnd (WebKit's web process aborts with `Could not create default EGL
+display: EGL_BAD_PARAMETER`), its start script forces `GDK_BACKEND=x11`, and its
+GStreamer 1.20 refuses nixpkgs' plugins. Built on nixpkgs it is a native Wayland
+client, uses the driver NixOS keeps in `/run/opengl-driver`, and plays media. The
+wrapper turns WebKit's DMA-BUF renderer off on NVIDIA's own driver alone (the
+blank-window bug), unless `WEBKIT_DISABLE_DMABUF_RENDERER` is set either way;
+Mesa keeps it. The command is `orden`, with `nib` beside it; the desktop entry and
+icons are installed alongside, so it shows up in a launcher.
 
 This is deliberately not a nixpkgs package. nixpkgs wants a maintainer who
 watches the build, and search.nixos.org is the only place a nixpkgs entry would
@@ -351,18 +356,21 @@ On NixOS, as an input of the system's flake, either the package itself or
 
 ```nix
 inputs.orden.url = "github:lxorb/orden?dir=packaging/nix";
+inputs.orden.inputs.nixpkgs.follows = "nixpkgs";
 # then, in a module:
 environment.systemPackages = [ inputs.orden.packages.${pkgs.system}.default ];
 ```
 
-There is no `flake.lock` on purpose: pinning nixpkgs here would mean an extra
-commit every time the pin went stale, and the package is one `fetchurl` and a
-wrapper.
+`flake.lock` pins nixpkgs, because Nix refuses to run a flake from GitHub whose
+lock file it would have to write. Every release moves it (see below), so it is
+never older than the release.
 
 `.github/workflows/nix.yml` runs `nix flake check`, builds the flake on x86_64
-and aarch64, and starts Orden out of it twice on each: under Xvfb, and under a
-headless sway with Xwayland off, so the second window is a native Wayland one.
-On main it builds the flake from GitHub, exactly as `nix run` above does.
+and aarch64, and starts Orden out of it twice on each in a headless sway
+(wlroots, like Hyprland), with Mesa where NixOS keeps it: once with Xwayland off
+and no `DISPLAY`, so the window is a native Wayland one, and once on X11 through
+Xwayland (`scripts/nix-start.sh`). On main it builds the flake from GitHub,
+exactly as `nix run` above does.
 
 ## Refreshing all of it for a new release
 
@@ -373,7 +381,8 @@ validation workflow meaningful and what `nix run` installs. A stable release mov
 them by itself: `release.yml` dispatches `packaging-bump.yml`, which runs
 `scripts/bump-packaging.mjs` over the flake, the PKGBUILD and its `.SRCINFO`,
 `snapcraft.yaml`, the Scoop manifest, the Chocolatey package and the cask, with the
-digests the release page reports. It checks the `.SRCINFO` against `makepkg`, builds
+digests the release page reports, and runs `nix flake update` on the flake. It
+checks the `.SRCINFO` against `makepkg`, builds
 and starts the flake (nix.yml), opens a pull request and merges it, then starts
 the flake once more from GitHub. A build of main never gets there. By hand:
 

@@ -175,7 +175,8 @@ jobs:
           path: |
             *.png
             *.log
-            *.json
+            wayland.*
+            x11.*
             packaging/nix/flake.lock
           if-no-files-found: warn
 
@@ -212,7 +213,7 @@ jobs:
             exit 1
           fi
           grep -F 'Could not create default EGL display: EGL_BAD_PARAMETER. Aborting...' ${{ matrix.mode }}.log ||
-            grep -F 'cannot open display' ${{ matrix.mode }}.log
+            grep -F 'Failed to initialize GTK' ${{ matrix.mode }}.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -220,5 +221,5 @@ jobs:
           path: |
             *.png
             *.log
-            *.json
+            ${{ matrix.mode }}.*
           if-no-files-found: warn
