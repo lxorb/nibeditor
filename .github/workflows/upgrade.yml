@@ -113,7 +113,7 @@ jobs:
         run: |
           for version in "$NIB" "$NIBEDITOR"; do
             gh release download "v$version" --repo "$GITHUB_REPOSITORY" --dir "old-$version" \
-              --pattern "Nib-$version-windows-x64-setup.exe" --pattern "Nib-$version-windows-x64.msi"
+              --pattern "*-$version-windows-x64-setup.exe" --pattern "*-$version-windows-x64.msi"
           done
           curl -fsSL -o SFTA.ps1 \
             https://raw.githubusercontent.com/DanysysTeam/PS-SFTA/22a32292e576afc976a1167d92b50741ef523066/SFTA.ps1
@@ -167,7 +167,7 @@ jobs:
           OLD_VERSION: ${{ env[matrix.version] }}
         run: |
           gh release download "v$OLD_VERSION" --repo "$GITHUB_REPOSITORY" --dir old \
-            --pattern "Nib-$OLD_VERSION-macos-universal.dmg"
+            --pattern "*-$OLD_VERSION-macos-universal.dmg"
           hdiutil attach -nobrowse -mountpoint /tmp/old old/*.dmg
           find new -type f
           tar -x -z -f "$(find new -name app.tgz | head -1)" -C new

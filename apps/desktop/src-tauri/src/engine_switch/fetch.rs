@@ -5,16 +5,16 @@
 //! not in the installer; `JetBrains` fetches the runtime its IDEs run on the same way, the
 //! moment somebody picks another. What `JetBrains` gets wrong, by its own account, is that
 //! a fetched runtime then stays as it was while the IDE updates around it. Here the
-//! engine is fetched *per version of the app*, from the same release the app came from,
-//! and the updater fetches the next one before it installs the next app (see
+//! engine is fetched *per version of the app*, from where that version's files are (see
+//! `release`), and the updater fetches the next one before it installs the next app (see
 //! updater.ts), so the two never disagree.
 //!
-//! **Two archives, so an update is small.** A release carries, for each platform, the
+//! **Two archives, so an update is small.** Each version has, for each platform, the
 //! Chromium runtime - the engine's own files, which change when the engine does - and the
 //! app built on it, which changes every release:
 //!
 //! ```text
-//! chromium.json                                   what the release carries, and their signatures
+//! chromium-<version>.json                         what the version has, and their signatures
 //! chromium-runtime-<cef>-<platform>.tar.gz        ~140 MB, fetched when the engine moves
 //! nib-chromium-<version>-<platform>.tar.gz        a few MB, fetched with every version
 //! ```
@@ -177,21 +177,40 @@ pub fn platform() -> String {
     format!("{os}-{}", std::env::consts::ARCH)
 }
 
-/// The release a version of the app is on: its own tag, or the rolling build of main
-/// for a version with a build number on it (see scripts/build-version.sh).
-pub fn release(version: &str) -> String {
+/// The release a version of the app fetches its Chromium from: the rolling build of main
+/// for a version with a build number on it (see scripts/build-version.sh), and for a
+/// release `updates`, one pre-release holding every version's, so that a release's own
+/// page is its installers and nothing else, and a runtime is uploaded once however many
+/// versions use it. Up to 0.14 each release carried its own, and still does.
+pub fn release(version: &str) -> &'static str {
     if version.contains('-') {
-        "edge".to_string()
+        "edge"
     } else {
-        format!("v{version}")
+        "updates"
     }
 }
 
-/// Where a version's files are served from.
-fn source_of(version: &str) -> String {
+/// The manifest's name there: the rolling release has one, remade with every push, and
+/// `updates` one per version.
+fn manifest_name(version: &str) -> String {
+    if version.contains('-') {
+        "chromium.json".to_string()
+    } else {
+        format!("chromium-{version}.json")
+    }
+}
+
+/// Where a version's manifest is, and the folder its archives are served from.
+fn source_of(version: &str) -> (String, String) {
     std::env::var(SOURCE).map_or_else(
-        |_| format!("{RELEASES}{}/", release(version)),
-        |own| format!("{}/", own.trim_end_matches('/')),
+        |_| {
+            let base = format!("{RELEASES}{}/", release(version));
+            (format!("{base}{}", manifest_name(version)), base)
+        },
+        |own| {
+            let base = format!("{}/", own.trim_end_matches('/'));
+            (format!("{base}chromium.json"), base)
+        },
     )
 }
 
@@ -390,7 +409,7 @@ fn updater_key(app: &AppHandle) -> Result<String, String> {
 /// not here yet - and says where it got to.
 async fn fetch_engine(app: &AppHandle, places: &Places) -> Result<(), Refused> {
     let version = places.version.clone();
-    let base = source_of(&version);
+    let (manifest, base) = source_of(&version);
     let client = reqwest::Client::builder()
         .connect_timeout(CONNECT)
         .read_timeout(SILENT)
@@ -398,14 +417,14 @@ async fn fetch_engine(app: &AppHandle, places: &Places) -> Result<(), Refused> {
         .map_err(|error| Refused::failed(error.to_string()))?;
 
     let manifest: Manifest = client
-        .get(format!("{base}chromium.json"))
+        .get(&manifest)
         .send()
         .await
         .and_then(reqwest::Response::error_for_status)
-        .map_err(|error| Refused::unreached("chromium.json", &error))?
+        .map_err(|error| Refused::unreached(&manifest, &error))?
         .json()
         .await
-        .map_err(|error| Refused::new(Reason::Missing, format!("chromium.json: {error}")))?;
+        .map_err(|error| Refused::new(Reason::Missing, format!("{manifest}: {error}")))?;
     let wanted = matching(&manifest, &version, &platform())?;
 
     crate::paths::made(&places.engines).map_err(Refused::failed)?;
@@ -538,17 +557,20 @@ mod tests {
     use std::io::Write as _;
 
     use super::{
-        linked, matching, platform, release, runtime_folder, unpacked, Manifest, Reason, Refused,
+        linked, manifest_name, matching, platform, release, runtime_folder, unpacked, Manifest,
+        Reason, Refused,
     };
 
     #[test]
-    fn a_version_is_fetched_from_the_release_it_came_from() {
-        assert_eq!(release("0.9.2"), "v0.9.2");
+    fn a_release_is_fetched_from_updates_and_a_build_of_main_from_edge() {
+        assert_eq!(release("0.15.0"), "updates");
+        assert_eq!(manifest_name("0.15.0"), "chromium-0.15.0.json");
         assert_eq!(
             release("0.9.2-431"),
             "edge",
             "a build of main is on the rolling release"
         );
+        assert_eq!(manifest_name("0.9.2-431"), "chromium.json");
     }
 
     #[test]

@@ -142,8 +142,8 @@ jobs:
           rm -r source
 
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl \
-            --pattern "Nib-$VERSION-windows-x64-setup.exe" \
-            --pattern "Nib-$VERSION-windows-arm64-setup.exe"
+            --pattern "Orden-$VERSION-windows-x64-setup.exe" \
+            --pattern "Orden-$VERSION-windows-arm64-setup.exe"
 
           base="${{ github.server_url }}/$GITHUB_REPOSITORY/releases/download/$TAG"
           # Scoop reads the extension to pick an extractor, and an NSIS setup
@@ -151,10 +151,10 @@ jobs:
           # download so it is unpacked instead of run.
           jq --indent 4 \
             --arg version "$VERSION" \
-            --arg x64url "$base/Nib-$VERSION-windows-x64-setup.exe#/dl.7z" \
-            --arg x64hash "$(sha256sum "dl/Nib-$VERSION-windows-x64-setup.exe" | cut -d' ' -f1)" \
-            --arg armurl "$base/Nib-$VERSION-windows-arm64-setup.exe#/dl.7z" \
-            --arg armhash "$(sha256sum "dl/Nib-$VERSION-windows-arm64-setup.exe" | cut -d' ' -f1)" \
+            --arg x64url "$base/Orden-$VERSION-windows-x64-setup.exe#/dl.7z" \
+            --arg x64hash "$(sha256sum "dl/Orden-$VERSION-windows-x64-setup.exe" | cut -d' ' -f1)" \
+            --arg armurl "$base/Orden-$VERSION-windows-arm64-setup.exe#/dl.7z" \
+            --arg armhash "$(sha256sum "dl/Orden-$VERSION-windows-arm64-setup.exe" | cut -d' ' -f1)" \
             '.version = $version
              | .architecture["64bit"].url = $x64url
              | .architecture["64bit"].hash = $x64hash
@@ -216,7 +216,7 @@ jobs:
           renames=$(cat cask_renames.json 2>/dev/null || echo '{}')
           jq --indent 2 '. + {"nib": "orden"}' <<<"$renames" > cask_renames.json
 
-          dmg="Nib-$VERSION-macos-universal.dmg"
+          dmg="Orden-$VERSION-macos-universal.dmg"
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl --pattern "$dmg"
           sha=$(sha256sum "dl/$dmg" | cut -d' ' -f1)
           rm -r dl
@@ -262,15 +262,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl \
-            --pattern "Nib-$VERSION-windows-x64.msi" \
-            --pattern "Nib-$VERSION-windows-arm64.msi"
+            --pattern "Orden-$VERSION-windows-x64.msi" \
+            --pattern "Orden-$VERSION-windows-arm64.msi"
 
-          sed -i -E "s|(releases/download/v)[^/']+/Nib-[^']+-windows-|\\1$VERSION/Nib-$VERSION-windows-|" tools/chocolateyinstall.ps1
+          sed -i -E "s|(releases/download/v)[^/']+/[A-Za-z]+-[^']+-windows-|\\1$VERSION/Orden-$VERSION-windows-|" tools/chocolateyinstall.ps1
 
           # A digest is the first one below the url it belongs to, so the
           # architecture in that url is what picks which of the two is rewritten.
           for arch in x64 arm64; do
-            sum=$(sha256sum "dl/Nib-$VERSION-windows-$arch.msi" | cut -d' ' -f1 | tr 'a-f' 'A-F')
+            sum=$(sha256sum "dl/Orden-$VERSION-windows-$arch.msi" | cut -d' ' -f1 | tr 'a-f' 'A-F')
             sed -i -E "/-windows-$arch\.msi'/,/'[0-9A-Fa-f]{64}'/ s|'[0-9A-Fa-f]{64}'|'$sum'|" tools/chocolateyinstall.ps1
           done
           rm -r dl

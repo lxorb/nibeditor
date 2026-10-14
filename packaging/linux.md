@@ -275,7 +275,7 @@ stick through `removable-media`, and nothing else is needed.
 
 It pins the bytes it unpacks. `source-checksum` carries a `sha256/` per
 architecture, and `publish-linux.yml` rewrites both from what the release page
-reports for `Nib-<version>-linux-x64.deb` and `-arm64.deb` at the same moment it
+reports for `Orden-<version>-linux-x64.deb` and `-arm64.deb` at the same moment it
 rewrites the version and the URL - a release whose page reports no digest fails the
 step rather than building an unchecked snap. Every other path here pins one too
 (scoop and chocolatey a sha256, homebrew a sha256, the AUR a sha256, nix a hash,
@@ -353,10 +353,10 @@ stay pinned to the last release they were checked against, though, which is what
 makes the validation workflow meaningful. To move them forward by hand:
 
 ```
-version=0.13.1
+version=0.15.0
 base=https://github.com/lxorb/orden/releases/download/v$version
-for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.deb" | sha256sum; done
-for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.AppImage" | sha256sum; done
+for a in x64 arm64; do curl -fsSL "$base/Orden-$version-linux-$a.deb" | sha256sum; done
+for a in x64 arm64; do curl -fsSL "$base/Orden-$version-linux-$a.AppImage" | sha256sum; done
 ```
 
 - `aur/nib-bin/PKGBUILD`: `pkgver`, both `sha256sums_*`. Regenerate `.SRCINFO`

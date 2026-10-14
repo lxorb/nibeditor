@@ -76,8 +76,10 @@ A Chromium that never gets as far as its window twice in a row is given up on, a
 row says so. A second launch while either engine runs reaches the running app.
 
 **Fetched, not installed.** Chromium is ~415 MB on disk, so it is not in any installer.
-Each release carries, per platform, the engine's runtime (fetched when it moves) and the
-app built on it (a few MB, fetched with every version), both signed with the updater's
+Each version has, per platform, the engine's runtime (fetched when it moves) and the
+app built on it (a few MB, fetched with every version), on the `updates` pre-release
+beside every other version's rather than on the release's own page (up to 0.14 they
+were on it), both signed with the updater's
 key and checked before a byte is unpacked; `src/engine_switch/fetch.rs`,
 `cef/pack.py`, `scripts/chromium-manifest.mjs` and the `chromium` job of
 `release.yml`. The row fetches it the first time Chromium is chosen, with a ring that

@@ -39,9 +39,12 @@ jobs:
       - name: Fetch the release .debs
         run: |
           mkdir -p dl
+          # Called Orden from 0.15, Nib before.
           for arch in x64 arm64; do
-            curl -fsSL -o "dl/Nib-$VERSION-linux-$arch.deb" \
-              "https://github.com/lxorb/orden/releases/download/v$VERSION/Nib-$VERSION-linux-$arch.deb"
+            for name in Orden Nib; do
+              curl -fsSL -o "dl/Nib-$VERSION-linux-$arch.deb" \
+                "https://github.com/lxorb/orden/releases/download/v$VERSION/$name-$VERSION-linux-$arch.deb" && break
+            done
           done
           sha256sum dl/*.deb
 
@@ -92,8 +95,10 @@ jobs:
 
       - name: What the AppImage bundles, in case Flathub cannot use the .deb
         run: |
-          curl -fsSL -o Nib.AppImage \
-            "https://github.com/lxorb/orden/releases/download/v$VERSION/Nib-$VERSION-linux-x64.AppImage"
+          for name in Orden Nib; do
+            curl -fsSL -o Nib.AppImage \
+              "https://github.com/lxorb/orden/releases/download/v$VERSION/$name-$VERSION-linux-x64.AppImage" && break
+          done
           chmod +x Nib.AppImage
           ./Nib.AppImage --appimage-extract >/dev/null
           echo "::group::AppDir"

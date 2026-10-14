@@ -272,6 +272,7 @@ jobs:
     env:
       TAG: ${{ needs.version.outputs.tag }}
       VERSION: ${{ needs.version.outputs.version }}
+      ROLLING: ${{ needs.version.outputs.rolling }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -289,13 +290,21 @@ jobs:
             case "$name" in
               # Tauri names an APK after the architectures inside it, wrapped in
               # an `app-` and a `-release` that say nothing to anybody who is
-              # about to download one.
+              # about to download one. The universal one is the APK, for any phone.
+              app-universal-release.apk)
+                name=android.apk
+                ;;
               app-*-release.apk)
                 name=${name#app-}
                 name="android-${name%-release.apk}.apk"
                 ;;
+              # A simulator build installs on no phone, so a release's page, which
+              # is its installers, goes without it; `mobile-edge` has it.
+              *.app.zip)
+                [ "$ROLLING" = true ] || continue
+                ;;
             esac
-            cp "$file" "uploads/Nib_${VERSION}_$name"
+            cp "$file" "uploads/Orden-$VERSION-$name"
           done
           ls -l uploads
 

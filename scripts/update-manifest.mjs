@@ -3,13 +3,14 @@
  *  Every bundle the release workflow produced has a `.sig` beside it; the
  *  manifest pairs each platform with its download URL and that signature.
  *
- *    node scripts/update-manifest.mjs v0.2.0 0.2.0 artifacts > latest.json
- *    node scripts/update-manifest.mjs main 0.2.1-57 artifacts > latest.json
+ *    node scripts/update-manifest.mjs updates 0.15.0 artifacts > latest.json
+ *    node scripts/update-manifest.mjs edge 0.15.1-57 artifacts > latest.json
  *
  *  The tag is where the files are downloaded from; the version is what the
- *  updater compares against the one installed. For a tagged release they say
- *  the same thing. For the rolling build of main the tag is always `main`
- *  and the version counts up on its own.
+ *  updater compares against the one installed. A tagged release's bundles are
+ *  on `updates`, beside every other release's, so that its own page is its
+ *  installers (release.yml, `publish`); the rolling build of main keeps its
+ *  own on `edge`, and its version counts up on its own.
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs'

@@ -52,8 +52,8 @@ jobs:
           # Both architectures at once: updpkgsums would only ever fix the sums
           # for the machine it runs on and would quietly leave the other wrong.
           sum() { curl -fsSL "$1" | sha256sum | cut -d' ' -f1; }
-          x64=$(sum "$base/Nib-$version-linux-x64.deb")
-          arm64=$(sum "$base/Nib-$version-linux-arm64.deb")
+          x64=$(sum "$base/Orden-$version-linux-x64.deb")
+          arm64=$(sum "$base/Orden-$version-linux-arm64.deb")
           desktop=$(sha256sum nib.desktop | cut -d' ' -f1)
 
           sed -i \
@@ -152,8 +152,8 @@ jobs:
           # rather than computed: the bytes are snapcraft's to fetch, and what is
           # wanted here is what the release says they are. A missing one fails the
           # step - a snap built with no digest is a snap nobody checked.
-          amd64="$(gh release view "$TAG" --repo "$REPO" --json assets --jq ".assets[] | select(.name == \"Nib-$version-linux-x64.deb\") | .digest" | sed 's|^sha256:||')"
-          arm64="$(gh release view "$TAG" --repo "$REPO" --json assets --jq ".assets[] | select(.name == \"Nib-$version-linux-arm64.deb\") | .digest" | sed 's|^sha256:||')"
+          amd64="$(gh release view "$TAG" --repo "$REPO" --json assets --jq ".assets[] | select(.name == \"Orden-$version-linux-x64.deb\") | .digest" | sed 's|^sha256:||')"
+          arm64="$(gh release view "$TAG" --repo "$REPO" --json assets --jq ".assets[] | select(.name == \"Orden-$version-linux-arm64.deb\") | .digest" | sed 's|^sha256:||')"
 
           for said in "$amd64" "$arm64"; do
             if [ -z "$said" ]; then
@@ -164,7 +164,7 @@ jobs:
 
           sed -i \
             -e "s/^version: .*/version: '$version'/" \
-            -e "s|/download/v[0-9][^/]*/Nib-[0-9][^-]*-linux-|/download/$TAG/Nib-$version-linux-|g" \
+            -e "s|/download/v[0-9][^/]*/[A-Za-z]*-[0-9][^-]*-linux-|/download/$TAG/Orden-$version-linux-|g" \
             -e "s|on amd64: sha256/.*|on amd64: sha256/$amd64|" \
             -e "s|on arm64: sha256/.*|on arm64: sha256/$arm64|" \
             snapcraft.yaml

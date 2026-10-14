@@ -26,8 +26,8 @@ options=('!strip' '!debug' '!emptydirs')
 _url="https://github.com/lxorb/orden/releases/download/v${pkgver}"
 source=('nib.desktop')
 # One name for both, since only the running architecture is fetched.
-source_x86_64=("nib.deb::${_url}/Nib-${pkgver}-linux-x64.deb")
-source_aarch64=("nib.deb::${_url}/Nib-${pkgver}-linux-arm64.deb")
+source_x86_64=("nib.deb::${_url}/Orden-${pkgver}-linux-x64.deb")
+source_aarch64=("nib.deb::${_url}/Orden-${pkgver}-linux-arm64.deb")
 noextract=('nib.deb')
 sha256sums=('dbc30233704066e7d5479267db5d81532ca61a5b68f30eb0b7eccc9372532aff')
 sha256sums_x86_64=('d3ffa0ab64a64d5910f9f3dc45c56d000c6967307c8c17429b9b3799d4dd8907')

@@ -110,9 +110,9 @@ Download an installer from the [latest release](https://github.com/lxorb/orden/r
 | Windows, Chocolatey | `choco install nib` |
 | macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/nib` |
 | Nix | `nix profile install github:lxorb/orden?dir=packaging/nix` |
-| Debian, Ubuntu | `sudo apt install ./Nib-<version>-linux-x64.deb` |
-| Fedora, openSUSE | `sudo dnf install ./Nib-<version>-linux-x64.rpm` |
-| Any Linux | `chmod +x Nib-<version>-linux-x64.AppImage && ./Nib-<version>-linux-x64.AppImage` |
+| Debian, Ubuntu | `sudo apt install ./Orden-<version>-linux-x64.deb` |
+| Fedora, openSUSE | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
+| Any Linux | `chmod +x Orden-<version>-linux-x64.AppImage && ./Orden-<version>-linux-x64.AppImage` |
 
 The desktop app keeps itself up to date: it looks every few hours, downloads what it finds and installs it as you quit, so the new version is what starts next time. Which stream it follows is one setting, in Settings, General, Updates, and it belongs to that machine rather than to your account: **Stable** takes the official releases and is where every install starts, **Unstable** takes the build of every push to main and can break. Switching to Stable keeps the build you are on until a release passes it; switching to Unstable takes the next push. The web app is the new version the moment you reload it, and the Android app has no updater.
 

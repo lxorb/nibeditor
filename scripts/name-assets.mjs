@@ -51,7 +51,8 @@ for (const dir of readdirSync(root)) {
   // `nib-windows-x64` is the artifact directory the matrix produced. The label
   // says `Nib-` whatever the product is called: every build from before the
   // rename takes an update only from a file whose name starts with it, and one
-  // manifest serves them all (`names()` in src-tauri/src/updates.rs).
+  // manifest serves them all (`names()` in src-tauri/src/updates.rs). The copies
+  // a release's own page carries are called Orden (release.yml, `publish`).
   const label = `Nib-${version}-${dir.replace(/^nib-/, '')}`
 
   for (const path of filesIn(full)) {

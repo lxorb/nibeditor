@@ -40,7 +40,7 @@ describe('the snap', () => {
     const version = /^version: '([^']+)'$/m.exec(snap)?.[1]
     expect(version).toMatch(/^\d+\.\d+\.\d+$/)
 
-    const urls = [...snap.matchAll(/releases\/download\/v([^/]+)\/Nib-([^-]+)-linux-/g)]
+    const urls = [...snap.matchAll(/releases\/download\/v([^/]+)\/(?:Nib|Orden)-([^-]+)-linux-/g)]
     expect(urls).toHaveLength(2)
     for (const [, tag, named] of urls) {
       expect(tag).toBe(version)
