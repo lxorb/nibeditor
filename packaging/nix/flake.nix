@@ -40,22 +40,22 @@
       # `orden-edge`, so the two can sit in one profile side by side. Both run
       # scripts/bump-packaging.mjs; see packaging/linux.md.
       release = {
-        pname = "orden";
-        version = "0.15.0";
+        pname = "orden-edge";
+        version = "0.15.1-669";
         # The release the .debs are attached to, and what they are called there.
-        tag = "v0.15.0";
-        asset = "Orden";
+        tag = "edge";
+        asset = "Nib";
       };
 
       # One .deb per architecture.
       debs = {
         x86_64-linux = {
           suffix = "x64";
-          hash = "sha256-w9xSUsYsFERRwkhKKfBfVwdi/z/HKDQM2j/S3t0nREE=";
+          hash = "sha256-jvSPPYYgmc9qLizukYVxkhtI8H/jwXqO06D1YX8+i/o=";
         };
         aarch64-linux = {
           suffix = "arm64";
-          hash = "sha256-+idhQ+j+HWP42kJ7jlyO1GCd1H0z/DMGdwM0sph8NgE=";
+          hash = "sha256-guJXWtzmM86m5bXg8BeDGUBShg8/+YpoUEDKbGEtxFQ=";
         };
       };
 
