@@ -114,9 +114,9 @@ jobs:
           test "$(readlink result/bin/orden)" = nib
           # What the wrapper sets: no display backend forced on anyone, and the
           # DMA-BUF renderer off only where nobody said otherwise.
-          cat result/bin/nib
-          if grep -n GDK_BACKEND result/bin/nib; then exit 1; fi
-          grep -q 'WEBKIT_DISABLE_DMABUF_RENDERER=${WEBKIT_DISABLE_DMABUF_RENDERER-' result/bin/nib
+          strings result/bin/nib | sed -n '/^makeCWrapper/,/^$/p' | tee wrapper.txt
+          if grep -n GDK_BACKEND wrapper.txt; then exit 1; fi
+          grep -q "set-default 'WEBKIT_DISABLE_DMABUF_RENDERER' '1'" wrapper.txt
           nix shell nixpkgs#pax-utils -c lddtree result/bin/.nib-wrapped | head -80
           find result/share -type f -o -type l | sort
           nix shell nixpkgs#desktop-file-utils -c desktop-file-validate result/share/applications/orden.desktop
