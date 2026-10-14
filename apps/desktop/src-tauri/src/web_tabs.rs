@@ -3086,7 +3086,9 @@ mod shot {
             _ => return None,
         };
         let mut data = Vec::new();
-        image.with_data(|bytes| data.extend_from_slice(bytes)).ok()?;
+        image
+            .with_data(|bytes| data.extend_from_slice(bytes))
+            .ok()?;
         // A picture with no alpha leaves the fourth byte to chance.
         if opaque {
             for alpha in data.iter_mut().skip(3).step_by(4) {
@@ -3154,10 +3156,10 @@ mod shot {
                 Some(vec![255, 0, 255, 255, 127, 0, 127, 128])
             );
             let made = png(&pixels).expect("a picture");
-            assert_eq!(&made[..8], b"PNG
-
-
-");
+            assert_eq!(
+                &made[..8],
+                &[0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a]
+            );
         }
     }
 }

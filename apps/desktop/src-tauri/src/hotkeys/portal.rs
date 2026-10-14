@@ -161,11 +161,9 @@ impl Portal {
         )?;
         let body = reply.body();
         let version = u32::try_from(body.deserialize::<OwnedValue>()?)?;
-        let sender = bus
-            .unique_name()
-            .map_or_else(String::new, |name| {
-                name.as_str().trim_start_matches(':').replace('.', "_")
-            });
+        let sender = bus.unique_name().map_or_else(String::new, |name| {
+            name.as_str().trim_start_matches(':').replace('.', "_")
+        });
         Ok(Self {
             bus,
             sender,
