@@ -125,6 +125,7 @@
           installPhase = ''
             runHook preInstall
             install -Dm755 usr/bin/nib $out/libexec/${pname}/nib
+            install -d $out/share/applications
             substitute ${./orden.desktop} $out/share/applications/${pname}.desktop \
               --replace-fail 'Name=Orden' 'Name=${if edge then "Orden Edge" else "Orden"}' \
               --replace-fail 'Exec=orden' 'Exec=${pname}' \
