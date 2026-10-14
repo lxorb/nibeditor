@@ -20,6 +20,7 @@
 //! `NIB_QUICK_ADD_KEY`, or none at all, and the window it opens is sent off the screen
 //! like every other and never brought forward (`placement::built`, `placement::raised`).
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, PoisonError};
 
 use tauri::{AppHandle, Manager as _, Webview, WebviewUrl, WebviewWindowBuilder};
@@ -34,22 +35,16 @@ const HEIGHT: f64 = 150.0;
 /// The key a probe registers instead of the page's.
 const PROBE_KEY: &str = "NIB_QUICK_ADD_KEY";
 
-/// What is held: the key the system has for quick add, and the window that asked.
-#[derive(Default)]
-struct Held {
-    /// The key registered now.
-    key: Option<String>,
-    /// The label of the window whose page answers.
-    host: Option<String>,
-}
+/// The label of the window whose page answers, which is the window that comes forward
+/// when a task is opened.
+static HOST: Mutex<Option<String>> = Mutex::new(None);
 
-static HELD: Mutex<Held> = Mutex::new(Held {
-    key: None,
-    host: None,
-});
+/// Whether this launch was started by `--quick-add`, and the window is to come up as
+/// soon as there is a page to answer it.
+static ASKED_AT_LAUNCH: AtomicBool = AtomicBool::new(false);
 
-fn with_held<T>(on_held: impl FnOnce(&mut Held) -> T) -> T {
-    on_held(&mut HELD.lock().unwrap_or_else(PoisonError::into_inner))
+fn host() -> Option<String> {
+    HOST.lock().unwrap_or_else(PoisonError::into_inner).clone()
 }
 
 /// The key a run may hold: the page's, or in a probe the one the drive named, and none
@@ -73,43 +68,26 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
     }
     let probe = std::env::var(PROBE_KEY).ok();
     let wanted = key_allowed(key, probe, crate::placement::away().is_some());
-    with_held(|held| held.host = Some(webview.label().to_owned()));
-    hold_key(&app, wanted)
+    *HOST.lock().unwrap_or_else(PoisonError::into_inner) = Some(webview.label().to_owned());
+    let held = crate::hotkeys::hold(&app, crate::hotkeys::Which::QuickAdd, wanted);
+    if ASKED_AT_LAUNCH.swap(false, Ordering::Relaxed) {
+        bring_up(&app, None);
+    }
+    held
 }
 
-/// Registers `wanted` in place of the key held, and answers what is held after.
-fn hold_key(app: &AppHandle, wanted: Option<String>) -> Option<String> {
-    use tauri_plugin_global_shortcut::{GlobalShortcutExt as _, ShortcutState};
-
-    let held = with_held(|held| held.key.clone());
-    if held == wanted {
-        return held;
+/// Notes a launch started by `--quick-add`, whose window comes up once the page that
+/// answers it is there (`quick_add_key`).
+pub fn asked_at_launch(argv: &[String]) {
+    if crate::hotkeys::Which::asked_by(argv).contains(&crate::hotkeys::Which::QuickAdd) {
+        ASKED_AT_LAUNCH.store(true, Ordering::Relaxed);
     }
-    if let Some(old) = &held {
-        let _ = app.global_shortcut().unregister(old.as_str());
-    }
-    let mut now = None;
-    if let Some(new) = wanted {
-        let taken = crate::hotkeys::plugin_added(app)
-            && app
-                .global_shortcut()
-                .on_shortcut(new.as_str(), |app, _, event| {
-                    if event.state == ShortcutState::Pressed {
-                        bring_up(app);
-                    }
-                })
-                .is_ok();
-        if taken {
-            now = Some(new);
-        }
-    }
-    with_held(|held| held.key.clone_from(&now));
-    now
 }
 
 /// The window, shown over whatever is in front with the keyboard in its field: made the
-/// first time, shown again every time after.
-fn bring_up(app: &AppHandle) {
+/// first time, shown again every time after. With the compositor's token for the press,
+/// where a Wayland session handed one, so the window may take the front.
+pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
     let window = match app.get_webview_window(LABEL) {
         Some(window) => window,
         None => match quick_window(app) {
@@ -121,6 +99,12 @@ fn bring_up(app: &AppHandle) {
         under_pointer(app, &window);
         let _ = window.show();
     }
+    #[cfg(target_os = "linux")]
+    if let Some(token) = token {
+        crate::linux::token_arrived(token);
+    }
+    #[cfg(not(target_os = "linux"))]
+    let _ = token;
     crate::placement::raised(&window.as_ref().window());
     crate::placement::keyboard_to(window.as_ref());
 }
@@ -148,8 +132,13 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
 }
 
 /// Centred across the screen the pointer is on, a quarter of the way down, where a
-/// launcher's field is.
+/// launcher's field is. Not on Wayland, which never says where the pointer is outside
+/// the app's own windows and places every window itself.
 fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<crate::Engine>) {
+    #[cfg(target_os = "linux")]
+    if !crate::linux::places_windows() {
+        return;
+    }
     let Ok(pointer) = app.cursor_position() else {
         let _ = window.center();
         return;
@@ -193,8 +182,7 @@ pub fn quick_add_hide(app: AppHandle, webview: Webview, raise: bool) {
         let _ = window.hide();
     }
     if raise {
-        let host = with_held(|held| held.host.clone());
-        if let Some(window) = host.and_then(|label| app.get_window(&label)) {
+        if let Some(window) = host().and_then(|label| app.get_window(&label)) {
             crate::placement::raised(&window);
         }
     }

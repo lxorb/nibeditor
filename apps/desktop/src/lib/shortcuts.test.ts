@@ -8,7 +8,7 @@ import {
   standardBindings,
   tableBindings,
 } from '@nib/editor'
-import { sameCombination } from './keys'
+import { parseCombination, sameCombination } from './keys'
 import { BROWSER_KEYS, SYSTEM_KEYS } from './shortcuts/registry'
 
 /** The store writes to the browser's storage and asks the browser what kind
@@ -46,7 +46,7 @@ await Promise.all([
 ])
 
 /** A keyboard by its name, handed over the way the Settings sheet hands one over. */
-const { presetById } = await import('./shortcuts/presets')
+const { PRESETS, presetById } = await import('./shortcuts/presets')
 const keyboard = (id: string) => {
   const found = presetById(id)
   if (!found) throw new Error(`no keyboard called ${id}`)
@@ -138,6 +138,34 @@ describe('every shortcut there is', () => {
    *  does - unless the entry says on purpose what a Mac presses instead (Ctrl+Tab and
    *  Ctrl+[ are the Mac's own, as in Safari). And Option with a letter alone is a
    *  character on a Mac's keyboard, `å` or `∂`, so it is never a key there either. */
+  test('holds no Windows or Super key on Windows and Linux, by default or in a keyboard', () => {
+    const windowsKey = (key: string | null, platform: 'win' | 'linux') =>
+      key !== null && parseCombination(key, platform)?.meta === true
+    for (const platform of ['win', 'linux'] as const) {
+      const defaults = registry.SHORTCUTS.filter((one) =>
+        windowsKey(defaultKeyFor(one, platform), platform),
+      )
+      expect(
+        defaults.map((one) => one.id),
+        platform,
+      ).toEqual([])
+      const editor = [
+        ...nibBindings,
+        ...standardBindings,
+        ...tableBindings,
+        ...imageBindings,
+      ].filter((one) => windowsKey(defaultKeyFor(one, platform), platform))
+      expect(
+        editor.map((one) => one.id),
+        platform,
+      ).toEqual([])
+      for (const preset of PRESETS) {
+        const held = Object.entries(preset.keys).filter(([, key]) => windowsKey(key, platform))
+        expect(held, `${preset.id} on ${platform}`).toEqual([])
+      }
+    }
+  })
+
   test('on a Mac, holds Cmd rather than Control unless the entry says what a Mac presses', () => {
     // Ctrl+Alt+Space on every system, on purpose: see the entry in registry.ts.
     const everywhere = new Set(['app.quick-add'])
@@ -279,6 +307,23 @@ describe('choosing a key', () => {
 
     expect(shortcuts.overrides).toEqual({})
     expect(shortcuts.keyFor('app.new')).toBe('Mod-Alt-n')
+  })
+
+  /** The Windows key belongs to the desktop on Windows and Linux: a Hyprland launcher on
+   *  Super+Space was taken by Orden. Recorded or not, it is refused there, and a Mac's
+   *  Cmd is its own modifier and stays. */
+  test('is refused where it holds the Windows key, outside a Mac', () => {
+    const { shortcuts } = registry
+    const on = (platform: string, key: string) => {
+      const one = Object.create(shortcuts) as typeof shortcuts
+      Object.defineProperty(one, 'platform', { value: platform })
+      return one.refuse(key)
+    }
+    for (const platform of ['win', 'linux']) {
+      expect(on(platform, 'Meta-Space'), platform).not.toBeNull()
+      expect(on(platform, 'Ctrl-Meta-k'), platform).not.toBeNull()
+    }
+    expect(on('mac', 'Meta-k')).toBeNull()
   })
 
   test('is refused where it would fire while typing', () => {

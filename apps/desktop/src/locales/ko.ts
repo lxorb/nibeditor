@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '다른 앱에서: {key}',
+  'From other apps: set in your system settings': '다른 앱에서: 시스템 설정에서 지정',
+  'From other apps: bind {command} in your system settings':
+    '다른 앱에서: 시스템 설정에서 {command} 지정',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: '에센셜',
   'Add to Essentials': '에센셜에 추가',

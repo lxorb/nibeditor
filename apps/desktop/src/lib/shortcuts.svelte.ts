@@ -174,6 +174,9 @@ class Shortcuts {
   refuse(key: string): string | null {
     const combination = parseCombination(key, this.platform)
     if (!combination) return t('That is not a key combination.')
+    // The Windows key is the system's on Windows and Linux, where a desktop binds its own
+    // keys to it - a Hyprland launcher's Super+Space among them - so the app holds none.
+    if (combination.meta && this.platform !== 'mac') return t('That is not a key combination.')
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
     // Named the way the platform names them: a Mac prints its keys as signs, and

@@ -190,11 +190,12 @@ flatpak run ch.emilvinu.nib
 filesystem away from the build commands, which is the condition Flathub builds
 under.
 
-The manifest sets no `WEBKIT_DISABLE_DMABUF_RENDERER`, and does not need one:
-the window comes up on the GNOME 50 runtime with `--device=dri` and nothing
-else. If a blank window is ever reported on a proprietary driver, that variable
-set to 1 in `finish-args` is the usual fix, and the reason other Tauri Flatpaks
-carry it.
+The manifest sets no `WEBKIT_DISABLE_DMABUF_RENDERER`, and does not need one: the
+app sets it itself, before GTK starts, where the driver is NVIDIA's own and nobody
+set it either way (apps/desktop/src-tauri/src/linux.rs), which is the blank window
+other Tauri Flatpaks carry the variable for. Every other driver keeps WebKitGTK's
+DMA-BUF renderer. The Snap keeps its own line, for its confinement rather than for a
+driver.
 
 ### What the linters say
 

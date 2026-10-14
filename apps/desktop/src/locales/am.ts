@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'ከሌሎች መተግበሪያዎች፦ {key}',
+  'From other apps: set in your system settings': 'ከሌሎች መተግበሪያዎች፦ በስርዓት ቅንብሮች ውስጥ ያዘጋጁ',
+  'From other apps: bind {command} in your system settings':
+    'ከሌሎች መተግበሪያዎች፦ {command}ን በስርዓት ቅንብሮች ውስጥ ይመድቡ',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'አስፈላጊዎች',
   'Add to Essentials': 'ወደ አስፈላጊዎች አክል',

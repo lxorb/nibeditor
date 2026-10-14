@@ -1945,6 +1945,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "gdkwayland-sys"
+version = "0.18.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "140071d506d223f7572b9f09b5e155afbd77428cd5cc7af8f2694c41d98dfe69"
+dependencies = [
+ "gdk-sys",
+ "glib-sys 0.18.1",
+ "gobject-sys 0.18.0",
+ "libc",
+ "pkg-config",
+ "system-deps 6.2.2",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3400,7 +3414,9 @@ dependencies = [
  "dirs 6.0.0",
  "file-id",
  "flate2",
+ "gdkwayland-sys",
  "getrandom 0.3.4",
+ "gtk",
  "hkdf",
  "hmac",
  "javascriptcore-rs",
@@ -3447,6 +3463,7 @@ dependencies = [
  "windows-core 0.61.2",
  "windows-registry 0.6.1",
  "x25519-dalek",
+ "zbus 5.19.0",
  "zeroize",
  "zip",
 ]

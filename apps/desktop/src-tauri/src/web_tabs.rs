@@ -1053,17 +1053,27 @@ fn page_built(
     let _ = (app, store);
 
     // Edge by edge in the screen's pixels, as every placement after it; see web_follow.rs.
+    // In GTK's own pixels on Linux, where the page is then laid over the window's.
+    let bounds = crate::web_follow::Bounds::from(pane);
     let scale = window.scale_factor().unwrap_or(1.0);
-    let (left, top, width, height) =
-        crate::web_follow::edges(crate::web_follow::Bounds::from(pane), scale);
-    window
+    #[cfg(target_os = "linux")]
+    let scale_built = 1.0;
+    #[cfg(not(target_os = "linux"))]
+    let scale_built = scale;
+    let (left, top, width, height) = crate::web_follow::edges(bounds, scale_built);
+    let view = window
         .add_child(
             builder,
             PhysicalPosition::new(left, top),
             PhysicalSize::new(width, height),
         )
-        .map(|view| crate::page_style::worn(&view))
-        .map_err(|error| format!("that page could not be opened: {error}"))
+        .map_err(|error| format!("that page could not be opened: {error}"))?;
+    crate::page_style::worn(&view);
+    #[cfg(target_os = "linux")]
+    let _ = crate::web_follow::put(&view, bounds, scale);
+    #[cfg(not(target_os = "linux"))]
+    let _ = scale;
+    Ok(())
 }
 
 /// Starts the browser process every web tab shares while the window's own page is still
@@ -1802,13 +1812,12 @@ pub fn web_place(
     let scale = window
         .scale_factor()
         .map_err(|error| format!("that page could not be placed: {error}"))?;
-    let placed = crate::web_follow::edges(bounds, scale);
-    let (_, _, width, height) = placed;
+    let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
     // Each step says itself while it runs, so a stall names the one that waited; see
     // stall.rs.
     {
         let _doing = crate::stall::doing("web_place: bounds");
-        view.set_bounds(crate::web_follow::rect_of(placed))
+        crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
@@ -2199,12 +2208,13 @@ pub async fn web_close(
 /// asks for this first, paints it in the hole, and then hides the webview, so what is
 /// behind the menu is the page.
 ///
-/// `WebView2` has `CapturePreview` and `WKWebView` has `takeSnapshot`, which are the
-/// engine photographing itself and the only way to get at those pixels: the app's own
-/// webview cannot draw the page and nothing outside the process may copy the screen.
-/// On Linux there is nothing to call - `WebKitGTK`'s snapshot is not reachable through
-/// what wry hands out - and the answer is `None`, which the window reads as "keep your
-/// own ground". Said in docs/web-tabs.md rather than hidden here.
+/// `WebView2` has `CapturePreview`, `WKWebView` has `takeSnapshot` and `WebKitGTK` has
+/// `webkit_web_view_get_snapshot`, which are the engine photographing itself and the only
+/// way to get at those pixels: the app's own webview cannot draw the page and nothing
+/// outside the process may copy the screen - least of all on Wayland. Without one the page
+/// went under every menu with nothing in its place, an empty pane under the menu bar's
+/// menus (Hyprland, 2026-10-14). Where there is no way in at all - nib's own Chromium -
+/// the answer is `None`, which the window reads as "keep your own ground".
 #[tauri::command]
 pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
     let view = found(&app, &tab)?;
@@ -3015,16 +3025,158 @@ mod shot {
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) use shot::png as read_stream;
 
-// Every build but the two system engines that can photograph a page: Linux, and nib's
-// own Chromium. See the two above.
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+// WebKitGTK: the engine photographing itself, as `webkit_web_view_get_snapshot` does it,
+// which wry hands out as the page's own `WebView`.
+#[cfg(all(target_os = "linux", not(feature = "cef")))]
+mod shot {
+    use gtk::cairo;
+    use tauri::async_runtime::Sender;
+    use tauri::webview::PlatformWebview;
+    use webkit2gtk::{SnapshotOptions, SnapshotRegion, WebViewExt as _};
+
+    /// What of the page is on screen, as the engine draws it, handed to `done` as a PNG:
+    /// the pixels copied on the window's thread, where the engine answers, and turned
+    /// into a PNG on a thread of their own, so the window's thread spends a copy on it
+    /// and no more.
+    #[allow(
+        clippy::unnecessary_wraps,
+        reason = "the signature matches the Windows photograph, which does fail"
+    )]
+    pub fn photograph(
+        webview: &PlatformWebview,
+        done: Sender<Option<Vec<u8>>>,
+    ) -> Result<(), String> {
+        webview.inner().snapshot(
+            SnapshotRegion::Visible,
+            SnapshotOptions::NONE,
+            None::<&gtk::gio::Cancellable>,
+            move |taken| {
+                let taken = taken.map_err(|error| eprintln!("web_shot: {error}")).ok();
+                let Some(pixels) = taken.and_then(copied) else {
+                    let _ = done.try_send(None);
+                    return;
+                };
+                let _ = std::thread::Builder::new()
+                    .name("web shot".into())
+                    .spawn(move || {
+                        let _ = done.try_send(png(&pixels));
+                    });
+            },
+        );
+        Ok(())
+    }
+
+    /// A picture's pixels as cairo keeps them: premultiplied, blue first, rows `stride`
+    /// apart.
+    pub struct Pixels {
+        /// Across, in pixels.
+        pub width: u32,
+        /// Down, in pixels.
+        pub height: u32,
+        /// How many bytes one row takes, padding and all.
+        pub stride: usize,
+        /// The rows.
+        pub data: Vec<u8>,
+    }
+
+    fn copied(surface: cairo::Surface) -> Option<Pixels> {
+        let image = cairo::ImageSurface::try_from(surface).ok()?;
+        let opaque = match image.format() {
+            cairo::Format::ARgb32 => false,
+            cairo::Format::Rgb24 => true,
+            _ => return None,
+        };
+        let mut data = Vec::new();
+        image
+            .with_data(|bytes| data.extend_from_slice(bytes))
+            .ok()?;
+        // A picture with no alpha leaves the fourth byte to chance.
+        if opaque {
+            for alpha in data.iter_mut().skip(3).step_by(4) {
+                *alpha = 255;
+            }
+        }
+        Some(Pixels {
+            width: u32::try_from(image.width()).ok()?,
+            height: u32::try_from(image.height()).ok()?,
+            stride: usize::try_from(image.stride()).ok()?,
+            data,
+        })
+    }
+
+    /// The pixels as a PNG.
+    pub fn png(pixels: &Pixels) -> Option<Vec<u8>> {
+        let rgba = straight(pixels)?;
+        let mut out = Vec::new();
+        {
+            let mut encoder = ::png::Encoder::new(&mut out, pixels.width, pixels.height);
+            encoder.set_color(::png::ColorType::Rgba);
+            encoder.set_depth(::png::BitDepth::Eight);
+            // A picture that stands in for a moment under a menu: fast over small.
+            encoder.set_compression(::png::Compression::Fastest);
+            let mut writer = encoder.write_header().ok()?;
+            writer.write_image_data(&rgba).ok()?;
+        }
+        Some(out)
+    }
+
+    /// The pixels in straight colour, red first, row after row with nothing between.
+    pub fn straight(pixels: &Pixels) -> Option<Vec<u8>> {
+        let wide = usize::try_from(pixels.width).ok()?;
+        let tall = usize::try_from(pixels.height).ok()?;
+        let mut rgba = Vec::with_capacity(wide * 4 * tall);
+        for row in pixels.data.chunks(pixels.stride.max(1)).take(tall) {
+            for &[blue, green, red, alpha] in row.get(..wide * 4)?.as_chunks::<4>().0 {
+                let unmixed = |value: u8| {
+                    if alpha == 0 {
+                        0
+                    } else {
+                        u8::try_from(u16::from(value) * 255 / u16::from(alpha)).unwrap_or(255)
+                    }
+                };
+                rgba.extend_from_slice(&[unmixed(red), unmixed(green), unmixed(blue), alpha]);
+            }
+        }
+        (rgba.len() == wide * 4 * tall).then_some(rgba)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::{png, straight, Pixels};
+
+        /// Two pixels and a byte of padding a row: magenta, and half of it see-through.
+        #[test]
+        fn a_picture_comes_out_red_first_in_straight_colour() {
+            let pixels = Pixels {
+                width: 2,
+                height: 1,
+                stride: 12,
+                data: vec![255, 0, 255, 255, 64, 0, 64, 128, 9, 9, 9, 9],
+            };
+            assert_eq!(
+                straight(&pixels),
+                Some(vec![255, 0, 255, 255, 127, 0, 127, 128])
+            );
+            let made = png(&pixels).expect("a picture");
+            assert_eq!(
+                &made[..8],
+                &[0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a]
+            );
+        }
+    }
+}
+
+// nib's own Chromium, and the BSDs: no way in, so the window keeps its own ground under
+// an overlay there; see the note on `web_shot`.
+#[cfg(any(
+    feature = "cef",
+    not(any(windows, target_os = "macos", target_os = "linux"))
+))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
 
-    /// No way in. `WebKitGTK`'s snapshot is not reachable through what wry hands out,
-    /// so the window keeps its own ground under an overlay here; see the note on
-    /// `web_shot`.
+    /// No way in.
     ///
     /// The `Result` is never an `Err` here, which clippy would flag on its own - but the
     /// signature has to match the Windows one `web_shot` calls, where the engine's own
