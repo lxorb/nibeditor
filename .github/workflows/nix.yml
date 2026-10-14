@@ -1,8 +1,9 @@
 name: nix
 
 # The flake in packaging/nix, the way somebody on NixOS meets it: `nix flake check`,
-# `nix build`, and then Orden started out of it, once on X11 and once on a Wayland
-# compositor with no X server at all, on both architectures. Orden has no
+# `nix build`, and then Orden started out of it in a headless sway, once as a
+# native Wayland client with no X server at all and once on X11 through Xwayland,
+# on both architectures; see scripts/nix-start.sh. Orden has no
 # --version to ask, so a start is the test: a window has to come up and the app
 # has to stay up, with nothing in its log about a missing library or a display it
 # could not open.
@@ -18,10 +19,12 @@ on:
       - scripts/bump-packaging.mjs
       - .github/workflows/nix.yml
       - .github/workflows/packaging-bump.yml
+      - scripts/nix-start.sh
   push:
     branches: [main]
     paths:
       - packaging/nix/**
+      - scripts/nix-start.sh
       - .github/workflows/nix.yml
   workflow_dispatch:
     inputs:
@@ -113,10 +116,10 @@ jobs:
           ls -la result/bin
           test "$(readlink result/bin/orden)" = nib
           # What the wrapper sets: no display backend forced on anyone, and the
-          # DMA-BUF renderer off only where nobody said otherwise.
-          strings result/bin/nib | sed -n '/^makeCWrapper/,/^$/p' | tee wrapper.txt
-          if grep -n GDK_BACKEND wrapper.txt; then exit 1; fi
-          grep -q "set-default 'WEBKIT_DISABLE_DMABUF_RENDERER' '1'" wrapper.txt
+          # DMA-BUF renderer off on NVIDIA's driver alone.
+          cat result/bin/nib
+          if grep -n GDK_BACKEND result/bin/nib; then exit 1; fi
+          grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' result/bin/nib
           nix shell nixpkgs#pax-utils -c lddtree result/bin/.nib-wrapped | head -80
           find result/share -type f -o -type l | sort
           nix shell nixpkgs#desktop-file-utils -c desktop-file-validate result/share/applications/orden.desktop
@@ -136,109 +139,22 @@ jobs:
           sudo ln -sfn "$mesa" /run/opengl-driver
           ls -la /run/opengl-driver/ /run/opengl-driver/share/glvnd/egl_vendor.d
 
-      - name: X11, Wayland and the tools that look at them
+      - name: sway, Xwayland and the tools that look at them
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xvfb xcompmgr xdotool x11-utils imagemagick sway grim jq
+          sudo apt-get install -y --no-install-recommends sway xwayland grim jq
 
-      - name: It starts on X11
-        env:
-          FLAKE: ${{ steps.flake.outputs.flake }}
-        run: |
-          export XDG_RUNTIME_DIR=$(mktemp -d)
-          Xvfb :99 -screen 0 1280x800x24 >xvfb.log 2>&1 &
-          export DISPLAY=:99
-          sleep 2
-          # Orden's window is transparent, and without a compositor what is behind
-          # it is black.
-          xcompmgr >xcompmgr.log 2>&1 &
-          GST_DEBUG=2 env -u WAYLAND_DISPLAY nix run "$FLAKE" >x11.log 2>&1 &
-          app=$!
-
-          window=$(timeout 120 xdotool search --sync --onlyvisible --class '.' | head -1)
-          if [ -z "$window" ]; then
-            echo "::error::no window on X11 within two minutes"
-            cat x11.log
-            exit 1
-          fi
-          xprop -id "$window" WM_CLASS WM_NAME _NET_WM_NAME
-          # Long enough for the page to load and paint in software.
-          sleep 15
-          import -window root x11-15s.png
-          sleep 30
-          import -window root x11.png
-          if ! kill -0 "$app" 2>/dev/null; then
-            echo "::error::the app exited on its own"
-            cat x11.log
-            exit 1
-          fi
-          xwininfo -id "$window" | grep -E 'Absolute|Width|Height|Map State|Depth'
-          import -window "$window" x11-window.png
-          kill "$app" || true
-          cat x11.log
-          sleep 3
-          WEBKIT_DISABLE_COMPOSITING_MODE=1 env -u WAYLAND_DISPLAY nix run "$FLAKE" >x11-nocomp.log 2>&1 &
-          other=$!
-          sleep 30
-          import -window root x11-nocomp.png
-          kill "$other" || true
-          cat x11-nocomp.log
-          if grep -iE 'error while loading shared libraries|cannot open shared object|cannot open display|EGL_BAD|Failed to create GBM|gstreamer.*not found' x11.log; then
-            echo "::error::the log on X11 says something is missing"
-            exit 1
-          fi
-
-      # sway on its headless backend with Xwayland off: nothing for GTK to fall
-      # back to, so a window here is a native Wayland one.
       - name: It starts on Wayland
+        id: wayland
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
-        run: |
-          export XDG_RUNTIME_DIR=$(mktemp -d)
-          chmod 700 "$XDG_RUNTIME_DIR"
-          printf 'xwayland disable\noutput HEADLESS-1 resolution 1280x800\n' >sway.conf
-          WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman \
-            env -u DISPLAY sway -c sway.conf >sway.log 2>&1 &
-          for _ in $(seq 30); do
-            socket=$(cd "$XDG_RUNTIME_DIR" && ls wayland-? 2>/dev/null | head -1)
-            [ -n "$socket" ] && break
-            sleep 1
-          done
-          [ -n "$socket" ] || { cat sway.log; exit 1; }
-          export WAYLAND_DISPLAY="$socket"
-          export SWAYSOCK=$(ls "$XDG_RUNTIME_DIR"/sway-ipc.*.sock)
+        run: bash scripts/nix-start.sh wayland "$FLAKE"
 
-          GST_DEBUG=2 env -u DISPLAY nix run "$FLAKE" >wayland.log 2>&1 &
-          app=$!
-
-          views='[recurse(.nodes[]?, .floating_nodes[]?) | select(.type == "con" or .type == "floating_con") | select(.pid != null)]'
-          for _ in $(seq 120); do
-            [ "$(swaymsg -t get_tree | jq "$views | length")" -gt 0 ] && break
-            kill -0 "$app" 2>/dev/null || break
-            sleep 1
-          done
-          swaymsg -t get_tree | jq "$views | map({app_id, name, shell})" | tee views.json
-          if [ "$(jq 'length' views.json)" -eq 0 ]; then
-            echo "::error::no window on Wayland within two minutes"
-            cat wayland.log
-            exit 1
-          fi
-          jq -e 'all(.shell == "xdg_shell")' views.json
-          sleep 15
-          grim wayland-15s.png
-          sleep 30
-          grim wayland.png
-          if ! kill -0 "$app" 2>/dev/null; then
-            echo "::error::the app exited on its own"
-            cat wayland.log
-            exit 1
-          fi
-          kill "$app" || true
-          cat wayland.log
-          if grep -iE 'error while loading shared libraries|cannot open shared object|cannot open display|EGL_BAD|Failed to create GBM|failed to create EGL|wl_display|gstreamer.*not found' wayland.log; then
-            echo "::error::the log on Wayland says something is missing"
-            exit 1
-          fi
+      - name: It starts on X11, through Xwayland
+        if: ${{ !cancelled() && steps.wayland.outcome != 'skipped' }}
+        env:
+          FLAKE: ${{ steps.flake.outputs.flake }}
+        run: bash scripts/nix-start.sh x11 "$FLAKE"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
@@ -247,5 +163,49 @@ jobs:
           path: |
             *.png
             *.log
-            views.json
+            *.json
+          if-no-files-found: warn
+
+  # The flake as it was on 0.13.1, which wrapped the AppImage: the error a NixOS
+  # user on Hyprland reported, reproduced on the same runner.
+  before:
+    name: the 0.13.1 flake, ${{ matrix.mode }}
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [wayland, x11]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FLAKE: github:lxorb/orden/2591eb1344c902122da58051022558957d9609e5?dir=packaging/nix
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: |
+          mesa=$(nix build --no-link --print-out-paths --inputs-from "$FLAKE" nixpkgs#mesa | head -1)
+          sudo ln -sfn "$mesa" /run/opengl-driver
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends sway xwayland grim jq
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          nix build "$FLAKE" -o result
+      - run: |
+          if bash scripts/nix-start.sh ${{ matrix.mode }} "$FLAKE"; then
+            echo "::error::the 0.13.1 flake started"
+            exit 1
+          fi
+          grep -F 'Could not create default EGL display: EGL_BAD_PARAMETER. Aborting...' ${{ matrix.mode }}.log ||
+            grep -F 'cannot open display' ${{ matrix.mode }}.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: before-${{ matrix.mode }}
+          path: |
+            *.png
+            *.log
+            *.json
           if-no-files-found: warn

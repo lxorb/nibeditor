@@ -66,6 +66,7 @@
             dpkg
             autoPatchelfHook
             wrapGAppsHook3
+            makeShellWrapper
           ];
 
           buildInputs =
@@ -114,17 +115,23 @@
             runHook postInstall
           '';
 
-          # WebKitGTK's DMA-BUF renderer is what leaves a blank window on NVIDIA's
-          # driver, so it is off unless the user has said otherwise. Links and
-          # attachments open with xdg-open. pandoc is deliberately not here: it is
-          # only needed for importing and exporting DOCX and friends, Orden hides
-          # that when it is missing, and anyone who wants it can add it to their
-          # own profile.
-          preFixup = ''
-            gappsWrapperArgs+=(
-              --set-default WEBKIT_DISABLE_DMABUF_RENDERER 1
-              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]}
-            )
+          # The wrapper is a shell script rather than wrapGAppsHook3's own, for the
+          # one thing a binary wrapper cannot do: WebKitGTK's DMA-BUF renderer is
+          # what leaves a blank window on NVIDIA's own driver, so there, and only
+          # there, it is turned off - unless the user has set it either way. Mesa
+          # (Intel, AMD) keeps it. Links and attachments open with xdg-open.
+          #
+          # pandoc is deliberately not here: it is only needed for importing and
+          # exporting DOCX and friends, Orden hides that when it is missing, and
+          # anyone who wants it can add it to their own profile.
+          dontWrapGApps = true;
+          postFixup = ''
+            mv $out/bin/nib $out/bin/.nib-wrapped
+            makeShellWrapper $out/bin/.nib-wrapped $out/bin/nib \
+              "''${gappsWrapperArgs[@]}" \
+              --inherit-argv0 \
+              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
+              --run 'if [ -z "''${WEBKIT_DISABLE_DMABUF_RENDERER+set}" ] && [ -e /proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1; fi'
           '';
 
           meta = {
