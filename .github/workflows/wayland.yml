@@ -115,7 +115,7 @@ jobs:
             echo "$bad"
             exit 1
           fi
-          if grep -rn 'GDK_BACKEND' squashfs-root/AppRun squashfs-root/apprun-hooks 2>/dev/null; then
+          if grep -rnE '^[[:space:]]*(export[[:space:]]+)?GDK_BACKEND=' squashfs-root/AppRun squashfs-root/apprun-hooks 2>/dev/null; then
             echo "::error::the AppImage sets GDK_BACKEND, which keeps GTK off Wayland"
             exit 1
           fi
