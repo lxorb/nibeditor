@@ -184,7 +184,11 @@ jobs:
       contents: read
     steps:
       - name: sway, Mesa and a session bus, as Arch has them today
-        run: pacman -Syu --noconfirm --needed sway mesa dbus python gtk3 git
+        # sway's binary carries a file capability a container may not exec with; a copy
+        # carries none, and goes first on the path.
+        run: |
+          pacman -Syu --noconfirm --needed sway mesa dbus python gtk3 git
+          install -m 755 "$(command -v sway)" /usr/local/bin/sway
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -231,7 +235,9 @@ jobs:
           name: linux-packages
           path: packages
       - name: The .rpm, sway, Mesa and a session bus
-        run: dnf install -y ./packages/rpm/*.rpm sway mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
+        run: |
+          dnf install -y ./packages/rpm/*.rpm sway mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
+          install -m 755 "$(command -v sway)" /usr/local/bin/sway
       - name: Under Wayland
         env:
           OUT: wayland-out
