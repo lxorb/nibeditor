@@ -17,6 +17,10 @@
   #   nix run github:lxorb/orden?dir=packaging/nix
   #   nix profile install github:lxorb/orden?dir=packaging/nix
   #
+  # and the latest build of main, as orden-edge, from the nix-edge branch:
+  #
+  #   nix profile install github:lxorb/orden/nix-edge?dir=packaging/nix
+  #
   # On NixOS, as an input of the system's flake:
   #
   #   inputs.orden.url = "github:lxorb/orden?dir=packaging/nix";
@@ -30,11 +34,20 @@
   outputs =
     { self, nixpkgs }:
     let
-      # Moved after every release by .github/workflows/packaging-bump.yml, which
-      # runs scripts/bump-packaging.mjs; see packaging/linux.md.
-      version = "0.15.0";
+      # Which build this flake installs. On main it is the latest release, moved by
+      # .github/workflows/packaging-bump.yml after every one; on the `nix-edge`
+      # branch it is the latest build of main, written there by nix-edge.yml as
+      # `orden-edge`, so the two can sit in one profile side by side. Both run
+      # scripts/bump-packaging.mjs; see packaging/linux.md.
+      release = {
+        pname = "orden";
+        version = "0.15.0";
+        # The release the .debs are attached to, and what they are called there.
+        tag = "v0.15.0";
+        asset = "Orden";
+      };
 
-      # One .deb per architecture, from the release the version names.
+      # One .deb per architecture.
       debs = {
         x86_64-linux = {
           suffix = "x64";
@@ -46,22 +59,25 @@
         };
       };
 
+      inherit (release) pname version;
+      edge = pname != "orden";
       systems = builtins.attrNames debs;
       forEach = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
       # Built out of whichever nixpkgs it is handed: this flake's own for
-      # `packages`, the system's for `overlays.default`.
+      # `packages`, the system's for `overlays.default`. Nothing is compiled: the
+      # .deb is unpacked, its program pointed at nixpkgs' libraries, and wrapped
+      # in a shell script.
       mkOrden =
         pkgs:
         let
           inherit (debs.${pkgs.stdenv.hostPlatform.system}) suffix hash;
         in
         pkgs.stdenv.mkDerivation {
-          pname = "orden";
-          inherit version;
+          inherit pname version;
 
           src = pkgs.fetchurl {
-            url = "https://github.com/lxorb/orden/releases/download/v${version}/Orden-${version}-linux-${suffix}.deb";
+            url = "https://github.com/lxorb/orden/releases/download/${release.tag}/${release.asset}-${version}-linux-${suffix}.deb";
             inherit hash;
           };
 
@@ -100,72 +116,86 @@
           dontConfigure = true;
           dontBuild = true;
 
-          # The program keeps the name every install of it has had, nib, so `orden`
-          # is a second name beside it. Tauri's own desktop entry is replaced with
-          # the one beside this file, and its 256x256 icon, which it files under a
-          # scale-2 directory, goes where a theme looks for it.
+          # The program keeps the name every install of it has had, nib, out of
+          # $PATH; the command is the package's name, and the stable one keeps
+          # `nib` beside it. Tauri's own desktop entry is replaced with the one
+          # beside this file, and its 256x256 icon, which it files under a scale-2
+          # directory, goes where a theme looks for it. Every file the profile
+          # gets is named after the package, so stable and edge never collide.
           installPhase = ''
             runHook preInstall
-            install -Dm755 usr/bin/nib $out/bin/nib
-            ln -s nib $out/bin/orden
-            install -Dm644 ${./orden.desktop} $out/share/applications/orden.desktop
+            install -Dm755 usr/bin/nib $out/libexec/${pname}/nib
+            substitute ${./orden.desktop} $out/share/applications/${pname}.desktop \
+              --replace-fail 'Name=Orden' 'Name=${if edge then "Orden Edge" else "Orden"}' \
+              --replace-fail 'Exec=orden' 'Exec=${pname}' \
+              --replace-fail 'Icon=orden' 'Icon=${pname}' \
+              --replace-fail 'StartupWMClass=orden' 'StartupWMClass=${pname}'
             for size in 32 128; do
               install -Dm644 usr/share/icons/hicolor/"$size"x"$size"/apps/nib.png \
-                $out/share/icons/hicolor/"$size"x"$size"/apps/orden.png
+                $out/share/icons/hicolor/"$size"x"$size"/apps/${pname}.png
             done
             install -Dm644 usr/share/icons/hicolor/256x256@2/apps/nib.png \
-              $out/share/icons/hicolor/256x256/apps/orden.png
+              $out/share/icons/hicolor/256x256/apps/${pname}.png
             runHook postInstall
           '';
 
-          # The wrapper is a shell script rather than wrapGAppsHook3's own, for the
-          # one thing a binary wrapper cannot do: WebKitGTK's DMA-BUF renderer is
-          # what leaves a blank window on NVIDIA's own driver, so there, and only
-          # there, it is turned off - unless the user has set it either way. Mesa
-          # (Intel, AMD) keeps it. Links and attachments open with xdg-open.
+          # The wrapper is a shell script rather than wrapGAppsHook3's own, which
+          # would be compiled, and for the one thing a binary wrapper cannot do:
+          # WebKitGTK's DMA-BUF renderer is what leaves a blank window on NVIDIA's
+          # own driver, so there, and only there, it is turned off - unless the
+          # user has set it either way. Mesa (Intel, AMD) keeps it. GTK names the
+          # window after the command it was started as, which is what the desktop
+          # entry's StartupWMClass says. Links and attachments open with xdg-open.
           #
           # pandoc is deliberately not here: it is only needed for importing and
           # exporting DOCX and friends, Orden hides that when it is missing, and
           # anyone who wants it can add it to their own profile.
           dontWrapGApps = true;
           postFixup = ''
-            mv $out/bin/nib $out/bin/.nib-wrapped
-            makeShellWrapper $out/bin/.nib-wrapped $out/bin/nib \
+            makeShellWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
               --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
               --run 'if [ -z "''${WEBKIT_DISABLE_DMABUF_RENDERER+set}" ] && [ -e /proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1; fi'
+          ''
+          + pkgs.lib.optionalString (!edge) ''
+            ln -s orden $out/bin/nib
           '';
 
           meta = {
-            description = "Markdown editor with realtime inline preview";
+            description = "Markdown editor with realtime inline preview${pkgs.lib.optionalString edge ", built from main"}";
             homepage = "https://orden.so";
             downloadPage = "https://github.com/lxorb/orden/releases";
-            changelog = "https://github.com/lxorb/orden/releases/tag/v${version}";
+            changelog = "https://github.com/lxorb/orden/releases/tag/${release.tag}";
             license = pkgs.lib.licenses.agpl3Only;
-            mainProgram = "orden";
+            mainProgram = pname;
             platforms = systems;
             sourceProvenance = [ pkgs.lib.sourceTypes.binaryNativeCode ];
           };
         };
     in
     {
-      packages = forEach (pkgs: rec {
-        orden = mkOrden pkgs;
-        default = orden;
+      packages = forEach (
+        pkgs:
+        let
+          orden = mkOrden pkgs;
+        in
+        {
+          ${pname} = orden;
+          default = orden;
+        }
         # What the package was called before 0.15, for a profile that names it.
-        nib = orden;
-      });
+        // pkgs.lib.optionalAttrs (!edge) { nib = orden; }
+      );
 
-      overlays.default = final: _prev: { orden = mkOrden final; };
+      overlays.default = final: _prev: { ${pname} = mkOrden final; };
 
-      apps = forEach (pkgs: rec {
-        orden = {
+      apps = forEach (pkgs: {
+        default = {
           type = "app";
-          program = "${self.packages.${pkgs.stdenv.hostPlatform.system}.orden}/bin/orden";
+          program = pkgs.lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.default;
           meta.description = "Orden, a markdown editor with realtime inline preview";
         };
-        default = orden;
       });
     };
 }

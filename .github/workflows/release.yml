@@ -313,8 +313,8 @@ jobs:
     # The one job that writes: the release and its files are the point of it.
     permissions:
       contents: write
-      # To dispatch publish.yml, publish-linux.yml and packaging-bump.yml at the end
-      # of this job.
+      # To dispatch publish.yml, publish-linux.yml and packaging-bump.yml, or
+      # nix-edge.yml for a build of main, at the end of this job.
       actions: write
     env:
       TAG: ${{ needs.version.outputs.tag }}
@@ -438,3 +438,9 @@ jobs:
           gh workflow run publish.yml -f tag="$TAG"
           gh workflow run publish-linux.yml -f tag="$TAG"
           gh workflow run packaging-bump.yml -f tag="$TAG"
+
+      # The flake on the nix-edge branch follows edge; see nix-edge.yml. Only a
+      # build of main, which is what edge is meant to be.
+      - name: Hand the build of main to Nix
+        if: needs.version.outputs.rolling == 'true' && github.ref == 'refs/heads/main'
+        run: gh workflow run nix-edge.yml

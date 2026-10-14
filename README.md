@@ -110,6 +110,7 @@ Download an installer from the [latest release](https://github.com/lxorb/orden/r
 | Windows, Chocolatey | `choco install nib` |
 | macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/nib` |
 | Nix | `nix profile install github:lxorb/orden?dir=packaging/nix` |
+| Nix, the build of main | `nix profile install github:lxorb/orden/nix-edge?dir=packaging/nix` |
 | Debian, Ubuntu | `sudo apt install ./Orden-<version>-linux-x64.deb` |
 | Fedora, openSUSE | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
 | Any Linux | `chmod +x Orden-<version>-linux-x64.AppImage && ./Orden-<version>-linux-x64.AppImage` |

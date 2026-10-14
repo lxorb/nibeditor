@@ -361,6 +361,29 @@ inputs.orden.inputs.nixpkgs.follows = "nixpkgs";
 environment.systemPackages = [ inputs.orden.packages.${pkgs.system}.default ];
 ```
 
+The build of main is on the `nix-edge` branch, as `orden-edge`, with its own
+command, desktop entry and icons, so it installs beside the release rather than
+over it:
+
+```
+nix profile install github:lxorb/orden/nix-edge?dir=packaging/nix
+nix profile upgrade --all    # either one moves to its newest build
+```
+
+That branch is main plus one commit carrying the edge pins, force-pushed by
+`.github/workflows/nix-edge.yml` after each build of main replaced the `edge`
+pre-release and the rewritten flake started in CI. Main never carries edge pins:
+it changes only through pull requests, and edge changes on every push. Edge keeps
+only its newest files, so a lock pinned to an older nix-edge commit stops fetching
+once the next build replaces them; `nix profile upgrade` (or `nix flake update
+orden` in a system flake) takes the current one.
+
+Neither needs a binary cache. Nothing is compiled: the build unpacks a 13 MB .deb,
+points its program at nixpkgs' libraries and writes a shell wrapper, about four
+seconds on a CI runner, plus the download of the .deb from the release, which a
+cache would only replace with a download of the same size. Everything else comes
+from cache.nixos.org already.
+
 `flake.lock` pins nixpkgs, because Nix refuses to run a flake from GitHub whose
 lock file it would have to write. Every release moves it (see below), so it is
 never older than the release.

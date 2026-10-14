@@ -10,8 +10,8 @@ name: nix
 #
 # On a pull request it builds the flake in the checkout. On main, and by hand, it
 # builds the flake from GitHub, the way `nix run github:lxorb/orden?dir=packaging/nix`
-# does. packaging-bump.yml calls it twice: on the rewritten flake before it lands,
-# and from GitHub after.
+# does. packaging-bump.yml and nix-edge.yml call it twice each: on the rewritten
+# flake before it lands, and from GitHub after.
 on:
   pull_request:
     paths:
@@ -19,6 +19,7 @@ on:
       - scripts/bump-packaging.mjs
       - .github/workflows/nix.yml
       - .github/workflows/packaging-bump.yml
+      - .github/workflows/nix-edge.yml
       - scripts/nix-start.sh
   push:
     branches: [main]
@@ -43,7 +44,7 @@ on:
         default: ''
 
 concurrency:
-  group: nix-${{ github.ref }}-${{ inputs.flake }}-${{ inputs.artifact }}
+  group: nix-${{ github.workflow }}-${{ github.ref }}-${{ inputs.flake }}-${{ inputs.artifact }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Nothing here writes anywhere.
@@ -125,18 +126,28 @@ jobs:
           FLAKE: ${{ steps.flake.outputs.flake }}
         run: |
           nix build --print-build-logs "$FLAKE" -o result
-          ls -la result/bin
-          test "$(readlink result/bin/orden)" = nib
+          # orden, or orden-edge on the nix-edge branch: every file a profile gets
+          # is named after it, so the two never collide.
+          pname=$(nix eval --raw "$FLAKE#default.pname")
+          echo "### $pname $(nix eval --raw "$FLAKE#default.version")" >>"$GITHUB_STEP_SUMMARY"
+          find result/bin result/share -type f -o -type l | sort | tee files.txt
+          if [ "$pname" = orden ]; then
+            test "$(readlink result/bin/nib)" = orden
+            expected=2
+          else
+            expected=1
+          fi
+          test "$(find result/bin -mindepth 1 | wc -l)" -eq "$expected"
           # What the wrapper sets: no display backend forced on anyone, and the
           # DMA-BUF renderer off on NVIDIA's driver alone.
-          cat result/bin/nib
-          if grep -n GDK_BACKEND result/bin/nib; then exit 1; fi
-          grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' result/bin/nib
-          nix shell nixpkgs#pax-utils -c lddtree result/bin/.nib-wrapped | head -80
-          find result/share -type f -o -type l | sort
-          nix shell nixpkgs#desktop-file-utils -c desktop-file-validate result/share/applications/orden.desktop
+          cat "result/bin/$pname"
+          if grep -n GDK_BACKEND "result/bin/$pname"; then exit 1; fi
+          grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
+          nix shell nixpkgs#pax-utils -c lddtree "result/libexec/$pname/nib" | head -80
+          nix shell nixpkgs#desktop-file-utils -c desktop-file-validate "result/share/applications/$pname.desktop"
+          cat "result/share/applications/$pname.desktop"
           for size in 32x32 128x128 256x256; do
-            test -s "result/share/icons/hicolor/$size/apps/orden.png"
+            test -s "result/share/icons/hicolor/$size/apps/$pname.png"
           done
 
       # On NixOS, hardware.graphics puts Mesa (or the GPU's own driver) in
@@ -177,49 +188,6 @@ jobs:
             *.log
             wayland.*
             x11.*
+            files.txt
             packaging/nix/flake.lock
-          if-no-files-found: warn
-
-  # The flake as it was on 0.13.1, which wrapped the AppImage: the error a NixOS
-  # user on Hyprland reported, reproduced on the same runner.
-  before:
-    name: the 0.13.1 flake, ${{ matrix.mode }}
-    strategy:
-      fail-fast: false
-      matrix:
-        mode: [wayland, x11]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    env:
-      FLAKE: github:lxorb/orden/2591eb1344c902122da58051022558957d9609e5?dir=packaging/nix
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - run: |
-          mesa=$(nix build --no-link --print-out-paths --no-write-lock-file --inputs-from "$FLAKE" nixpkgs#mesa | head -1)
-          sudo ln -sfn "$mesa" /run/opengl-driver
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends sway xwayland grim jq
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          nix build --no-write-lock-file "$FLAKE" -o result
-      - run: |
-          if NIX_RUN_FLAGS=--no-write-lock-file bash scripts/nix-start.sh ${{ matrix.mode }} "$FLAKE"; then
-            echo "::error::the 0.13.1 flake started"
-            exit 1
-          fi
-          grep -F 'Could not create default EGL display: EGL_BAD_PARAMETER. Aborting...' ${{ matrix.mode }}.log ||
-            grep -F 'Failed to initialize GTK' ${{ matrix.mode }}.log
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always()
-        with:
-          name: before-${{ matrix.mode }}
-          path: |
-            *.png
-            *.log
-            ${{ matrix.mode }}.*
           if-no-files-found: warn

@@ -40,7 +40,7 @@ export SWAYSOCK
 
 # Started by sway, so it gets sway's own WAYLAND_DISPLAY and, with Xwayland on,
 # its DISPLAY; the other one is taken away.
-swaymsg exec "env -u $drop GST_DEBUG=2 nix run ${NIX_RUN_FLAGS:-} '$flake' >'$out/$mode.log' 2>&1" >/dev/null
+swaymsg exec "env -u $drop GST_DEBUG=2 nix run '$flake' >'$out/$mode.log' 2>&1" >/dev/null
 
 views='[recurse(.nodes[]?, .floating_nodes[]?) | select(.pid? != null and (.type == "con" or .type == "floating_con"))]'
 for _ in $(seq 180); do

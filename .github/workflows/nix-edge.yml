@@ -1,0 +1,98 @@
+name: nix-edge
+
+# The flake for the build of main: the `nix-edge` branch is main with one commit on
+# top, packaging/nix moved onto the .debs of the `edge` pre-release as the package
+# orden-edge, so
+#
+#   nix profile install github:lxorb/orden/nix-edge?dir=packaging/nix
+#
+# installs the latest build of main beside the release, and `nix profile upgrade`
+# takes the next one. Nothing is built from source, here or on the user's machine:
+# it is the same .deb the edge release carries.
+#
+# release.yml dispatches this once a build of main has replaced `edge`. Main is
+# reached only through pull requests and edge changes on every push, so the pins
+# never go to main: this force-pushes the one branch, and only after the rewritten
+# flake built and started on both architectures (nix.yml). A newer build cancels
+# an older one that has not landed yet.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: nix-edge
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - name: The flake, on edge
+        id: bump
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/bump-packaging.mjs --edge
+          version=$(sed -n 's/^ *version = "\(.*\)";$/\1/p' packaging/nix/flake.nix)
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          echo "### orden-edge $version" >>"$GITHUB_STEP_SUMMARY"
+          git diff --stat
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: packaging
+          path: packaging
+          include-hidden-files: true
+          if-no-files-found: error
+
+  check:
+    needs: rewrite
+    permissions:
+      contents: read
+    uses: ./.github/workflows/nix.yml
+    with:
+      artifact: packaging
+
+  # Only from main: a dispatch on any other branch proves everything above and
+  # moves nothing.
+  land:
+    needs: [rewrite, check]
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.rewrite.outputs.version }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: packaging
+          path: packaging
+
+      - name: Push nix-edge
+        run: |
+          git config user.name lxorbs-minion
+          git config user.email 43935334+lxorbs-minion@users.noreply.github.com
+          git add packaging/nix
+          git commit -m "chore: nix edge $VERSION" -m "Co-authored-by: Emil Vinu <101118850+lxorb@users.noreply.github.com>"
+          git push --force origin HEAD:refs/heads/nix-edge
+          echo "nix-edge is $(git rev-parse HEAD), orden-edge $VERSION." >>"$GITHUB_STEP_SUMMARY"
+
+  # And from GitHub, exactly as the command above fetches it.
+  after:
+    needs: land
+    permissions:
+      contents: read
+    uses: ./.github/workflows/nix.yml
+    with:
+      flake: github:${{ github.repository }}/nix-edge?dir=packaging/nix
