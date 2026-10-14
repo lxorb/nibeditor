@@ -139,7 +139,7 @@ jobs:
       - name: X11, Wayland and the tools that look at them
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xvfb xdotool x11-utils imagemagick sway grim jq
+          sudo apt-get install -y --no-install-recommends xvfb xcompmgr xdotool x11-utils imagemagick sway grim jq
 
       - name: It starts on X11
         env:
@@ -149,6 +149,9 @@ jobs:
           Xvfb :99 -screen 0 1280x800x24 >xvfb.log 2>&1 &
           export DISPLAY=:99
           sleep 2
+          # Orden's window is transparent, and without a compositor what is behind
+          # it is black.
+          xcompmgr >xcompmgr.log 2>&1 &
           GST_DEBUG=2 env -u WAYLAND_DISPLAY nix run "$FLAKE" >x11.log 2>&1 &
           app=$!
 
@@ -159,8 +162,10 @@ jobs:
             exit 1
           fi
           xprop -id "$window" WM_CLASS WM_NAME _NET_WM_NAME
-          # Long enough for the page to load and paint.
-          sleep 25
+          # Long enough for the page to load and paint in software.
+          sleep 15
+          import -window root x11-15s.png
+          sleep 30
           import -window root x11.png
           if ! kill -0 "$app" 2>/dev/null; then
             echo "::error::the app exited on its own"
@@ -211,7 +216,9 @@ jobs:
             exit 1
           fi
           jq -e 'all(.shell == "xdg_shell")' views.json
-          sleep 25
+          sleep 15
+          grim wayland-15s.png
+          sleep 30
           grim wayland.png
           if ! kill -0 "$app" 2>/dev/null; then
             echo "::error::the app exited on its own"

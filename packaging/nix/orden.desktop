@@ -9,5 +9,5 @@ Terminal=false
 Categories=Office;TextEditor;Utility;
 MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;
 Keywords=markdown;md;editor;notes;writing;wysiwyg;orden;nib;nibeditor;
-StartupWMClass=nib
+StartupWMClass=orden
 StartupNotify=true
