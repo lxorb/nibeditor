@@ -47,7 +47,8 @@ const response = await fetch(`https://api.github.com/repos/${REPO}/releases/tags
 })
 if (!response.ok) throw new Error(`${tag}: the release page answered ${response.status}`)
 const release = await response.json()
-if (release.draft || (!edge && release.prerelease)) throw new Error(`${tag} is not a stable release`)
+if (release.draft || (!edge && release.prerelease))
+  throw new Error(`${tag} is not a stable release`)
 
 // What the .debs are called there: `Orden-<version>` on a release, and whatever
 // the build of main uploaded on edge, which says its own version.
@@ -163,4 +164,6 @@ if (!edge) {
 }
 
 for (const [path, text] of pending) writeFileSync(join(ROOT, 'packaging', path), text)
-console.log(`packaging on ${edge ? `edge ${version}` : version}${current && current !== version ? `, from ${current}` : ''}`)
+console.log(
+  `packaging on ${edge ? `edge ${version}` : version}${current && current !== version ? `, from ${current}` : ''}`,
+)
