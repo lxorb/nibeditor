@@ -45,17 +45,6 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-
-      # The flake's nixpkgs moves with every release, so what `nix run` builds
-      # Orden against is never older than the release itself. Checked with
-      # everything else below before it lands.
-      - name: The flake's nixpkgs, current
-        run: nix flake update --flake ./packaging/nix
-
       - name: Rewrite the packaging
         id: bump
         env:
@@ -80,6 +69,22 @@ jobs:
             } >>"$GITHUB_STEP_SUMMARY"
           fi
           git diff --stat
+
+      # The flake's nixpkgs moves with every release, so what `nix run` builds
+      # Orden against is never older than the release itself; checked with the
+      # rest below before it lands. A release the packaging is on already moves
+      # nothing at all.
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        if: steps.bump.outputs.changed == 'true'
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: The flake's nixpkgs, current
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          nix flake update --flake ./packaging/nix
+          git diff --stat packaging/nix/flake.lock
 
       # The .SRCINFO is rewritten line by line beside the PKGBUILD, so makepkg is
       # asked whether it agrees. The image is the one publish-linux.yml pins.
