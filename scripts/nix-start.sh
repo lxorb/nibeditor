@@ -59,7 +59,7 @@ elif ! jq -e --arg shell "$shell" 'all(.shell == $shell)' "$out/$mode.json" >/de
 else
   # Long enough for the page to load and paint in software.
   sleep 15
-  grim "$out/$mode.png"
+  WAYLAND_DISPLAY=$(cd "$XDG_RUNTIME_DIR" && ls wayland-? | head -1) grim "$out/$mode.png"
   pid=$(jq '.[0].pid' "$out/$mode.json")
   # What it runs with: GTK picks the backend itself, and on Mesa the DMA-BUF
   # renderer stays on.

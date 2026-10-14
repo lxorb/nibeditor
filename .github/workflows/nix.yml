@@ -135,7 +135,7 @@ jobs:
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
         run: |
-          mesa=$(nix build --no-link --print-out-paths --inputs-from "$FLAKE" nixpkgs#mesa | head -1)
+          mesa=$(nix build --no-link --print-out-paths --no-write-lock-file --inputs-from "$FLAKE" nixpkgs#mesa | head -1)
           sudo ln -sfn "$mesa" /run/opengl-driver
           ls -la /run/opengl-driver/ /run/opengl-driver/share/glvnd/egl_vendor.d
 
@@ -187,12 +187,12 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
       - run: |
-          mesa=$(nix build --no-link --print-out-paths --inputs-from "$FLAKE" nixpkgs#mesa | head -1)
+          mesa=$(nix build --no-link --print-out-paths --no-write-lock-file --inputs-from "$FLAKE" nixpkgs#mesa | head -1)
           sudo ln -sfn "$mesa" /run/opengl-driver
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends sway xwayland grim jq
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          nix build "$FLAKE" -o result
+          nix build --no-write-lock-file "$FLAKE" -o result
       - run: |
           if bash scripts/nix-start.sh ${{ matrix.mode }} "$FLAKE"; then
             echo "::error::the 0.13.1 flake started"
