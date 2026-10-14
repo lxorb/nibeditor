@@ -698,7 +698,9 @@ fn keep(window: &Window) {
 
 #[cfg(test)]
 mod tests {
-    use super::{named, names_its_place, onto, sane, Area, Followed, Placement, OFF};
+    use super::{
+        named, names_its_place, onto, sane, sized_for_any, Area, Followed, Placement, OFF,
+    };
     use tauri::utils::config::WindowConfig;
 
     fn placed(x: f64, y: f64, width: f64, height: f64) -> Placement {

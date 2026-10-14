@@ -169,7 +169,7 @@ pub fn hand_gtk(token: &str) {
     // SAFETY: the display is GDK's Wayland display, checked just above and alive for the
     // call, and GDK copies the string before it returns.
     unsafe {
-        gdkwayland_sys::gdk_wayland_display_set_startup_notification_id(
+        gdk_wayland_sys::gdk_wayland_display_set_startup_notification_id(
             display.as_ptr().cast(),
             token.as_ptr(),
         );
