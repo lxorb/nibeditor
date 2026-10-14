@@ -12,7 +12,7 @@ describe('a key from any app, handed to the system', () => {
   test("quick add's keys", () => {
     expect(accelerator('Ctrl-Alt-Space', 'win')).toBe('Control+Alt+Space')
     expect(accelerator('Mod-Shift-a', 'win')).toBe('Control+Shift+A')
-    expect(accelerator('Alt-Meta-q', 'linux')).toBe('Super+Alt+Q')
+    expect(accelerator('Alt-Meta-q', 'mac')).toBe('Super+Alt+Q')
     expect(accelerator('Ctrl-Alt--', 'win')).toBe('Control+Alt+Minus')
     expect(accelerator('F9', 'win')).toBe('F9')
   })
@@ -23,5 +23,10 @@ describe('a key from any app, handed to the system', () => {
     expect(accelerator('', 'win')).toBeNull()
     expect(accelerator(null, 'win')).toBeNull()
     expect(accelerator('Shift Shift', 'win')).toBeNull()
+  })
+
+  test('is never the Windows or Super key outside a Mac, which the desktop keeps', () => {
+    expect(accelerator('Meta-Space', 'linux')).toBeNull()
+    expect(accelerator('Alt-Meta-q', 'win')).toBeNull()
   })
 })

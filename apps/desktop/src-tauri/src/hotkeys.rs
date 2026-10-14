@@ -137,7 +137,7 @@ fn with_state<T>(on_held: impl FnOnce(&mut State) -> T) -> T {
 /// Holds `key` for `which` from any app, in the plugin's notation, or lets it go. Answers
 /// the key held now.
 pub fn hold(app: &AppHandle, which: Which, key: Option<String>) -> Option<String> {
-    let key = key.filter(|key| !key.trim().is_empty());
+    let key = key.filter(|key| !key.trim().is_empty() && allowed(key, cfg!(target_os = "macos")));
     #[cfg(target_os = "linux")]
     if crate::linux::wayland_session() {
         return by_portal(app, which, key);
@@ -195,6 +195,16 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
     });
     told_page(app);
     now
+}
+
+/// Whether a key may be held at all: never with the Windows key outside a Mac, where the
+/// desktop binds its own keys to it - a Hyprland launcher's Super+Space was taken - and
+/// a Mac's Cmd is its ordinary modifier.
+fn allowed(accelerator: &str, mac: bool) -> bool {
+    mac || !accelerator.split('+').any(|part| {
+        ["super", "meta", "win", "command", "cmd", "logo"]
+            .contains(&part.trim().to_ascii_lowercase().as_str())
+    })
 }
 
 /// Whether the plugin is in the app, added now where it was not yet.
@@ -390,6 +400,15 @@ mod tests {
         assert_eq!(started_by(None, None, None, some("/usr/bin/nib")), "nib");
         assert_eq!(started_by(None, None, None, some("orden")), "orden");
         assert_eq!(started_by(None, None, None, None), "nib");
+    }
+
+    #[test]
+    fn the_windows_key_is_never_held_outside_a_mac() {
+        assert!(!allowed("Super+Space", false));
+        assert!(!allowed("Control+Super+Alt+K", false));
+        assert!(!allowed("Meta+Q", false));
+        assert!(allowed("Control+Alt+Space", false));
+        assert!(allowed("Control+Super+Alt+K", true));
     }
 
     #[test]
