@@ -75,7 +75,7 @@
 
           # WebKitGTK plays audio and video through GStreamer, and these are the
           # only plugins it is let to load.
-          gstreamer = with pkgs.gst_all_1; [
+          gstPlugins = with pkgs.gst_all_1; [
             gstreamer
             gst-plugins-base
             gst-plugins-good
@@ -113,7 +113,7 @@
               xdotool
               stdenv.cc.cc.lib
             ])
-            ++ gstreamer;
+            ++ gstPlugins;
 
           dontConfigure = true;
           dontBuild = true;
@@ -164,7 +164,7 @@
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
               --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
-              --set GST_PLUGIN_SYSTEM_PATH_1_0 ${pkgs.lib.makeSearchPath "lib/gstreamer-1.0" gstreamer} \
+              --set GST_PLUGIN_SYSTEM_PATH_1_0 ${pkgs.lib.makeSearchPath "lib/gstreamer-1.0" gstPlugins} \
               --unset GST_PLUGIN_PATH \
               --unset GST_PLUGIN_PATH_1_0 \
               --run 'export GST_REGISTRY_1_0="''${XDG_CACHE_HOME:-$HOME/.cache}/${pname}/gstreamer-registry-${pkgs.stdenv.hostPlatform.system}.bin"' \
