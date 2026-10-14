@@ -100,10 +100,14 @@ wait_for_views() {
 
 # The drive's page, one colour edge to edge, and the app's endpoint open to `eval`
 # before the app writes this launch's port into it.
+# With MEDIA=1 the page carries a video as well, so the page's engine starts GStreamer and
+# reads every plugin it is pointed at.
 site_pid=""
-if [ "${DRIVE:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ]; then
   mkdir -p "$out/site"
-  printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>' > "$out/site/index.html"
+  video=""
+  [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
+  printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>%s' "$video" > "$out/site/index.html"
   python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
   site_pid=$!
   config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
@@ -153,7 +157,7 @@ if [ "$status" = 0 ] && [ -n "$portal_pid" ]; then
   grep -q 'CTRL+ALT+space' "$out/portal.log" || { echo "::error::quick add's key was not the one preferred"; status=1; }
 fi
 
-if [ "$status" = 0 ] && [ -n "$site_pid" ]; then
+if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
 fi
 
@@ -185,8 +189,9 @@ if [ -f "$out/nib.log" ]; then
 fi
 
 # What a Wayland session must never print: the EGL display the friend's NixOS box could
-# not make, a protocol error, a GTK critical, a display that could not be opened.
-if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting' "$out/orden.log" "$out/second.log" 2>/dev/null; then
+# not make, a protocol error, a GTK critical, a display that could not be opened, and
+# GStreamer loading plugins that are not its own.
+if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting|GStreamer-WARNING' "$out/orden.log" "$out/second.log" 2>/dev/null; then
   echo "::error::the graphics stack failed"
   status=1
 fi

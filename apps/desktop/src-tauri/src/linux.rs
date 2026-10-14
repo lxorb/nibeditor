@@ -9,6 +9,13 @@
 //! is NVIDIA's and the reader has not said otherwise, so every package gets it. One file
 //! looked for, which is microseconds of a launch.
 //!
+//! **An `AppImage`'s GStreamer** (`prepare` too). The media framework an `AppImage`
+//! carries is a build machine's, and the plugin paths the host hands it are the host's:
+//! a NixOS profile's lists folders of Qt and KDE plugins, every one of which GStreamer
+//! tried to load against the image's own older libraries, and said so 82 times. Inside an
+//! `AppImage` GStreamer is pointed at its own plugins and nothing else, with a registry of
+//! its own in the app's cache, so it never mixes the two.
+//!
 //! **Coming forward.** A Wayland compositor gives the front only to a window that shows
 //! a token from the press that asked for it (xdg-activation): the launcher's, handed to
 //! a launch as `XDG_ACTIVATION_TOKEN`, or the portal's, handed with a key from any app.
@@ -77,6 +84,80 @@ pub fn prepare() {
         std::env::remove_var(TOKEN);
     }
     let _ = LAUNCHED_WITH.set(token);
+    if let Some(root) = appdir() {
+        for (name, value) in
+            gstreamer_of(std::path::Path::new(&root), |path| path.exists(), cache())
+        {
+            match value {
+                Some(value) => std::env::set_var(name, value),
+                None => std::env::remove_var(name),
+            }
+        }
+    }
+}
+
+/// The folder the `AppImage` this program runs from is unpacked in, as its `AppRun` says:
+/// only where this program is in it, so a variable left over from another image's
+/// launch is not taken for this one.
+fn appdir() -> Option<std::ffi::OsString> {
+    let root = std::env::var_os("APPDIR")?;
+    let exe = std::env::current_exe().ok()?;
+    exe.starts_with(&root).then_some(root)
+}
+
+/// The variables GStreamer reads its plugins by, as an `AppImage` unpacked at `root` should
+/// have them: the host's own lists gone, the image's plugins and scanner where it has
+/// them, and a registry of its own under `cache`.
+fn gstreamer_of(
+    root: &std::path::Path,
+    exists: impl Fn(&std::path::Path) -> bool,
+    cache: Option<std::path::PathBuf>,
+) -> Vec<(&'static str, Option<std::ffi::OsString>)> {
+    let found = |paths: &[&str]| {
+        paths
+            .iter()
+            .map(|one| root.join(one))
+            .find(|one| exists(one))
+            .map(std::path::PathBuf::into_os_string)
+    };
+    let plugins = found(&[
+        "usr/lib/gstreamer-1.0",
+        "usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+        "usr/lib/aarch64-linux-gnu/gstreamer-1.0",
+    ]);
+    let scanner = found(&[
+        "usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner",
+        "usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner",
+        "usr/lib/aarch64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner",
+        "usr/libexec/gstreamer-1.0/gst-plugin-scanner",
+    ]);
+    let mut said = vec![
+        ("GST_PLUGIN_PATH", None),
+        ("GST_PLUGIN_PATH_1_0", None),
+        ("GST_PLUGIN_SYSTEM_PATH", None),
+        ("GST_PLUGIN_SYSTEM_PATH_1_0", plugins),
+    ];
+    if scanner.is_some() {
+        said.push(("GST_PLUGIN_SCANNER_1_0", scanner));
+    }
+    if let Some(cache) = cache {
+        said.push((
+            "GST_REGISTRY_1_0",
+            Some(cache.join("gstreamer-1.0-registry.bin").into_os_string()),
+        ));
+    }
+    said
+}
+
+/// The app's own cache folder, read off the environment before anything of Tauri's is up.
+fn cache() -> Option<std::path::PathBuf> {
+    let base = std::env::var_os("XDG_CACHE_HOME")
+        .map(std::path::PathBuf::from)
+        .filter(|one| one.is_absolute())
+        .or_else(|| {
+            std::env::var_os("HOME").map(|home| std::path::Path::new(&home).join(".cache"))
+        })?;
+    Some(base.join("ch.emilvinu.nib"))
 }
 
 /// Whether to turn DMA-BUF off: NVIDIA's driver, and nobody having set it either way.
@@ -252,6 +333,36 @@ mod tests {
         assert!(session_is_wayland(None, Some("wayland")));
         assert!(!session_is_wayland(Some(""), Some("x11")));
         assert!(!session_is_wayland(None, None));
+    }
+
+    #[test]
+    fn an_appimage_s_gstreamer_reads_its_own_plugins_and_nothing_of_the_host_s() {
+        let root = std::path::Path::new("/tmp/.mount_x");
+        let bundled = |path: &std::path::Path| {
+            path.ends_with("usr/lib/x86_64-linux-gnu/gstreamer-1.0")
+                || path.ends_with("gstreamer1.0/gstreamer-1.0/gst-plugin-scanner")
+        };
+        let said = gstreamer_of(root, bundled, Some("/home/e/.cache/ch.emilvinu.nib".into()));
+        let of = |name: &str| {
+            said.iter()
+                .find(|(one, _)| *one == name)
+                .map(|(_, value)| value.clone())
+        };
+        assert_eq!(of("GST_PLUGIN_PATH"), Some(None));
+        assert_eq!(of("GST_PLUGIN_SYSTEM_PATH"), Some(None));
+        assert_eq!(
+            of("GST_PLUGIN_SYSTEM_PATH_1_0"),
+            Some(Some(
+                root.join("usr/lib/x86_64-linux-gnu/gstreamer-1.0")
+                    .into_os_string()
+            ))
+        );
+        assert!(of("GST_PLUGIN_SCANNER_1_0").is_some_and(|one| one.is_some()));
+        assert!(of("GST_REGISTRY_1_0").is_some());
+        // An image with no plugins of its own: the host's lists gone, nothing put instead.
+        let none = gstreamer_of(root, |_| false, None);
+        assert_eq!(none.len(), 4);
+        assert!(none.iter().all(|(_, value)| value.is_none()));
     }
 
     #[test]

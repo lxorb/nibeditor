@@ -84,6 +84,10 @@ pub enum Reach {
     /// Bound through the desktop portal.
     Portal,
     /// Not at all: only a command bound in the desktop's own settings.
+    #[cfg_attr(
+        not(target_os = "linux"),
+        allow(dead_code, reason = "only a Wayland session goes without")
+    )]
     None,
 }
 
@@ -103,8 +107,12 @@ pub struct Keys {
 }
 
 /// What is held.
-struct Held {
+struct State {
     /// What the page asked for each key, in the plugin's notation.
+    #[cfg_attr(
+        not(target_os = "linux"),
+        allow(dead_code, reason = "only the portal binds every key at once")
+    )]
     wanted: BTreeMap<Which, String>,
     /// What the system holds for each, in its own words.
     held: BTreeMap<Which, String>,
@@ -114,7 +122,7 @@ struct Held {
     change: bool,
 }
 
-static HELD: Mutex<Held> = Mutex::new(Held {
+static HELD: Mutex<State> = Mutex::new(State {
     wanted: BTreeMap::new(),
     held: BTreeMap::new(),
     refused: BTreeSet::new(),
@@ -122,7 +130,7 @@ static HELD: Mutex<Held> = Mutex::new(Held {
     change: false,
 });
 
-fn with<T>(on_held: impl FnOnce(&mut Held) -> T) -> T {
+fn with<T>(on_held: impl FnOnce(&mut State) -> T) -> T {
     on_held(&mut HELD.lock().unwrap_or_else(PoisonError::into_inner))
 }
 

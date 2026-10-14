@@ -115,6 +115,12 @@ jobs:
             echo "::error::the AppImage sets GDK_BACKEND, which keeps GTK off Wayland"
             exit 1
           fi
+          echo "::group::base libraries a newer host has newer copies of"
+          find squashfs-root -name 'liblzma*' -o -name 'libcurl*' -o -name 'libnghttp2*' -o -name 'libz.so*' -o -name 'libstdc++*' -o -name 'libgcc_s*' | sort
+          echo "::endgroup::"
+          echo "::group::GStreamer"
+          find squashfs-root -path '*gstreamer*' -maxdepth 6 | head -40
+          echo "::endgroup::"
           rm -rf squashfs-root
           echo "nothing of the window system or GL in the AppImage"
 
@@ -184,11 +190,18 @@ jobs:
           cd packages/appimage
           chmod +x ./*.AppImage
           ./*.AppImage --appimage-extract > /dev/null
+      # And a host's GStreamer plugin path pointing at libraries that are no plugins at
+      # all, the way a NixOS profile points it at Qt's: the image's GStreamer must not
+      # read them (src-tauri/src/linux.rs).
       - name: Under Wayland with no portal, `--quick-add` reaching the running app
         env:
           OUT: wayland-out
           KEYS: 'no desktop portal'
+          MEDIA: '1'
         run: |
+          mkdir -p "$RUNNER_TEMP/not-plugins"
+          cp /usr/lib/libcurl.so* /usr/lib/liblzma.so* "$RUNNER_TEMP/not-plugins/"
+          export GST_PLUGIN_PATH="$RUNNER_TEMP/not-plugins" GST_PLUGIN_SYSTEM_PATH_1_0="$RUNNER_TEMP/not-plugins"
           app="$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
           SECOND="$app --quick-add" dbus-run-session -- bash scripts/wayland-launch.sh "$app"
       - if: always()
