@@ -29,6 +29,9 @@ offset=$("$image" --appimage-offset)
 echo "taken out of $(basename "$image"):"
 find squashfs-root \( -name 'libwayland-*' -o -name 'libxkbcommon*' -o -name 'libEGL*' \
   -o -name 'libGL*' -o -name 'libgbm*' -o -name 'libdrm*' \) -prune -print -exec rm -rf {} +
+# And the GStreamer plugins for JACK, which no web page plays through and whose library
+# only a JACK desktop has: elsewhere GStreamer says it could not load them, every launch.
+find squashfs-root -path '*gstreamer-1.0/*' \( -name 'libgstjack.so' -o -name 'libgstfluidsynthmidi.so' \)   -print -delete
 
 compression=$(unsquashfs -s -o "$offset" "$image" | sed -n 's/^Compression //p' | head -1)
 head -c "$offset" "$image" > runtime
