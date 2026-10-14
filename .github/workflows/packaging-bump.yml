@@ -126,7 +126,12 @@ jobs:
     env:
       VERSION: ${{ needs.rewrite.outputs.version }}
       BASE: ${{ github.ref_name }}
-      GH_TOKEN: ${{ github.token }}
+      # This workflow's own token opens the pull request where the repository lets
+      # Actions do that (Settings, Actions, General, "Allow GitHub Actions to
+      # create and approve pull requests"). PACKAGING_PR_TOKEN, a token of
+      # lxorbs-minion with contents and pull requests on this repository, does it
+      # where that is off, and its pull request runs the checks as well.
+      GH_TOKEN: ${{ secrets.PACKAGING_PR_TOKEN || github.token }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -144,10 +149,15 @@ jobs:
           git add packaging
           git commit -m "chore: packaging on $VERSION" -m "Co-authored-by: Emil Vinu <101118850+lxorb@users.noreply.github.com>"
           git push --force origin "$branch"
-          gh pr view "$branch" --json state -q .state 2>/dev/null | grep -qx OPEN ||
-            gh pr create --base "$BASE" --head "$branch" \
-              --title "chore: packaging on $VERSION" \
-              --body "The package manifests on v$VERSION, from the digests its release page reports. Built and started by run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID before this was opened."
+          if gh pr view "$branch" --json state -q .state 2>/dev/null | grep -qx OPEN; then
+            exit 0
+          fi
+          if ! gh pr create --base "$BASE" --head "$branch" \
+            --title "chore: packaging on $VERSION" \
+            --body "The package manifests on v$VERSION, from the digests its release page reports. Built and started by run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID before this was opened."; then
+            echo "::error::GitHub refused the pull request. Tick Settings > Actions > General > Allow GitHub Actions to create and approve pull requests, or add a PACKAGING_PR_TOKEN secret, and run this again. The change is pushed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$BASE...$branch"
+            exit 1
+          fi
 
       - name: Merge it
         id: merge
