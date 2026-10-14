@@ -104,7 +104,7 @@ else
   fi
   if [ -n "${GST_INSPECT:-}" ]; then
     # The elements WebKit plays a video and its sound with.
-    for element in playbin autoaudiosink videoconvert vp9dec avdec_h264 opusdec; do
+    for element in queue typefind playbin autoaudiosink videoconvert vp9dec avdec_h264 opusdec; do
       if ! env -i "${environment[@]}" "$GST_INSPECT" "$element" >>"$out/$mode.gst.log" 2>&1; then
         echo "::error::GStreamer, as the app runs it, has no $element"
         failed=1

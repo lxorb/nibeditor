@@ -164,7 +164,7 @@
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
               --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
-              --set GST_PLUGIN_SYSTEM_PATH_1_0 ${pkgs.lib.makeSearchPath "lib/gstreamer-1.0" gstPlugins} \
+              --set GST_PLUGIN_SYSTEM_PATH_1_0 ${pkgs.lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" gstPlugins} \
               --unset GST_PLUGIN_PATH \
               --unset GST_PLUGIN_PATH_1_0 \
               --run 'export GST_REGISTRY_1_0="''${XDG_CACHE_HOME:-$HOME/.cache}/${pname}/gstreamer-registry-${pkgs.stdenv.hostPlatform.system}.bin"' \
