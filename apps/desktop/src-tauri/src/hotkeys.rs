@@ -159,7 +159,7 @@ fn by_portal(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
         Some(held.wanted.clone())
     });
     if let Some(wanted) = changed {
-        portal::want(app, wanted);
+        portal::want_keys(app, wanted);
     }
     with_state(|held| held.held.get(&which).cloned())
 }
@@ -193,7 +193,7 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
             None => held.held.remove(&which),
         };
     });
-    told(app);
+    told_page(app);
     now
 }
 
@@ -227,7 +227,7 @@ fn reached(app: &AppHandle, reach: Reach, change: bool) {
         held.reach = Some(reach);
         held.change = change;
     });
-    told(app);
+    told_page(app);
 }
 
 /// The keys the system holds now, and those it turned down.
@@ -240,7 +240,7 @@ fn bound(app: &AppHandle, now: BTreeMap<Which, String>, refused: BTreeSet<Which>
         held.held = now;
         held.refused = refused;
     });
-    told(app);
+    told_page(app);
 }
 
 /// The keys the system shows now for those it holds, changed in its own settings.
@@ -256,14 +256,14 @@ fn changed(app: &AppHandle, shown: BTreeMap<Which, String>) {
             }
         }
     });
-    told(app);
+    told_page(app);
 }
 
-fn told(app: &AppHandle) {
-    let _ = app.emit(EVENT, keys());
+fn told_page(app: &AppHandle) {
+    let _ = app.emit(EVENT, keys_now());
 }
 
-fn keys() -> Keys {
+fn keys_now() -> Keys {
     with_state(|held| Keys {
         reach: held.reach.unwrap_or(if wayland() {
             Reach::Portal
@@ -277,7 +277,7 @@ fn keys() -> Keys {
             .map(|(which, said)| (which.id(), said.clone()))
             .collect(),
         refused: held.refused.iter().map(|which| which.id()).collect(),
-        run: command(
+        run: started_by(
             std::env::var("FLATPAK_ID").ok(),
             std::env::var("APPIMAGE").ok(),
             std::env::var("SNAP_NAME").ok(),
@@ -299,7 +299,7 @@ fn wayland() -> bool {
 
 /// What starts Orden here: Flatpak's and Snap's own commands, the `AppImage` itself, or the
 /// name it was started by, which is `nib` or `orden` on the path.
-fn command(
+fn started_by(
     flatpak: Option<String>,
     appimage: Option<String>,
     snap: Option<String>,
@@ -329,10 +329,10 @@ fn command(
 pub fn global_keys(app: AppHandle) -> Keys {
     #[cfg(target_os = "linux")]
     if crate::linux::wayland_session() {
-        portal::start(&app);
+        portal::wake(&app);
     }
     let _ = &app;
-    keys()
+    keys_now()
 }
 
 /// The system's own page for the keys, where it has one: the portal's second version.
@@ -340,7 +340,7 @@ pub fn global_keys(app: AppHandle) -> Keys {
 pub fn global_keys_change(app: AppHandle) {
     #[cfg(target_os = "linux")]
     if crate::linux::wayland_session() {
-        portal::change(&app);
+        portal::reconfigure(&app);
     }
     let _ = app;
 }
@@ -371,11 +371,11 @@ mod tests {
     fn the_command_is_the_one_this_install_is_started_by() {
         let some = |text: &str| Some(text.to_owned());
         assert_eq!(
-            command(some("ch.emilvinu.nib"), None, None, some("/app/bin/nib")),
+            started_by(some("ch.emilvinu.nib"), None, None, some("/app/bin/nib")),
             "flatpak run ch.emilvinu.nib"
         );
         assert_eq!(
-            command(
+            started_by(
                 None,
                 some("/home/e/Orden.AppImage"),
                 None,
@@ -384,12 +384,12 @@ mod tests {
             "/home/e/Orden.AppImage"
         );
         assert_eq!(
-            command(None, None, some("orden"), some("/snap/x/nib")),
+            started_by(None, None, some("orden"), some("/snap/x/nib")),
             "orden"
         );
-        assert_eq!(command(None, None, None, some("/usr/bin/nib")), "nib");
-        assert_eq!(command(None, None, None, some("orden")), "orden");
-        assert_eq!(command(None, None, None, None), "nib");
+        assert_eq!(started_by(None, None, None, some("/usr/bin/nib")), "nib");
+        assert_eq!(started_by(None, None, None, some("orden")), "orden");
+        assert_eq!(started_by(None, None, None, None), "nib");
     }
 
     #[test]

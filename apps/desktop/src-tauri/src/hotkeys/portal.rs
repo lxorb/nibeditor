@@ -61,7 +61,7 @@ static SESSION_NOW: Mutex<Option<String>> = Mutex::new(None);
 
 /// The binding thread, started the first time anything asks: the portal asked whether it
 /// is there at all.
-pub fn start(app: &AppHandle) {
+pub fn wake(app: &AppHandle) {
     let _ = asks(app);
 }
 
@@ -77,12 +77,12 @@ fn asks(app: &AppHandle) -> &'static Sender<Ask> {
 }
 
 /// These keys, and no others, from any app.
-pub fn want(app: &AppHandle, wanted: BTreeMap<Which, String>) {
+pub fn want_keys(app: &AppHandle, wanted: BTreeMap<Which, String>) {
     let _ = asks(app).send(Ask::Want(wanted));
 }
 
 /// The system's own page for the keys.
-pub fn change(app: &AppHandle) {
+pub fn reconfigure(app: &AppHandle) {
     let _ = asks(app).send(Ask::Change);
 }
 
