@@ -156,6 +156,21 @@ jobs:
           pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 
+      # The AppImage without the Wayland, xkbcommon, EGL, GL, GBM and DRM libraries the
+      # host's driver has to supply, signed again for the updater; see the script, and
+      # wayland.yml, which runs the result on Arch under Wayland.
+      - name: The AppImage without the host's graphics stack
+        if: startsWith(matrix.platform, 'ubuntu')
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: |
+          sudo apt-get install -y squashfs-tools
+          for image in apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage; do
+            bash scripts/appimage-trim.sh "$image"
+          done
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: nib-${{ matrix.label }}
