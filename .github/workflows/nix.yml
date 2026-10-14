@@ -172,9 +172,17 @@ jobs:
             cat x11.log
             exit 1
           fi
+          xwininfo -id "$window" | grep -E 'Absolute|Width|Height|Map State|Depth'
+          import -window "$window" x11-window.png
           kill "$app" || true
           cat x11.log
-          ls -la ~/.cache/gstreamer-1.0 || true
+          sleep 3
+          WEBKIT_DISABLE_COMPOSITING_MODE=1 env -u WAYLAND_DISPLAY nix run "$FLAKE" >x11-nocomp.log 2>&1 &
+          other=$!
+          sleep 30
+          import -window root x11-nocomp.png
+          kill "$other" || true
+          cat x11-nocomp.log
           if grep -iE 'error while loading shared libraries|cannot open shared object|cannot open display|EGL_BAD|Failed to create GBM|gstreamer.*not found' x11.log; then
             echo "::error::the log on X11 says something is missing"
             exit 1
