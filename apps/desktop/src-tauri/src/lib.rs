@@ -611,11 +611,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(feature = "cef")]
     engine::gate::begin();
 
-    // Before GTK and before any thread, because both read the environment it sets: the
-    // renderer NVIDIA's driver needs, and the launcher's token; see linux.rs.
+    // Before GTK and any thread, both of which read what it sets; see linux.rs.
     #[cfg(target_os = "linux")]
     linux::prepare();
-
     // First, so that the one step nothing inside the process can time - the
     // machine loading the binary before any of this ran - is on the trace as well;
     // see trace.rs. Off unless NIB_TRACE_STARTUP says otherwise.

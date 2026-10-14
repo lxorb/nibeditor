@@ -329,7 +329,7 @@ fn presses(bus: &Connection, app: &AppHandle) -> zbus::Result<()> {
         let message = message?;
         let header = message.header();
         let body = message.body();
-        match header.member().map(|member| member.as_str()) {
+        match header.member().map(zbus::names::MemberName::as_str) {
             Some("Activated") => {
                 let (session, id, _at, options): (
                     OwnedObjectPath,
@@ -392,7 +392,7 @@ fn installed_entry() -> Option<String> {
         .chain(shared.split(':').map(PathBuf::from))
         .map(|folder| folder.join("applications"))
         .collect();
-    first_entry(&folders, |path| path.is_file())
+    first_entry(&folders, std::path::Path::is_file)
 }
 
 fn first_entry(folders: &[PathBuf], exists: impl Fn(&std::path::Path) -> bool) -> Option<String> {

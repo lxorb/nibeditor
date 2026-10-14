@@ -9,11 +9,11 @@
 //! is NVIDIA's and the reader has not said otherwise, so every package gets it. One file
 //! looked for, which is microseconds of a launch.
 //!
-//! **An `AppImage`'s GStreamer** (`prepare` too). The media framework an `AppImage`
+//! **An `AppImage`'s `GStreamer`** (`prepare` too). The media framework an `AppImage`
 //! carries is a build machine's, and the plugin paths the host hands it are the host's:
-//! a NixOS profile's lists folders of Qt and KDE plugins, every one of which GStreamer
+//! a NixOS profile's lists folders of Qt and KDE plugins, every one of which `GStreamer`
 //! tried to load against the image's own older libraries, and said so 82 times. Inside an
-//! `AppImage` GStreamer is pointed at its own plugins and nothing else, with a registry of
+//! `AppImage` `GStreamer` is pointed at its own plugins and nothing else, with a registry of
 //! its own in the app's cache, so it never mixes the two.
 //!
 //! **Coming forward.** A Wayland compositor gives the front only to a window that shows
@@ -85,9 +85,11 @@ pub fn prepare() {
     }
     let _ = LAUNCHED_WITH.set(token);
     if let Some(root) = appdir() {
-        for (name, value) in
-            gstreamer_of(std::path::Path::new(&root), |path| path.exists(), cache())
-        {
+        for (name, value) in gstreamer_of(
+            std::path::Path::new(&root),
+            std::path::Path::exists,
+            cache(),
+        ) {
             match value {
                 Some(value) => std::env::set_var(name, value),
                 None => std::env::remove_var(name),
@@ -105,7 +107,7 @@ fn appdir() -> Option<std::ffi::OsString> {
     exe.starts_with(&root).then_some(root)
 }
 
-/// The variables GStreamer reads its plugins by, as an `AppImage` unpacked at `root` should
+/// The variables `GStreamer` reads its plugins by, as an `AppImage` unpacked at `root` should
 /// have them: the host's own lists gone, the image's plugins and scanner where it has
 /// them, and a registry of its own under `cache`.
 fn gstreamer_of(

@@ -228,6 +228,13 @@ pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
 /// Linux, where the page is laid over the window's in an overlay (see linux.rs) - the
 /// runtime's own bounds go nowhere there, and it would read the screen's pixels with
 /// the page's scale, which is 1 until the page is on screen.
+#[cfg_attr(
+    target_os = "linux",
+    allow(
+        clippy::unnecessary_wraps,
+        reason = "the runtime's own placement elsewhere can fail"
+    )
+)]
 pub fn put(view: &tauri::Webview, bounds: Bounds, scale: f64) -> tauri::Result<()> {
     #[cfg(target_os = "linux")]
     {
