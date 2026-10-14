@@ -338,7 +338,10 @@ GStreamer 1.20 refuses nixpkgs' plugins. Built on nixpkgs it is a native Wayland
 client, uses the driver NixOS keeps in `/run/opengl-driver`, and plays media. The
 wrapper turns WebKit's DMA-BUF renderer off on NVIDIA's own driver alone (the
 blank-window bug), unless `WEBKIT_DISABLE_DMABUF_RENDERER` is set either way;
-Mesa keeps it. The command is `orden`, with `nib` beside it; the desktop entry and
+Mesa keeps it. GStreamer loads its own plugins and nothing else: a
+`GST_PLUGIN_PATH` the session carries (a NixOS profile's `lib/`, Qt and KDE
+plugins and all) is dropped, and its registry is the package's own. No
+`LD_PRELOAD`, no `GDK_BACKEND`. The command is `orden`, with `nib` beside it; the desktop entry and
 icons are installed alongside, so it shows up in a launcher.
 
 This is deliberately not a nixpkgs package. nixpkgs wants a maintainer who
