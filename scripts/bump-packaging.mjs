@@ -78,20 +78,14 @@ if (current && newer(current, version)) {
   throw new Error(`the packaging is on ${current} already, which is newer than ${version}`)
 }
 
-edit('nix/flake.nix', [
-  [/^(\s*version = )"[^"]*";$/m, `$1"${version}";`],
-  [
-    /(suffix = "x64";\s*hash = )"[^"]*";/,
-    `$1"${sri(digest(file('linux-x64', '.AppImage')))}";`,
-  ],
-  [
-    /(suffix = "arm64";\s*hash = )"[^"]*";/,
-    `$1"${sri(digest(file('linux-arm64', '.AppImage')))}";`,
-  ],
-])
-
 const debX64 = digest(file('linux-x64', '.deb'))
 const debArm64 = digest(file('linux-arm64', '.deb'))
+
+edit('nix/flake.nix', [
+  [/^(\s*version = )"[^"]*";$/m, `$1"${version}";`],
+  [/(suffix = "x64";\s*hash = )"[^"]*";/, `$1"${sri(debX64)}";`],
+  [/(suffix = "arm64";\s*hash = )"[^"]*";/, `$1"${sri(debArm64)}";`],
+])
 
 edit('aur/nib-bin/PKGBUILD', [
   [/^pkgver=.*$/m, `pkgver=${version}`],

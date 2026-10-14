@@ -1,8 +1,12 @@
 {
-  # Orden for Nix. The AppImage is wrapped rather than rebuilt: Tauri's AppImage
-  # already carries WebKitGTK and its web process, so what nixpkgs adds is only the
-  # FHS environment appimageTools sets up, and the few things the AppImage leaves to
-  # the system (GStreamer's plugins, for audio and video in a note).
+  # Orden for Nix: the program out of the release's .deb, run on nixpkgs' own
+  # WebKitGTK, GTK and GStreamer, the way the AUR package runs it on Arch's.
+  #
+  # Not the AppImage. It bundles Ubuntu 22.04's GLib and GStreamer, which nixpkgs'
+  # GStreamer plugins cannot load into, and it forces GTK onto X11 even in a Wayland
+  # session. The .deb is the bare program, so everything it links is nixpkgs', the
+  # same version as everything else on the system: native Wayland, the graphics
+  # driver NixOS provides, GStreamer with its plugins, and a fraction of the size.
   #
   # This is not the nixpkgs package - it is a flake anyone can install from
   # directly, without waiting on a nixpkgs review:
@@ -27,19 +31,19 @@
       # runs scripts/bump-packaging.mjs; see packaging/linux.md.
       version = "0.15.0";
 
-      # One AppImage per architecture, from the release the version names.
-      appimages = {
+      # One .deb per architecture, from the release the version names.
+      debs = {
         x86_64-linux = {
           suffix = "x64";
-          hash = "sha256-u5KuH+CozgJ1TFuc/Ig6OHwgt9ylS16cs9G/jq2i3Uk=";
+          hash = "sha256-w9xSUsYsFERRwkhKKfBfVwdi/z/HKDQM2j/S3t0nREE=";
         };
         aarch64-linux = {
           suffix = "arm64";
-          hash = "sha256-/N4z63ADqOsCYVQX2EusoJxJ4o2tV8NEyzUAjiwdqZY=";
+          hash = "sha256-+idhQ+j+HWP42kJ7jlyO1GCd1H0z/DMGdwM0sph8NgE=";
         };
       };
 
-      systems = builtins.attrNames appimages;
+      systems = builtins.attrNames debs;
       forEach = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
       # Built out of whichever nixpkgs it is handed: this flake's own for
@@ -47,94 +51,81 @@
       mkOrden =
         pkgs:
         let
-          inherit (appimages.${pkgs.stdenv.hostPlatform.system}) suffix hash;
+          inherit (debs.${pkgs.stdenv.hostPlatform.system}) suffix hash;
+        in
+        pkgs.stdenv.mkDerivation {
+          pname = "orden";
+          inherit version;
 
           src = pkgs.fetchurl {
-            url = "https://github.com/lxorb/orden/releases/download/v${version}/Orden-${version}-linux-${suffix}.AppImage";
+            url = "https://github.com/lxorb/orden/releases/download/v${version}/Orden-${version}-linux-${suffix}.deb";
             inherit hash;
           };
 
-          # Unpacked once, and run from here, so the AppImage's own start script can
-          # be corrected and the .desktop entry and the icons installed into the
-          # profile, which is what makes Orden show up in a launcher.
-          #
-          # The script forces GDK_BACKEND=x11 on everyone, which puts a Wayland
-          # session on Xwayland; without it GTK takes Wayland when there is one and
-          # X11 when there is not, and a GDK_BACKEND the user set still counts.
-          #
-          # The GStreamer it bundles is Ubuntu 22.04's 1.20, which refuses every
-          # plugin newer than itself, and it bundles no plugins: taking it out lets
-          # WebKit load nixpkgs' GStreamer and plugins, the same version as each
-          # other.
-          contents = pkgs.appimageTools.extract {
-            pname = "orden";
-            inherit version src;
-            postExtract = ''
-              chmod -R u+w $out
-              substituteInPlace $out/apprun-hooks/linuxdeploy-plugin-gtk.sh \
-                --replace-fail 'export GDK_BACKEND=x11' ':'
-              rm $out/usr/lib/libgst*-1.0.so*
-            '';
-          };
-        in
-        pkgs.appimageTools.wrapAppImage {
-          pname = "orden";
-          inherit version;
-          src = contents;
+          nativeBuildInputs = with pkgs; [
+            dpkg
+            autoPatchelfHook
+            wrapGAppsHook3
+          ];
 
-          # WebKitGTK plays audio and video through GStreamer. Wayland, EGL and
-          # D-Bus are in appimageTools' own list already, and named here as well
-          # because a window depends on them.
-          #
-          # pandoc is deliberately not pulled in: it is only needed for importing
-          # and exporting DOCX and friends, Orden hides that when it is missing, and
-          # it would roughly double the closure. Anyone who wants it can add pandoc
-          # to their own profile.
-          extraPkgs =
-            pkgs:
-            (with pkgs.gst_all_1; [
+          buildInputs =
+            (with pkgs; [
+              webkitgtk_4_1
+              gtk3
+              libsoup_3
+              glib
+              glib-networking
+              cairo
+              pango
+              gdk-pixbuf
+              dbus
+              openssl
+              xdotool
+              stdenv.cc.cc.lib
+            ])
+            # WebKitGTK plays audio and video through GStreamer;
+            # wrapGAppsHook3 points it at these.
+            ++ (with pkgs.gst_all_1; [
               gstreamer
               gst-plugins-base
               gst-plugins-good
               gst-plugins-bad
               gst-libav
-            ])
-            ++ (with pkgs; [
-              wayland
-              libxkbcommon
-              libGL
-              libglvnd
-              dbus
             ]);
 
-          # GStreamer looks for its plugins in its own store path; in the FHS
-          # environment they are all in /usr/lib.
-          #
-          # WebKitGTK's DMA-BUF renderer wants a libgbm that matches the bundled
-          # WebKit, and nixpkgs' Mesa is not that one: the window comes up blank on
-          # many GPUs. Off unless the user says otherwise, the same as the snap.
-          profile = ''
-            export GST_PLUGIN_SYSTEM_PATH_1_0=/usr/lib/gstreamer-1.0
-            export WEBKIT_DISABLE_DMABUF_RENDERER="''${WEBKIT_DISABLE_DMABUF_RENDERER:-1}"
-          '';
+          dontConfigure = true;
+          dontBuild = true;
 
-          # The program inside is still called nib, and so was this package until
-          # 0.15; `nib` stays as a second name for whoever types it.
-          extraInstallCommands = ''
-            ln -s orden $out/bin/nib
+          # The program keeps the name every install of it has had, nib, so `orden`
+          # is a second name beside it. Tauri's own desktop entry is replaced with
+          # the one beside this file, and its 256x256 icon, which it files under a
+          # scale-2 directory, goes where a theme looks for it.
+          installPhase = ''
+            runHook preInstall
+            install -Dm755 usr/bin/nib $out/bin/nib
+            ln -s nib $out/bin/orden
             install -Dm644 ${./orden.desktop} $out/share/applications/orden.desktop
             for size in 32 128; do
-              install -Dm644 \
-                ${contents}/usr/share/icons/hicolor/"$size"x"$size"/apps/nib.png \
+              install -Dm644 usr/share/icons/hicolor/"$size"x"$size"/apps/nib.png \
                 $out/share/icons/hicolor/"$size"x"$size"/apps/orden.png
             done
-            # A plain 256x256 image, filed by Tauri under a scale-2 directory.
-            install -Dm644 \
-              ${contents}/usr/share/icons/hicolor/256x256@2/apps/nib.png \
+            install -Dm644 usr/share/icons/hicolor/256x256@2/apps/nib.png \
               $out/share/icons/hicolor/256x256/apps/orden.png
+            runHook postInstall
           '';
 
-          passthru = { inherit contents; };
+          # WebKitGTK's DMA-BUF renderer is what leaves a blank window on NVIDIA's
+          # driver, so it is off unless the user has said otherwise. Links and
+          # attachments open with xdg-open. pandoc is deliberately not here: it is
+          # only needed for importing and exporting DOCX and friends, Orden hides
+          # that when it is missing, and anyone who wants it can add it to their
+          # own profile.
+          preFixup = ''
+            gappsWrapperArgs+=(
+              --set-default WEBKIT_DISABLE_DMABUF_RENDERER 1
+              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]}
+            )
+          '';
 
           meta = {
             description = "Markdown editor with realtime inline preview";

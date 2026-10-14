@@ -110,35 +110,24 @@ jobs:
           FLAKE: ${{ steps.flake.outputs.flake }}
         run: |
           nix build --print-build-logs "$FLAKE" -o result
-          nix build "$FLAKE#default.contents" -o contents
           ls -la result/bin
-          test "$(readlink result/bin/nib)" = orden
+          test "$(readlink result/bin/orden)" = nib
+          # What the wrapper sets: no display backend forced on anyone, and the
+          # DMA-BUF renderer off only where nobody said otherwise.
+          cat result/bin/nib
+          if grep -n GDK_BACKEND result/bin/nib; then exit 1; fi
+          grep -q 'WEBKIT_DISABLE_DMABUF_RENDERER=${WEBKIT_DISABLE_DMABUF_RENDERER-' result/bin/nib
+          nix shell nixpkgs#pax-utils -c lddtree result/bin/.nib-wrapped | head -80
           find result/share -type f -o -type l | sort
           nix shell nixpkgs#desktop-file-utils -c desktop-file-validate result/share/applications/orden.desktop
           for size in 32x32 128x128 256x256; do
             test -s "result/share/icons/hicolor/$size/apps/orden.png"
           done
 
-      # What the AppImage itself sets before the program starts, as the flake
-      # corrected it: no GDK_BACKEND forced on a Wayland session, and none of the
-      # GStreamer it bundles in the way of nixpkgs'.
-      - name: What the AppImage sets on its way in
-        run: |
-          cat contents/apprun-hooks/*
-          if grep -n 'export GDK_BACKEND' contents/apprun-hooks/*; then
-            echo "::error::the AppImage still forces a display backend"
-            exit 1
-          fi
-          if ls contents/usr/lib/libgst*; then
-            echo "::error::the AppImage's own GStreamer is still in it"
-            exit 1
-          fi
-          ls contents/usr/lib
-
       # On NixOS, hardware.graphics puts Mesa (or the GPU's own driver) in
-      # /run/opengl-driver, which nixpkgs' libglvnd reads and the FHS environment
-      # passes through. Without one WebKit's web process aborts on its first
-      # frame. The runner gets the same, out of the flake's own nixpkgs.
+      # /run/opengl-driver, which is where nixpkgs' libglvnd looks for one. Without
+      # it WebKit's web process aborts on its first frame. The runner gets the
+      # same, out of the flake's own nixpkgs.
       - name: A graphics driver where NixOS keeps it
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
@@ -151,9 +140,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends xvfb xdotool x11-utils imagemagick sway grim jq
-          # appimageTools runs the app in a bubblewrap FHS environment, and Ubuntu
-          # 24.04 blocks the unprivileged user namespaces it needs by default.
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       - name: It starts on X11
         env:
@@ -166,11 +152,12 @@ jobs:
           GST_DEBUG=2 env -u WAYLAND_DISPLAY nix run "$FLAKE" >x11.log 2>&1 &
           app=$!
 
-          window=$(timeout 120 xdotool search --sync --onlyvisible --class '.' | head -1) || {
+          window=$(timeout 120 xdotool search --sync --onlyvisible --class '.' | head -1)
+          if [ -z "$window" ]; then
             echo "::error::no window on X11 within two minutes"
             cat x11.log
             exit 1
-          }
+          fi
           xprop -id "$window" WM_CLASS WM_NAME _NET_WM_NAME
           # Long enough for the page to load and paint.
           sleep 25
