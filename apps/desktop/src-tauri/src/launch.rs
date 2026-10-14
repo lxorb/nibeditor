@@ -183,6 +183,12 @@ pub fn take_startup_pdfs(window: tauri::Window, pending: tauri::State<'_, Pendin
 /// handled). So the launch is handed to the event loop, to be answered in a turn of its
 /// own, on either engine; see `second_launch`.
 pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
+    // The compositor's token for the launch, kept for the window it brings forward,
+    // whichever of the handlers below gets there first; see linux.rs.
+    #[cfg(target_os = "linux")]
+    if let Some(token) = token_in(&argv) {
+        crate::linux::token_arrived(token);
+    }
     // Asked for from a thread of its own, because from inside the window procedure the
     // runtime runs a task at once, in the middle of the message it is handling.
     let later = app.clone();
@@ -195,6 +201,18 @@ pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
 /// A second launch of the app, which belongs to the one already open: its window
 /// comes forward and takes whatever the launch was asked to open.
 fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
+    // `--quick-add` and `--stop-agents`: a key from any app, pressed by a desktop's own
+    // shortcut where no key reaches the app otherwise; see hotkeys.rs. The key's own
+    // window is what comes forward, if any.
+    let pressed = crate::hotkeys::Which::asked_by(argv);
+    if !pressed.is_empty() {
+        for which in pressed {
+            crate::hotkeys::pressed(app, which, None);
+        }
+        return;
+    }
+    let argv = &without_ours(argv);
+
     // The window, not the webview window, which a window holding a page in a tab
     // is not; see web_tabs.rs. Not for a reminder's press, which the deep link hands
     // to the reminders: a Done is answered out of sight, and a press on the
@@ -215,6 +233,38 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
     let pdfs = crate::handed_pdfs::pdfs_in(argv, std::path::Path::new(cwd));
     hand_over(app, Handed::Pdfs, crate::handed_pdfs::admitted(app, pdfs));
 }
+
+/// Whether the window's page is up and its engine still there: it asked for its pages
+/// once its space restored, and the process behind it has not gone since (stall.rs).
+pub fn page_up(app: &AppHandle, label: &str) -> bool {
+    app.try_state::<Pending>()
+        .is_some_and(|pending| pending.is_listening(label))
+        && !crate::stall::page_gone(label)
+}
+
+/// The compositor's token a second launch carried, where it had one; see handover.rs.
+#[cfg_attr(
+    not(target_os = "linux"),
+    allow(dead_code, reason = "only a Wayland launch carries a token")
+)]
+fn token_in(argv: &[String]) -> Option<String> {
+    argv.iter()
+        .skip(1)
+        .find_map(|one| one.strip_prefix(TOKEN_FLAG))
+        .filter(|token| !token.is_empty())
+        .map(str::to_owned)
+}
+
+/// A launch's arguments without the app's own, which no page or file is.
+fn without_ours(argv: &[String]) -> Vec<String> {
+    argv.iter()
+        .filter(|one| !one.starts_with(TOKEN_FLAG) && !crate::hotkeys::Which::is_flag(one))
+        .cloned()
+        .collect()
+}
+
+/// How a second launch's token travels with its arguments.
+pub const TOKEN_FLAG: &str = "--activation-token=";
 
 /// What arrived for the app, from whichever way it came, opened in the window in
 /// front.
@@ -459,7 +509,10 @@ fn free_label(app: &AppHandle) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{handed_by, is_document_window, receiver, Handed, Handover, Pending, Seen};
+    use super::{
+        handed_by, is_document_window, receiver, token_in, without_ours, Handed, Handover, Pending,
+        Seen,
+    };
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
         Seen {
@@ -556,6 +609,25 @@ mod tests {
 
         pending.forget("nib-2");
         assert!(!pending.is_listening("nib-2"));
+    }
+
+    #[test]
+    fn a_launch_token_travels_with_the_arguments_and_is_taken_off_them() {
+        let argv: Vec<String> = [
+            "nib",
+            "https://orden.so",
+            "--activation-token=abc",
+            "--quick-add",
+        ]
+        .map(String::from)
+        .into();
+        assert_eq!(token_in(&argv).as_deref(), Some("abc"));
+        assert_eq!(
+            without_ours(&argv),
+            vec!["nib".to_owned(), "https://orden.so".to_owned()]
+        );
+        let bare: Vec<String> = ["nib", "--activation-token="].map(String::from).into();
+        assert_eq!(token_in(&bare), None);
     }
 
     /// nib opens nothing from outside its spaces, so a note's path on a command line is

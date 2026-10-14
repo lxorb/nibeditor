@@ -1,0 +1,217 @@
+name: wayland
+
+# Orden on Linux the way a Wayland desktop runs it, with no X server anywhere: every
+# package a Linux reader installs, started under a headless sway with Xwayland off,
+# DISPLAY and GDK_BACKEND unset, and three screens - one portrait at 1.77, one at 1, one
+# at 1.75 - the desk the first Hyprland report came from. See scripts/wayland-launch.sh
+# for what each run checks, and src-tauri/src/linux.rs and hotkeys/portal.rs for what
+# it checks it of.
+#
+#   deb       Ubuntu 24.04's own WebKitGTK, and the desktop portal's global shortcuts
+#             (a stand-in portal, scripts/wayland-portal.py): the key bound, pressed,
+#             and quick add up.
+#   appimage  Arch, the newest Mesa and Wayland there are, against the libraries the
+#             AppImage carries: where it carries its own libwayland, Mesa's EGL cannot
+#             make a display and the window never comes ("Could not create default EGL
+#             display: EGL_BAD_PARAMETER", NixOS under Hyprland, 2026-10-14). No portal
+#             for keys, so `--quick-add` handed to the running app instead.
+#   rpm       Fedora's own WebKitGTK and Mesa.
+#
+# The packages are built the way release.yml builds them, on the same Ubuntu, as a
+# debug build: the bundles are the same and the compile is a third of the time.
+#
+# The Nix flake has a job of its own, launch under Wayland included, in
+# validate-linux-packaging.yml; this one leaves packaging/nix to it.
+on:
+  pull_request:
+    paths:
+      - 'apps/desktop/src-tauri/**'
+      - 'apps/desktop/src/lib/web-tab/**'
+      - 'apps/desktop/package.json'
+      - 'pnpm-lock.yaml'
+      - 'packaging/**'
+      - '!packaging/nix/**'
+      - 'scripts/wayland-*'
+      - '.github/workflows/wayland.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/desktop/src-tauri/**'
+      - 'apps/desktop/src/lib/web-tab/**'
+      - 'apps/desktop/package.json'
+      - 'pnpm-lock.yaml'
+      - 'packaging/**'
+      - '!packaging/nix/**'
+      - 'scripts/wayland-*'
+      - '.github/workflows/wayland.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: wayland-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# Nothing here writes anywhere.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+          key: wayland
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev patchelf xdg-utils
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build the app and its Linux packages
+        env:
+          CARGO_PROFILE_DEV_DEBUG: line-tables-only
+        run: >-
+          pnpm --filter @nib/desktop exec tauri build --debug --bundles deb,rpm,appimage
+          --config '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      # What the AppImage brings of its own that a Wayland desktop's graphics stack must
+      # bring instead: the window system's client libraries and the GL ones sit under
+      # the host's Mesa or NVIDIA driver, and a copy from this Ubuntu breaks them.
+      - name: The AppImage carries no window system or GL of its own
+        working-directory: apps/desktop/src-tauri/target/debug/bundle/appimage
+        run: |
+          ls -la
+          ./*.AppImage --appimage-extract > /dev/null
+          echo "::group::usr/lib"
+          ls squashfs-root/usr/lib | sort
+          echo "::endgroup::"
+          bad=$(find squashfs-root -name 'libwayland-*' -o -name 'libEGL*' -o -name 'libGL*' -o -name 'libgbm*' -o -name 'libdrm*' -o -name 'libxkbcommon*' | sort)
+          if [ -n "$bad" ]; then
+            echo "::error::the AppImage carries libraries the host's must be used for:"
+            echo "$bad"
+            exit 1
+          fi
+          if grep -rn 'GDK_BACKEND' squashfs-root/AppRun squashfs-root/apprun-hooks 2>/dev/null; then
+            echo "::error::the AppImage sets GDK_BACKEND, which keeps GTK off Wayland"
+            exit 1
+          fi
+          rm -rf squashfs-root
+          echo "nothing of the window system or GL in the AppImage"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-packages
+          if-no-files-found: error
+          path: |
+            apps/desktop/src-tauri/target/debug/bundle/deb/*.deb
+            apps/desktop/src-tauri/target/debug/bundle/rpm/*.rpm
+            apps/desktop/src-tauri/target/debug/bundle/appimage/*.AppImage
+
+  deb:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: linux-packages
+          path: packages
+      - name: The .deb, sway, Mesa and a session bus
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ./packages/deb/*.deb sway dbus python3-gi gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0
+      - name: Under Wayland, the portal's key reaching quick add
+        env:
+          OUT: wayland-out
+          PORTAL: '1'
+          KEYS: 'the desktop portal, version 2'
+          QUICK_ADD_FLOATS: '1'
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wayland-deb
+          path: wayland-out
+          if-no-files-found: ignore
+
+  appimage:
+    needs: build
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    permissions:
+      contents: read
+    steps:
+      - name: sway, Mesa and a session bus, as Arch has them today
+        run: pacman -Syu --noconfirm --needed sway mesa dbus python gtk3 git
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: linux-packages
+          path: packages
+      # A container has no FUSE to mount it with, so it is unpacked and its own AppRun
+      # started: the same hooks, the same libraries, the same program.
+      - name: Unpacked
+        run: |
+          cd packages/appimage
+          chmod +x ./*.AppImage
+          ./*.AppImage --appimage-extract > /dev/null
+      - name: Under Wayland with no portal, `--quick-add` reaching the running app
+        env:
+          OUT: wayland-out
+          KEYS: 'no desktop portal'
+        run: |
+          app="$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+          SECOND="$app --quick-add" dbus-run-session -- bash scripts/wayland-launch.sh "$app"
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wayland-appimage
+          path: wayland-out
+          if-no-files-found: ignore
+
+  rpm:
+    needs: build
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: linux-packages
+          path: packages
+      - name: The .rpm, sway, Mesa and a session bus
+        run: dnf install -y ./packages/rpm/*.rpm sway mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
+      - name: Under Wayland
+        env:
+          OUT: wayland-out
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wayland-rpm
+          path: wayland-out
+          if-no-files-found: ignore

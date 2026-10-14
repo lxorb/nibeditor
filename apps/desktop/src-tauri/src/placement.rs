@@ -181,12 +181,14 @@ pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
         return config;
     };
 
-    config.x = Some(placed.x);
-    config.y = Some(placed.y);
+    if positions() {
+        config.x = Some(placed.x);
+        config.y = Some(placed.y);
+        config.center = false;
+    }
     config.width = placed.width;
     config.height = placed.height;
     config.maximized = placed.maximized;
-    config.center = false;
     config
 }
 
@@ -201,10 +203,27 @@ pub fn reopened<'a, R: tauri::Runtime, M: Manager<R>>(
     let Some(placed) = last_place(app) else {
         return builder;
     };
+    let builder = if positions() {
+        builder.position(placed.x, placed.y)
+    } else {
+        builder
+    };
     builder
-        .position(placed.x, placed.y)
         .inner_size(placed.width, placed.height)
         .maximized(placed.maximized)
+}
+
+/// Whether a window may be put where it was: everywhere but Wayland, where the
+/// compositor places every window and an app is never told where one is.
+fn positions() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        crate::linux::places_windows()
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        true
+    }
 }
 
 /// The place the file says, made to fit the screens there are, and noted as where a
@@ -216,7 +235,34 @@ fn last_place(app: &AppHandle) -> Option<Placement> {
             *remembered = Some(placed);
         }
     }
-    Some(onto(placed, &areas(app)))
+    let screens = areas(app);
+    Some(if positions() {
+        onto(placed, &screens)
+    } else {
+        sized_for_any(placed, &screens)
+    })
+}
+
+/// Where the compositor places the window and never says on which screen - Wayland's
+/// way - its place says nothing, and the screen at its corner may be a portrait one
+/// beside the screen it opens on. So it is only kept no bigger than the biggest screen.
+fn sized_for_any(placed: Placement, screens: &[Area]) -> Placement {
+    let widest = screens
+        .iter()
+        .map(|screen| screen.width)
+        .fold(0.0, f64::max);
+    let tallest = screens
+        .iter()
+        .map(|screen| screen.height)
+        .fold(0.0, f64::max);
+    if widest <= 0.0 || tallest <= 0.0 {
+        return placed;
+    }
+    Placement {
+        width: placed.width.min(widest),
+        height: placed.height.min(tallest),
+        ..placed
+    }
 }
 
 /// Whether the config says where the window goes, which the app's own config never
@@ -414,8 +460,21 @@ pub fn built<R: Runtime, M: Manager<R>>(
 /// app - a key the window in front receives - and asks again, which no lock refuses: so
 /// under the switch this must never be reached at all, and nothing else in the crate
 /// asks a window for the keyboard; see the test below.
+///
+/// On Wayland with the compositor's token for the press that asked, which is the only
+/// way a window there may take the front; see linux.rs.
 pub fn raised<R: Runtime>(window: &Window<R>) {
     if away().is_some() {
+        return;
+    }
+    #[cfg(target_os = "linux")]
+    if let Some(token) = crate::linux::token_for_raise() {
+        let forward = window.clone();
+        let _ = window.run_on_main_thread(move || {
+            crate::linux::hand_gtk(&token);
+            let _ = forward.unminimize();
+            let _ = forward.set_focus();
+        });
         return;
     }
     let _ = window.unminimize();
@@ -717,6 +776,25 @@ mod tests {
     fn the_top_edge_is_never_above_the_screen() {
         let high = placed(100.0, -300.0, 1000.0, 600.0);
         assert_eq!(onto(high, &[LAPTOP]), placed(100.0, 0.0, 1000.0, 600.0));
+    }
+
+    /// Wayland's three screens, one of them portrait at its corner: the window keeps its
+    /// size for the screen it opens on, which the compositor picks.
+    #[test]
+    fn where_the_compositor_places_it_only_the_biggest_screen_bounds_it() {
+        let portrait = Area {
+            x: 0.0,
+            y: 0.0,
+            width: 813.0,
+            height: 1446.0,
+        };
+        let was = placed(0.0, 0.0, 1180.0, 760.0);
+        assert_eq!(sized_for_any(was, &[portrait, MONITOR]), was);
+        assert_eq!(
+            sized_for_any(placed(0.0, 0.0, 4000.0, 3000.0), &[portrait, MONITOR]),
+            placed(0.0, 0.0, MONITOR.width, portrait.height)
+        );
+        assert_eq!(sized_for_any(was, &[]), was);
     }
 
     /// A screen with a lower resolution than last time.

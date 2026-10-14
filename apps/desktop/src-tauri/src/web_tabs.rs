@@ -1053,17 +1053,27 @@ fn page_built(
     let _ = (app, store);
 
     // Edge by edge in the screen's pixels, as every placement after it; see web_follow.rs.
+    // In GTK's own pixels on Linux, where the page is then laid over the window's.
+    let bounds = crate::web_follow::Bounds::from(pane);
     let scale = window.scale_factor().unwrap_or(1.0);
-    let (left, top, width, height) =
-        crate::web_follow::edges(crate::web_follow::Bounds::from(pane), scale);
-    window
+    #[cfg(target_os = "linux")]
+    let scale_built = 1.0;
+    #[cfg(not(target_os = "linux"))]
+    let scale_built = scale;
+    let (left, top, width, height) = crate::web_follow::edges(bounds, scale_built);
+    let view = window
         .add_child(
             builder,
             PhysicalPosition::new(left, top),
             PhysicalSize::new(width, height),
         )
-        .map(|view| crate::page_style::worn(&view))
-        .map_err(|error| format!("that page could not be opened: {error}"))
+        .map_err(|error| format!("that page could not be opened: {error}"))?;
+    crate::page_style::worn(&view);
+    #[cfg(target_os = "linux")]
+    let _ = crate::web_follow::put(&view, bounds, scale);
+    #[cfg(not(target_os = "linux"))]
+    let _ = scale;
+    Ok(())
 }
 
 /// Starts the browser process every web tab shares while the window's own page is still
@@ -1802,13 +1812,12 @@ pub fn web_place(
     let scale = window
         .scale_factor()
         .map_err(|error| format!("that page could not be placed: {error}"))?;
-    let placed = crate::web_follow::edges(bounds, scale);
-    let (_, _, width, height) = placed;
+    let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
     // Each step says itself while it runs, so a stall names the one that waited; see
     // stall.rs.
     {
         let _doing = crate::stall::doing("web_place: bounds");
-        view.set_bounds(crate::web_follow::rect_of(placed))
+        crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 

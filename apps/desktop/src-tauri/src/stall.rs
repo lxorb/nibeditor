@@ -25,8 +25,9 @@
 //!
 //! The page's own main thread is the window's business; see lib/stalls.ts.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use tauri::AppHandle;
@@ -437,9 +438,57 @@ pub fn watch_page(app: &AppHandle, webview: &tauri::Webview, whose: &'static str
     });
 }
 
+/// Says in the log when the web process behind the window's own page goes - crashed, or
+/// ended by the system for its memory, or aborted at its start the way `WebKitGTK` does
+/// where it cannot make an EGL display - and notes the window as one with no page to
+/// answer in. `WebKitGTK`'s `web-process-terminated`.
+#[cfg(all(target_os = "linux", not(feature = "cef")))]
+pub fn watch_page(app: &AppHandle, webview: &tauri::Webview, whose: &'static str) {
+    use webkit2gtk::WebViewExt as _;
+
+    let app = app.clone();
+    let label = webview.label().to_owned();
+    let _ = webview.with_webview(move |platform| {
+        platform
+            .inner()
+            .connect_web_process_terminated(move |_, reason| {
+                gone(&label);
+                say(
+                    &app,
+                    "error",
+                    &format!("stall: {whose} page ended ({reason:?})"),
+                );
+            });
+    });
+}
+
 /// Every other engine: nothing to listen to.
-#[cfg(not(all(windows, not(feature = "cef"))))]
+#[cfg(not(any(
+    all(windows, not(feature = "cef")),
+    all(target_os = "linux", not(feature = "cef"))
+)))]
 pub fn watch_page(_app: &AppHandle, _webview: &tauri::Webview, _whose: &'static str) {}
+
+/// The windows whose page's engine has gone, by label.
+static GONE: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
+
+/// Notes the window's page as gone.
+#[cfg_attr(
+    not(target_os = "linux"),
+    allow(dead_code, reason = "only WebKitGTK's page is noted gone")
+)]
+fn gone(label: &str) {
+    GONE.lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .insert(label.to_owned());
+}
+
+/// Whether the window's page has gone with its engine.
+pub fn page_gone(label: &str) -> bool {
+    GONE.lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .contains(label)
+}
 
 #[cfg(test)]
 mod tests {

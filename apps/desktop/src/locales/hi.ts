@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const hi: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'दूसरे ऐप्स से: {key}',
+  'From other apps: set in your system settings': 'दूसरे ऐप्स से: सिस्टम सेटिंग्स में तय करें',
+  'From other apps: bind {command} in your system settings':
+    'दूसरे ऐप्स से: सिस्टम सेटिंग्स में {command} जोड़ें',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ज़रूरी',
   'Add to Essentials': 'ज़रूरी में जोड़ें',

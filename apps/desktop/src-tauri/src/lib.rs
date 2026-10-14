@@ -110,11 +110,12 @@ mod handover;
 mod handed_pdfs;
 mod highlights;
 mod history;
-// The global shortcut plugin, added once for whoever holds a key from any app; see hotkeys.rs.
+// The keys from any app, through the system or the desktop portal; see hotkeys.rs.
 #[cfg(desktop)]
 mod hotkeys;
 #[cfg(desktop)]
 mod keyboard;
+// What a Linux desktop, and Wayland above all, needs beyond GTK; see linux.rs.
 mod lane;
 #[cfg(desktop)]
 mod launch;
@@ -123,6 +124,8 @@ mod lifecycle;
 #[cfg(target_os = "macos")]
 mod lights;
 mod links;
+#[cfg(target_os = "linux")]
+mod linux;
 mod logs;
 mod matcher;
 // `nib mcp`, the server an agent's client runs; main.rs hands it the process before
@@ -357,6 +360,8 @@ macro_rules! desktop_commands {
             agents::shell::agents_shell,
             agents::shell::agents_hold,
             quick_add::quick_add_key,
+            hotkeys::global_keys,
+            hotkeys::global_keys_change,
             quick_add::quick_add_hide,
             quick_add::quick_add_tall,
             agents::shell::tray_keep,
@@ -606,6 +611,11 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(feature = "cef")]
     engine::gate::begin();
 
+    // Before GTK and before any thread, because both read the environment it sets: the
+    // renderer NVIDIA's driver needs, and the launcher's token; see linux.rs.
+    #[cfg(target_os = "linux")]
+    linux::prepare();
+
     // First, so that the one step nothing inside the process can time - the
     // machine loading the binary before any of this ran - is on the trace as well;
     // see trace.rs. Off unless NIB_TRACE_STARTUP says otherwise.
@@ -839,6 +849,11 @@ fn ready(
 
     let handle = app.handle();
 
+    // Which display GTK opened, asked here on the event loop's thread before any window is
+    // placed; see linux.rs.
+    #[cfg(target_os = "linux")]
+    linux::learn();
+
     // What the page will ask for first, read on a thread of its own from here, while
     // the webview below starts; see ahead.rs.
     #[cfg(desktop)]
@@ -891,6 +906,7 @@ fn ready(
         let args: Vec<String> = std::env::args().collect();
         let cwd = std::env::current_dir().unwrap_or_default();
         launch::hold_handed(handle, &args, &cwd);
+        quick_add::asked_at_launch(&args);
         trace::mark(if web_handed::for_a_link(&args) {
             "launch arguments, a link's"
         } else {

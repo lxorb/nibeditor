@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'De outros apps: {key}',
+  'From other apps: set in your system settings':
+    'De outros apps: defina nas configurações do sistema',
+  'From other apps: bind {command} in your system settings':
+    'De outros apps: associe {command} nas configurações do sistema',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essenciais',
   'Add to Essentials': 'Adicionar aos Essenciais',

@@ -20,6 +20,13 @@
 //! there already, and renaming it is not adding one. One that names another program is
 //! the reader's, and stays. A program never ends with two entries for this app.
 //!
+//! **An older copy is this app too.** On Linux the program a client was given can stop
+//! being this app's while it is still the same app: a Nix update leaves the old store
+//! path behind for the garbage collector, an `AppImage` moves on to the next release, and
+//! an `AppImage` of an earlier version named its own mount, which is gone the moment it
+//! quits (mcp/program.rs). An entry naming such a copy is given this one's program on
+//! launch, the way an entry under the old name is given the new name.
+//!
 //! **Only the app somebody installed**: a release under the shipped identifier, not a
 //! probe and not a development build, whose program would be a copy about to be deleted.
 //! A test points it at homes of its own with `NIB_ENROLL_HOME`, and nothing else does;
@@ -138,6 +145,8 @@ enum Held {
     None,
     /// One that starts this app's own program.
     Ours,
+    /// One that starts an older copy of this app, which this one replaces.
+    Older,
     /// One that starts something else: the reader's.
     Theirs,
 }
@@ -146,6 +155,12 @@ fn held(program: &Program, name: &str, folder: &Path, nib: &Path, home: Option<&
     match entry(program, name, folder, home) {
         None => Held::None,
         Some(said) if said.contains(nib.to_string_lossy().as_ref()) => Held::Ours,
+        Some(said)
+            if crate::mcp::program::command_in(&said)
+                .is_some_and(|command| crate::mcp::program::older_copy(command, nib)) =>
+        {
+            Held::Older
+        }
         Some(_) => Held::Theirs,
     }
 }
@@ -162,7 +177,15 @@ fn remove(program: &Program, tool: Tool, name: &str, folder: &Path, home: Option
 /// agent is never left without the app. Where the new name is the reader's own, the old
 /// entry stays as it is, the one way left to reach the app.
 pub fn carry_over(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
-    if held(program, OLD_NAME, folder, nib, home) != Held::Ours {
+    // An older copy under the new name: this one's program in its place.
+    if held(program, NAME, folder, nib, home) == Held::Older {
+        remove(program, tool, NAME, folder, home);
+        let _ = run_to_end(homed(program, &add_args(tool, nib), folder, home), TELLING);
+    }
+    if !matches!(
+        held(program, OLD_NAME, folder, nib, home),
+        Held::Ours | Held::Older
+    ) {
         return;
     }
     if held(program, NAME, folder, nib, home) == Held::None {
@@ -178,7 +201,10 @@ pub fn carry_over(program: &Program, tool: Tool, folder: &Path, nib: &Path, home
 pub fn enroll(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
     carry_over(program, tool, folder, nib, home);
     if entry(program, NAME, folder, home).is_some()
-        || held(program, OLD_NAME, folder, nib, home) == Held::Ours
+        || matches!(
+            held(program, OLD_NAME, folder, nib, home),
+            Held::Ours | Held::Older
+        )
     {
         return;
     }
@@ -189,7 +215,10 @@ pub fn enroll(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Op
 /// own program.
 pub fn unenroll(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
     for name in [NAME, OLD_NAME] {
-        if held(program, name, folder, nib, home) == Held::Ours {
+        if matches!(
+            held(program, name, folder, nib, home),
+            Held::Ours | Held::Older
+        ) {
             remove(program, tool, name, folder, home);
         }
     }

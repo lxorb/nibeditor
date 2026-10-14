@@ -79,8 +79,58 @@ pub fn handed_over(identifier: &str) -> bool {
     }
 }
 
-/// Elsewhere the plugin talks over a socket that does not wait on a window thread.
-#[cfg(not(windows))]
+/// On Linux the plugin hands a launch over on the session bus, which waits on no window
+/// thread, so a frozen nib never holds a launch up there. What the plugin's hand-over
+/// lacks is the compositor's token for the launch, without which Wayland lets the
+/// running window flash rather than come forward: so a launch that has one makes the
+/// same call itself, before anything of the app is built, with the token beside the
+/// arguments (see linux.rs). A launch without one leaves it to the plugin.
+#[cfg(target_os = "linux")]
+pub fn handed_over(identifier: &str) -> bool {
+    let Some(token) = crate::linux::launched_with() else {
+        return false;
+    };
+    let mut launch: Vec<String> = std::env::args().collect();
+    launch.push(format!("{}{token}", crate::launch::TOKEN_FLAG));
+    on_the_bus(identifier, &launch).unwrap_or(false)
+}
+
+/// The plugin's own call, under the plugin's own names (tauri-plugin-single-instance's
+/// `platform_impl/linux.rs`): answers whether a running nib took the launch.
+#[cfg(target_os = "linux")]
+fn on_the_bus(identifier: &str, launch: &[String]) -> zbus::Result<bool> {
+    let name = format!("{identifier}.SingleInstance");
+    let path = format!("/{}", name.replace('.', "/").replace('-', "_"));
+    let bus = zbus::blocking::Connection::session()?;
+    let taken: bool = bus
+        .call_method(
+            Some("org.freedesktop.DBus"),
+            "/org/freedesktop/DBus",
+            Some("org.freedesktop.DBus"),
+            "NameHasOwner",
+            &(name.as_str(),),
+        )?
+        .body()
+        .deserialize()?;
+    if !taken {
+        return Ok(false);
+    }
+    let cwd = std::env::current_dir()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .into_owned();
+    bus.call_method(
+        Some(name.as_str()),
+        path.as_str(),
+        Some("org.SingleInstance.DBus"),
+        "ExecuteCallback",
+        &(launch, cwd.as_str()),
+    )?;
+    Ok(true)
+}
+
+/// A Mac's plugin talks over a socket that does not wait on a window thread.
+#[cfg(not(any(windows, target_os = "linux")))]
 pub fn handed_over(_identifier: &str) -> bool {
     false
 }

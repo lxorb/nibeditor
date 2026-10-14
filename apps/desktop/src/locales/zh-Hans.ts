@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '从其他应用：{key}',
+  'From other apps: set in your system settings': '从其他应用：在系统设置中设定',
+  'From other apps: bind {command} in your system settings':
+    '从其他应用：在系统设置中绑定 {command}',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: '常驻项',
   'Add to Essentials': '添加到常驻项',

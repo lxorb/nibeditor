@@ -2624,7 +2624,9 @@ dependencies = [
  "dirs",
  "file-id",
  "flate2",
+ "gdkwayland-sys",
  "getrandom 0.3.4",
+ "gtk",
  "hkdf",
  "hmac",
  "javascriptcore-rs",
@@ -2669,6 +2671,7 @@ dependencies = [
  "windows-core 0.61.2",
  "windows-registry 0.6.1",
  "x25519-dalek",
+ "zbus 5.19.0",
  "zeroize",
  "zip",
 ]

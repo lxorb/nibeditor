@@ -101,7 +101,7 @@ mod snapshot;
         reason = "only an engine with agent tabs has a call to stop"
     )
 )]
-mod stop;
+pub(crate) mod stop;
 
 #[cfg(any(windows, feature = "cef"))]
 pub mod engines;

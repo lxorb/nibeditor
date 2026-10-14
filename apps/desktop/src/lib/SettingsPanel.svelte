@@ -36,6 +36,7 @@
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
   import { Rebind } from './settings/rebind.svelte'
+  import { globalKeys, noteFor } from './global-keys.svelte'
   import { hearTaps } from './tapped'
   import { landing } from './settings/landing.svelte'
   import { places as paneRows } from './settings/places'
@@ -395,6 +396,12 @@
   // Nothing is left listening behind a closed panel or a pane that moved on.
   $effect(() => {
     if (!settings.open || settings.section !== 'shortcuts') rebind.forget()
+  })
+
+  // What reaches the app from other apps, asked the first time the pane is open; see
+  // global-keys.svelte.ts.
+  $effect(() => {
+    if (settings.open && settings.section === 'shortcuts') globalKeys.follow()
   })
 
   /** A window that grows into place on a desktop; a page that rises from the
@@ -1142,12 +1149,18 @@
       {#each group.rows as entry (entry.id)}
         {@const key = shortcuts.keyFor(entry.id)}
         {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
+        {@const reach = noteFor(globalKeys.keys, entry.id, shown(key))}
         <div class="nib-setting setting shortcut">
           <span class="name">
             {entry.label()}
             {#if entry.alias}<small>{t('Second key')}</small>{/if}
             {#if entry.why}<small>{entry.why()}</small>{/if}
             {#if warning}<small class="caution">{warning}</small>{/if}
+            {#if reach}<small class="reach"
+                >{reach.text}{#if reach.change}
+                  <button class="link" onclick={() => globalKeys.change()}>{t('Change')}</button
+                  >{/if}</small
+              >{/if}
             {#if rebind.turnedDown?.id === entry.id}<small class="warn"
                 >{rebind.turnedDown.reason}</small
               >{/if}
@@ -1862,6 +1875,21 @@
      nobody has done yet reads as breakage. Quiet is `--muted-strong`, which is a
      colour somebody can read; the mix it used to be came out at 1.2:1 against
      the surface, which is a warning nobody can. */
+  /* What reaches the app from other apps, where the system decides that: a command
+     to bind can be long, and wraps rather than widening the row. */
+  .setting .name small.reach {
+    overflow-wrap: anywhere;
+  }
+
+  .setting .name small.reach .link {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--accent);
+    cursor: default;
+  }
+
   .setting .name small.caution {
     color: var(--muted-strong);
   }

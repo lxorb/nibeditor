@@ -101,10 +101,6 @@ struct Shell {
     words: Words,
     /// The stop's key, as the window last asked for it.
     key: Option<String>,
-    /// The key the system holds for the stop now.
-    registered: Option<String>,
-    /// Whether the global shortcut plugin is in the app yet.
-    shortcuts: bool,
     /// The window hidden for the agents, by its label.
     hidden: Option<String>,
     /// Whether closing the window has been said this run.
@@ -331,6 +327,7 @@ fn let_go(app: &AppHandle) {
 /// not in front, and the stop.
 fn news(app: &AppHandle, event: Event) {
     let words = with(|shell| shell.words.clone());
+    let question = matches!(event, Event::Asked { .. });
     let (title, body) = match event {
         Event::Asked { approval } if approval.category == Category::Pairing => (
             words.pairing.replace("{client}", &approval.summary),
@@ -345,12 +342,19 @@ fn news(app: &AppHandle, event: Event) {
     };
     // Off the thread that said it, which may be the event loop's own: whether a window
     // is in front is asked of the loop.
+    //
+    // And a question only where a window has a page to answer it in: one whose page never
+    // came up, or whose engine went, would be asked to approve something it cannot show.
     let app = app.clone();
     std::thread::spawn(move || {
-        let in_front = crate::launch::document_windows(&app)
+        let windows = crate::launch::document_windows(&app);
+        let in_front = windows
             .iter()
             .any(|window| window.is_focused().unwrap_or(false));
-        if !in_front {
+        let answerable = windows
+            .iter()
+            .any(|window| crate::launch::page_up(&app, window.label()));
+        if !in_front && (answerable || !question) {
             notify(&app, title, body);
         }
     });
@@ -379,41 +383,11 @@ pub fn notify(app: &AppHandle, title: String, body: String) {
     let _ = built.show();
 }
 
-/// The stop's key from any app, while an agent is connected and never otherwise. The
-/// global shortcut plugin is added the first time it is needed, on this thread.
+/// The stop's key from any app, while an agent is connected and never otherwise; see
+/// hotkeys.rs, which holds it.
 fn key(app: &AppHandle, on: bool) {
-    use tauri_plugin_global_shortcut::{GlobalShortcutExt as _, ShortcutState};
-
-    let (wanted, registered, added) = with(|shell| {
-        let wanted = if on { shell.key.clone() } else { None };
-        (wanted, shell.registered.clone(), shell.shortcuts)
-    });
-    if wanted == registered {
-        return;
-    }
-    if let Some(old) = &registered {
-        if added {
-            let _ = app.global_shortcut().unregister(old.as_str());
-        }
-    }
-    let mut held = None;
-    if let Some(new) = wanted {
-        let ready = added || crate::hotkeys::plugin_added(app);
-        with(|shell| shell.shortcuts = ready);
-        let stopping = ready
-            && app
-                .global_shortcut()
-                .on_shortcut(new.as_str(), |app, _, event| {
-                    if event.state == ShortcutState::Pressed {
-                        super::stop::stop(app);
-                    }
-                })
-                .is_ok();
-        if stopping {
-            held = Some(new);
-        }
-    }
-    with(|shell| shell.registered = held);
+    let wanted = with(|shell| if on { shell.key.clone() } else { None });
+    let _ = crate::hotkeys::hold(app, crate::hotkeys::Which::StopAgents, wanted);
 }
 
 /// The tray's id.

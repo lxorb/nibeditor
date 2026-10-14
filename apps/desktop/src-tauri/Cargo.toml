@@ -37,7 +37,8 @@ missing_docs = "warn"
 # (web_keys.rs), which the runtime offers no event for. And asking the system when it
 # last had input and which window is in front, on Windows and a Mac, so a web login is
 # not handed away from somebody typing in a page (src/presence.rs). And the shape a
-# web tab's page is cut to round the app's layers over it (src/web_cut.rs). None of
+# web tab's page is cut to round the app's layers over it (src/web_cut.rs). And on
+# Linux, the compositor's token handed to GTK's Wayland display (src/linux.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
@@ -379,6 +380,15 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
 javascriptcore-rs = "=1.1.2"
+# The desktop portal's global shortcuts, the only key from any app a Wayland session
+# hands over, and the token-carrying second launch, both on the session bus: zbus's
+# blocking API, which the single instance and notification plugins already build here,
+# rather than ashpd on top of it. GTK and its Wayland display for the compositor's token
+# when a window comes forward, both what tao already builds with. See hotkeys/portal.rs,
+# handover.rs and linux.rs.
+zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
+gtk = "0.18"
+gdkwayland-sys = "0.18"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # What a file *is*, apart from where it is: the volume and the file id, asked of an open
