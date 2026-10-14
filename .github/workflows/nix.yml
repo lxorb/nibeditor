@@ -102,6 +102,18 @@ jobs:
           FLAKE: ${{ steps.flake.outputs.flake }}
         run: nix flake check --all-systems --print-build-logs "$FLAKE"
 
+      # Nix refuses to run a flake from GitHub whose lock file it would have to
+      # change, so the committed flake.lock has to be the one these commands
+      # settle on.
+      - name: flake.lock is committed and current
+        if: startsWith(steps.flake.outputs.flake, 'path:')
+        run: |
+          git status --porcelain packaging/nix
+          if [ -n "$(git status --porcelain packaging/nix/flake.lock)" ] && [ -z "${{ inputs.artifact }}" ]; then
+            echo "::error::packaging/nix/flake.lock is missing or stale"
+            exit 1
+          fi
+
       # The other architecture only evaluates here; its own runner builds it.
       - name: The ${{ matrix.other }} package evaluates
         env:
@@ -164,6 +176,7 @@ jobs:
             *.png
             *.log
             *.json
+            packaging/nix/flake.lock
           if-no-files-found: warn
 
   # The flake as it was on 0.13.1, which wrapped the AppImage: the error a NixOS
@@ -194,7 +207,7 @@ jobs:
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           nix build --no-write-lock-file "$FLAKE" -o result
       - run: |
-          if bash scripts/nix-start.sh ${{ matrix.mode }} "$FLAKE"; then
+          if NIX_RUN_FLAGS=--no-write-lock-file bash scripts/nix-start.sh ${{ matrix.mode }} "$FLAKE"; then
             echo "::error::the 0.13.1 flake started"
             exit 1
           fi
