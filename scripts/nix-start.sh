@@ -10,7 +10,14 @@
 #
 # sway is wlroots, like Hyprland, and it says what each window is: `shell` is
 # xdg_shell for a Wayland client and xwayland for an X11 one. Leaves <mode>.log,
-# <mode>.png and <mode>.json in the working directory.
+# <mode>.png, <mode>.json and <mode>.env in the working directory.
+#
+# With STRANGER_PLUGINS set to a folder of shared libraries that are not
+# GStreamer's, the app is started with both of GStreamer's plugin paths pointing
+# at it, the way a NixOS profile's lib/ full of Qt and KDE plugins reaches a
+# session. The app's environment must have neither, and with GST_INSPECT set,
+# GStreamer itself is started in exactly that environment and must load its own
+# plugins and nothing else.
 set -euo pipefail
 
 mode=${1:?wayland or x11}
@@ -22,6 +29,11 @@ case "$mode" in
   x11) xwayland=enable shell=xwayland drop=WAYLAND_DISPLAY ;;
   *) echo "no mode $mode" >&2; exit 2 ;;
 esac
+
+stranger=""
+if [ -n "${STRANGER_PLUGINS:-}" ]; then
+  stranger="GST_PLUGIN_PATH=$STRANGER_PLUGINS GST_PLUGIN_SYSTEM_PATH_1_0=$STRANGER_PLUGINS"
+fi
 
 export XDG_RUNTIME_DIR=$(mktemp -d)
 chmod 700 "$XDG_RUNTIME_DIR"
@@ -40,7 +52,7 @@ export SWAYSOCK
 
 # Started by sway, so it gets sway's own WAYLAND_DISPLAY and, with Xwayland on,
 # its DISPLAY; the other one is taken away.
-swaymsg exec "env -u $drop GST_DEBUG=2 nix run '$flake' >'$out/$mode.log' 2>&1" >/dev/null
+swaymsg exec "env -u $drop $stranger nix run '$flake' >'$out/$mode.log' 2>&1" >/dev/null
 
 views='[recurse(.nodes[]?, .floating_nodes[]?) | select(.pid? != null and (.type == "con" or .type == "floating_con"))]'
 for _ in $(seq 180); do
@@ -61,17 +73,49 @@ else
   sleep 15
   WAYLAND_DISPLAY=$(cd "$XDG_RUNTIME_DIR" && ls wayland-? | head -1) grim "$out/$mode.png"
   pid=$(jq '.[0].pid' "$out/$mode.json")
-  # What it runs with: GTK picks the backend itself, and on Mesa the DMA-BUF
-  # renderer stays on.
-  xargs -0 -n1 echo <"/proc/$pid/environ" | grep -E '^(GDK_BACKEND|WEBKIT_DISABLE_DMABUF_RENDERER|WAYLAND_DISPLAY|DISPLAY)=' | tee "$out/$mode.env" || true
+
+  # What it runs with: GTK picks the backend itself, on Mesa the DMA-BUF
+  # renderer stays on, and GStreamer looks at its own plugins only.
+  mapfile -d '' environment <"/proc/$pid/environ"
+  printf '%s\n' "${environment[@]}" |
+    grep -E '^(GDK_BACKEND|WEBKIT_DISABLE_DMABUF_RENDERER|WAYLAND_DISPLAY|DISPLAY|GST_[A-Z_0-9]*|LD_PRELOAD|LD_LIBRARY_PATH)=' |
+    tee "$out/$mode.env" || true
   if grep -q '^GDK_BACKEND=' "$out/$mode.env"; then
     echo "::error::something set GDK_BACKEND on $mode"
+    failed=1
+  fi
+  if grep -qE '^LD_(PRELOAD|LIBRARY_PATH)=' "$out/$mode.env"; then
+    echo "::error::the app runs with LD_PRELOAD or LD_LIBRARY_PATH"
     failed=1
   fi
   if [ ! -e /proc/driver/nvidia/version ] && grep -q '^WEBKIT_DISABLE_DMABUF_RENDERER=' "$out/$mode.env"; then
     echo "::error::the DMA-BUF renderer is off with no NVIDIA driver"
     failed=1
   fi
+  if [ -n "${STRANGER_PLUGINS:-}" ]; then
+    if grep -qE '^GST_PLUGIN_PATH(_1_0)?=' "$out/$mode.env" || grep -qF "$STRANGER_PLUGINS" "$out/$mode.env"; then
+      echo "::error::the session's GStreamer plugin path reached the app"
+      failed=1
+    fi
+    if ! grep -q '^GST_REGISTRY_1_0=' "$out/$mode.env"; then
+      echo "::error::GStreamer keeps no registry of the app's own"
+      failed=1
+    fi
+  fi
+  if [ -n "${GST_INSPECT:-}" ]; then
+    # The elements WebKit plays a video and its sound with.
+    for element in playbin autoaudiosink videoconvert vp9dec avdec_h264 opusdec; do
+      if ! env -i "${environment[@]}" "$GST_INSPECT" "$element" >>"$out/$mode.gst.log" 2>&1; then
+        echo "::error::GStreamer, as the app runs it, has no $element"
+        failed=1
+      fi
+    done
+    if grep -E 'GStreamer-WARNING|Failed to load plugin' "$out/$mode.gst.log"; then
+      echo "::error::GStreamer, as the app runs it, tried to load a plugin that is not its own"
+      failed=1
+    fi
+  fi
+
   if ! kill -0 "$pid" 2>/dev/null || [ "$(swaymsg -t get_tree | jq "$views | length")" -eq 0 ]; then
     echo "::error::the window on $mode closed on its own"
     failed=1
@@ -81,7 +125,7 @@ fi
 
 sleep 1
 cat "$out/$mode.log"
-if grep -iE 'error while loading shared libraries|cannot open shared object|cannot open display|Could not create default EGL display|EGL_BAD|failed to create EGL|Failed to create GBM|gstreamer.*not found' "$out/$mode.log"; then
+if grep -iE 'error while loading shared libraries|cannot open shared object|cannot open display|Could not create default EGL display|EGL_BAD|failed to create EGL|Failed to create GBM|gstreamer.*not found|GStreamer-WARNING|Failed to load plugin|LD_PRELOAD' "$out/$mode.log"; then
   echo "::error::the log on $mode says something is missing"
   failed=1
 fi

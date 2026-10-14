@@ -167,6 +167,28 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends sway xwayland grim jq
 
+      # A NixOS profile's lib/ reaches a session's GStreamer plugin path with every
+      # Qt and KDE library in it, and a GStreamer that scans it warns about each
+      # one. The folder here is made of the runner's own libraries, and is shown to
+      # be one GStreamer chokes on before the app is started with it.
+      - name: A plugin path full of strangers, and GStreamer's own inspector
+        env:
+          FLAKE: ${{ steps.flake.outputs.flake }}
+        run: |
+          gst=$(nix build --no-link --print-out-paths --no-write-lock-file --inputs-from "$FLAKE" nixpkgs#gst_all_1.gstreamer.bin)
+          stranger=$HOME/profile/lib/qt-6/plugins/kf6
+          mkdir -p "$stranger"
+          find /usr/lib -name 'lib*.so.*' -type f | head -40 | xargs -I{} cp {} "$stranger"/
+          # And libraries that cannot load at all, like a Qt plugin built against
+          # another Qt: what makes GStreamer warn rather than skip them quietly.
+          for name in kio_trash dolphinpart kcm_fcitx5; do
+            head -c 65536 /dev/urandom >"$stranger/$name.so"
+          done
+          GST_REGISTRY_1_0=$(mktemp -u) GST_PLUGIN_PATH="$HOME/profile/lib" "$gst/bin/gst-inspect-1.0" playbin >stranger.log 2>&1 || true
+          grep -c 'Failed to load plugin' stranger.log
+          echo "GST_INSPECT=$gst/bin/gst-inspect-1.0" >>"$GITHUB_ENV"
+          echo "STRANGER_PLUGINS=$HOME/profile/lib" >>"$GITHUB_ENV"
+
       - name: It starts on Wayland
         id: wayland
         env:
@@ -189,5 +211,6 @@ jobs:
             wayland.*
             x11.*
             files.txt
+            stranger.log
             packaging/nix/flake.lock
           if-no-files-found: warn

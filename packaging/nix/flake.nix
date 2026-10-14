@@ -72,6 +72,16 @@
         pkgs:
         let
           inherit (debs.${pkgs.stdenv.hostPlatform.system}) suffix hash;
+
+          # WebKitGTK plays audio and video through GStreamer, and these are the
+          # only plugins it is let to load.
+          gstreamer = with pkgs.gst_all_1; [
+            gstreamer
+            gst-plugins-base
+            gst-plugins-good
+            gst-plugins-bad
+            gst-libav
+          ];
         in
         pkgs.stdenv.mkDerivation {
           inherit pname version;
@@ -103,15 +113,7 @@
               xdotool
               stdenv.cc.cc.lib
             ])
-            # WebKitGTK plays audio and video through GStreamer;
-            # wrapGAppsHook3 points it at these.
-            ++ (with pkgs.gst_all_1; [
-              gstreamer
-              gst-plugins-base
-              gst-plugins-good
-              gst-plugins-bad
-              gst-libav
-            ]);
+            ++ gstreamer;
 
           dontConfigure = true;
           dontBuild = true;
@@ -148,6 +150,11 @@
           # window after the command it was started as, which is what the desktop
           # entry's StartupWMClass says. Links and attachments open with xdg-open.
           #
+          # GStreamer is shut in with its own plugins: a plugin path the session
+          # carries (a NixOS profile's lib/, with every Qt and KDE library in it)
+          # is not searched, and the registry it keeps is this package's alone, so
+          # the web process never tries to load a stranger's .so.
+          #
           # pandoc is deliberately not here: it is only needed for importing and
           # exporting DOCX and friends, Orden hides that when it is missing, and
           # anyone who wants it can add it to their own profile.
@@ -157,6 +164,10 @@
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
               --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
+              --set GST_PLUGIN_SYSTEM_PATH_1_0 ${pkgs.lib.makeSearchPath "lib/gstreamer-1.0" gstreamer} \
+              --unset GST_PLUGIN_PATH \
+              --unset GST_PLUGIN_PATH_1_0 \
+              --run 'export GST_REGISTRY_1_0="''${XDG_CACHE_HOME:-$HOME/.cache}/${pname}/gstreamer-registry-${pkgs.stdenv.hostPlatform.system}.bin"' \
               --run 'if [ -z "''${WEBKIT_DISABLE_DMABUF_RENDERER+set}" ] && [ -e /proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1; fi'
           ''
           + pkgs.lib.optionalString (!edge) ''
