@@ -1,17 +1,17 @@
 {
-    "version": "0.13.1",
+    "version": "0.15.0",
     "description": "Orden, formerly nibeditor: a simple, lightweight markdown editor offering all the features you could ever need.",
     "homepage": "https://orden.so",
     "license": "AGPL-3.0-only",
     "notes": "Themes and note history live in '%APPDATA%\\ch.emilvinu.nib', which is junctioned into Scoop's persist directory, so they survive updates and uninstalls.",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/lxorb/orden/releases/download/v0.13.1/Nib-0.13.1-windows-x64-setup.exe#/dl.7z",
-            "hash": "5e99b62a419ce1bb911e4db8187f1b3a8e2eb24501132554a7eb49b1670de9c4"
+            "url": "https://github.com/lxorb/orden/releases/download/v0.15.0/Orden-0.15.0-windows-x64-setup.exe#/dl.7z",
+            "hash": "e6d3d483df42f1e8b9f44dcc9f9109c39b03bfc094702de2066312005c4d9463"
         },
         "arm64": {
-            "url": "https://github.com/lxorb/orden/releases/download/v0.13.1/Nib-0.13.1-windows-arm64-setup.exe#/dl.7z",
-            "hash": "f6c3404d750d9d0252f6819181cdf6099c208674520a1cd3d1ba8cdea3a6cee7"
+            "url": "https://github.com/lxorb/orden/releases/download/v0.15.0/Orden-0.15.0-windows-arm64-setup.exe#/dl.7z",
+            "hash": "aadf2f8d21ade842b36f5581b1010b7bd480369586b00f4a3d8be77964332da6"
         }
     },
     "pre_install": "Remove-Item \"$dir\\`$*\", \"$dir\\uninstall.exe\" -Force -Recurse -ErrorAction 'Ignore'",

@@ -2,8 +2,9 @@ name: validate-linux-packaging
 
 # Everything under packaging/ that targets Linux, built the way the package
 # managers themselves build it: makepkg in an Arch container, flatpak-builder
-# and flatpak-builder-lint against the Flathub runtime, snapcraft in LXD, and
-# `nix build`. Run by hand, because it only matters when a release moves.
+# and flatpak-builder-lint against the Flathub runtime, and snapcraft in LXD.
+# Run by hand, because it only matters when a release moves. Nix has a workflow
+# of its own, nix.yml, which runs on every change to the flake.
 on:
   workflow_dispatch:
     inputs:
@@ -109,7 +110,7 @@ jobs:
       - name: The .desktop entries the packaging ships instead
         run: |
           desktop-file-validate packaging/aur/nib-bin/nib.desktop
-          desktop-file-validate packaging/nix/nib.desktop
+          desktop-file-validate packaging/nix/orden.desktop
           desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
 
   aur:
@@ -347,35 +348,3 @@ jobs:
           done
           ls /tmp/snapx/meta/gui/ || true
           find /tmp/snapx -name 'libwebkit2gtk*' -o -name 'libgtk-3*' | head
-
-  nix:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - name: nix build
-        run: |
-          nix build --print-build-logs "path:$PWD/packaging/nix#nib"
-          ls -la result/bin result/share/applications result/share/icons/hicolor/*/apps
-      # Orden has no --version to ask, so this is a launch: what matters is
-      # that the FHS environment resolves every library the AppImage needs.
-      - name: Nothing is missing from the wrapper
-        run: |
-          sudo apt-get update && sudo apt-get install -y xvfb
-          # appimageTools wraps the app in a bubblewrap FHS environment, and
-          # Ubuntu 24.04 blocks unprivileged user namespaces by default.
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          timeout 20 xvfb-run -a ./result/bin/nib > nib.log 2>&1 || true
-          cat nib.log
-          ! grep -qiE "error while loading shared libraries|cannot open shared object" nib.log
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always()
-        with:
-          name: flake-lock
-          path: packaging/nix/flake.lock
-          if-no-files-found: warn

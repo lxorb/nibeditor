@@ -313,7 +313,8 @@ jobs:
     # The one job that writes: the release and its files are the point of it.
     permissions:
       contents: write
-      # To dispatch publish.yml and publish-linux.yml at the end of this job.
+      # To dispatch publish.yml, publish-linux.yml and packaging-bump.yml at the end
+      # of this job.
       actions: write
     env:
       TAG: ${{ needs.version.outputs.tag }}
@@ -428,9 +429,12 @@ jobs:
       # the release published above never reaches publish.yml's `on: release`, nor
       # publish-linux.yml's. workflow_dispatch is the documented exception to that
       # rule, so the release hands itself over explicitly. Only a real tag: `edge` is
-      # remade on every push to main and is not something to publish anywhere.
+      # remade on every push to main and is not something to publish anywhere. And to
+      # packaging-bump.yml, which moves the manifests in packaging/ onto it, the flake
+      # people install from this repository first of all.
       - name: Hand the release to the package managers
         if: needs.version.outputs.rolling != 'true'
         run: |
           gh workflow run publish.yml -f tag="$TAG"
           gh workflow run publish-linux.yml -f tag="$TAG"
+          gh workflow run packaging-bump.yml -f tag="$TAG"

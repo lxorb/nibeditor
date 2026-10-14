@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>nib</id>
-    <version>0.13.1</version>
+    <version>0.15.0</version>
     <packageSourceUrl>https://github.com/lxorb/orden/tree/main/packaging/chocolatey</packageSourceUrl>
     <owners>lxorb</owners>
 
     <title>Orden</title>
     <authors>lxorb</authors>
     <projectUrl>https://orden.so</projectUrl>
-    <iconUrl>https://cdn.jsdelivr.net/gh/lxorb/orden@v0.13.1/apps/desktop/src-tauri/icons/icon.png</iconUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/lxorb/orden@v0.15.0/apps/desktop/src-tauri/icons/icon.png</iconUrl>
     <copyright>Copyright (c) 2026 lxorb</copyright>
     <licenseUrl>https://github.com/lxorb/orden/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -42,7 +42,7 @@ This package installs the machine-wide MSI build, so Orden lands in `Program Fil
 and is available to every user on the machine. x64 and ARM64 are both supported; 32-bit
 Windows is not. The MSI is not code-signed.
 ]]></description>
-    <releaseNotes>https://github.com/lxorb/orden/releases/tag/v0.13.1</releaseNotes>
+    <releaseNotes>https://github.com/lxorb/orden/releases/tag/v0.15.0</releaseNotes>
   </metadata>
   <files>
     <file src="tools\**" target="tools" />

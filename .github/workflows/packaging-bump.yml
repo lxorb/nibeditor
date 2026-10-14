@@ -1,0 +1,152 @@
+name: packaging-bump
+
+# Moves the package manifests in packaging/ to a release once it is out: the flake
+# first of all, which is installed straight from this repository and so is only as
+# current as main is, and with it the Scoop, Chocolatey, Homebrew, snap and AUR
+# files, which the publishers rewrite in flight but which validate-linux-packaging
+# checks as committed. scripts/bump-packaging.mjs does the rewriting, from the
+# digests the release page reports.
+#
+# release.yml dispatches it at the end of a stable release, the same way it hands
+# the release to publish.yml; `edge` never comes here. The rewritten flake is
+# built and started (nix.yml) before anything lands, the change goes to the branch
+# this ran on as a pull request that is merged as soon as it is open, and the flake
+# is started once more from GitHub after.
+#
+# A pull request opened on this workflow's own token starts no workflow of its own,
+# which is why the checks run here rather than on it. `dry_run` does everything but
+# push, and a release whose packaging is already current changes nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The released tag to move the packaging to, for example v0.15.0
+        required: true
+      dry_run:
+        description: Rewrite and check, but push nothing
+        type: boolean
+        default: false
+
+concurrency:
+  group: packaging-bump-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      changed: ${{ steps.bump.outputs.changed }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - name: Rewrite the packaging
+        id: bump
+        env:
+          TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::$TAG is not a released version tag"
+            exit 1
+          fi
+          node scripts/bump-packaging.mjs "$TAG"
+          echo "version=${TAG#v}" >>"$GITHUB_OUTPUT"
+          if git diff --quiet; then
+            echo 'changed=false' >>"$GITHUB_OUTPUT"
+            echo "The packaging is on $TAG already: nothing to change." >>"$GITHUB_STEP_SUMMARY"
+          else
+            echo 'changed=true' >>"$GITHUB_OUTPUT"
+            {
+              echo '```diff'
+              git diff
+              echo '```'
+            } >>"$GITHUB_STEP_SUMMARY"
+          fi
+          git diff --stat
+
+      # The .SRCINFO is rewritten line by line beside the PKGBUILD, so makepkg is
+      # asked whether it agrees. The image is the one publish-linux.yml pins.
+      - name: The .SRCINFO is the one makepkg writes
+        env:
+          ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
+        run: |
+          docker run --rm -v "$PWD/packaging/aur/nib-bin:/pkg:ro" "$ARCH_IMAGE" bash -c '
+            useradd -m builduser && cp -r /pkg /build && chown -R builduser: /build &&
+            cd /build && su builduser -c "makepkg --printsrcinfo"' >SRCINFO
+          diff -u packaging/aur/nib-bin/.SRCINFO SRCINFO
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: packaging
+          path: packaging
+          # The AUR's .SRCINFO is one.
+          include-hidden-files: true
+          if-no-files-found: error
+
+  # The flake as it was just rewritten, built and started on both architectures.
+  check:
+    needs: rewrite
+    permissions:
+      contents: read
+    uses: ./.github/workflows/nix.yml
+    with:
+      artifact: packaging
+
+  land:
+    needs: [rewrite, check]
+    if: needs.rewrite.outputs.changed == 'true' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      sha: ${{ steps.merge.outputs.sha }}
+    env:
+      VERSION: ${{ needs.rewrite.outputs.version }}
+      BASE: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: packaging
+          path: packaging
+
+      - name: Open the pull request
+        run: |
+          branch="packaging/v$VERSION"
+          git config user.name lxorbs-minion
+          git config user.email 43935334+lxorbs-minion@users.noreply.github.com
+          git switch -c "$branch"
+          git add packaging
+          git commit -m "chore: packaging on $VERSION" -m "Co-authored-by: Emil Vinu <101118850+lxorb@users.noreply.github.com>"
+          git push --force origin "$branch"
+          gh pr view "$branch" --json state -q .state 2>/dev/null | grep -qx OPEN ||
+            gh pr create --base "$BASE" --head "$branch" \
+              --title "chore: packaging on $VERSION" \
+              --body "The package manifests on v$VERSION, from the digests its release page reports. Built and started by run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID before this was opened."
+
+      - name: Merge it
+        id: merge
+        run: |
+          number=$(gh pr view "packaging/v$VERSION" --json number -q .number)
+          gh pr merge "$number" --rebase --delete-branch
+          sha=$(gh pr view "$number" --json mergeCommit -q .mergeCommit.oid)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+          echo "#$number landed on $BASE as $sha." >>"$GITHUB_STEP_SUMMARY"
+
+  # And from GitHub, the way everybody else gets it.
+  after:
+    needs: land
+    permissions:
+      contents: read
+    uses: ./.github/workflows/nix.yml
+    with:
+      flake: github:${{ github.repository }}/${{ needs.land.outputs.sha }}?dir=packaging/nix

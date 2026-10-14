@@ -184,7 +184,7 @@ describe('what nib claims to open', () => {
   const desktops = {
     'aur/nib-bin/nib.desktop': read('aur', 'nib-bin', 'nib.desktop'),
     'flathub/ch.emilvinu.nib.desktop': read('flathub', 'ch.emilvinu.nib.desktop'),
-    'nix/nib.desktop': read('nix', 'nib.desktop'),
+    'nix/orden.desktop': read('nix', 'orden.desktop'),
     'snap/snapcraft.yaml': read('snap', 'snapcraft.yaml'),
   }
 
@@ -193,7 +193,8 @@ describe('what nib claims to open', () => {
       expect(entry, name).toContain(
         'MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;\n',
       )
-      expect(entry, name).toContain('Exec=nib %U')
+      // The program is nib everywhere but Nix, whose package is called orden.
+      expect(entry, name).toMatch(/^\s*Exec=(?:nib|orden) %U$/m)
       expect(entry, name).not.toContain('text/markdown')
       expect(entry, name).not.toContain('%F')
     }

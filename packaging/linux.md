@@ -15,8 +15,9 @@ app that is compiled from source inside its own sandbox.
 
 `.github/workflows/validate-linux-packaging.yml` builds all four the way the
 managers themselves do - `makepkg` in an Arch container, `flatpak-builder` plus
-`flatpak-builder-lint` against the Flathub runtime, `snapcraft` in LXD, and
-`nix build`. Run it after every release that changes packaging.
+`flatpak-builder-lint` against the Flathub runtime, and `snapcraft` in LXD. Run
+it after every release that changes packaging. The flake has its own,
+`.github/workflows/nix.yml`, which runs on every change to it.
 
 `.github/workflows/publish-linux.yml` pushes a published release out to the AUR
 and the Snap Store. Both jobs build and then stop short of uploading until their
@@ -328,8 +329,12 @@ anything unusual; this one does not, so it should pass automatically.
 
 `nix/flake.nix` wraps the AppImage with `appimageTools.wrapType2`, which is the
 short path for a Tauri app: the AppImage already carries WebKitGTK and its web
-process, so nothing has to be patched in. The desktop entry and icons are
-installed alongside, so it shows up in a launcher rather than only on `$PATH`.
+process. What the FHS environment adds is GStreamer's plugins, which the AppImage
+leaves to the system, and two variables: where those plugins are, and
+`WEBKIT_DISABLE_DMABUF_RENDERER=1` unless it is set already, the usual cure for a
+blank window on NVIDIA. The command is `orden`, with `nib` beside it as a second
+name; the desktop entry and icons are installed alongside, so it shows up in a
+launcher rather than only on `$PATH`.
 
 This is deliberately not a nixpkgs package. nixpkgs wants a maintainer who
 watches the build, and search.nixos.org is the only place a nixpkgs entry would
@@ -341,31 +346,45 @@ nix run github:lxorb/orden?dir=packaging/nix
 nix profile install github:lxorb/orden?dir=packaging/nix
 ```
 
+On NixOS, as an input of the system's flake, either the package itself or
+`overlays.default`, which builds it out of the system's own nixpkgs:
+
+```nix
+inputs.orden.url = "github:lxorb/orden?dir=packaging/nix";
+# then, in a module:
+environment.systemPackages = [ inputs.orden.packages.${pkgs.system}.default ];
+```
+
 There is no `flake.lock` on purpose: pinning nixpkgs here would mean an extra
 commit every time the pin went stale, and the package is one `fetchurl` and a
 wrapper.
 
+`.github/workflows/nix.yml` runs `nix flake check`, builds the flake on x86_64
+and aarch64, and starts Orden out of it twice on each: under Xvfb, and under a
+headless sway with Xwayland off, so the second window is a native Wayland one.
+On main it builds the flake from GitHub, exactly as `nix run` above does.
+
 ## Refreshing all of it for a new release
 
-`publish-linux.yml` rewrites the version and the checksums in flight, so a
-release publishes itself and nothing here has to be edited first. The files do
-stay pinned to the last release they were checked against, though, which is what
-makes the validation workflow meaningful. To move them forward by hand:
+`publish.yml` and `publish-linux.yml` rewrite the version and the checksums in
+flight, so a release publishes itself and nothing here has to be edited first.
+The files do stay pinned to the release they describe, which is what makes the
+validation workflow meaningful and what `nix run` installs. A stable release moves
+them by itself: `release.yml` dispatches `packaging-bump.yml`, which runs
+`scripts/bump-packaging.mjs` over the flake, the PKGBUILD and its `.SRCINFO`,
+`snapcraft.yaml`, the Scoop manifest, the Chocolatey package and the cask, with the
+digests the release page reports. It checks the `.SRCINFO` against `makepkg`, builds
+and starts the flake (nix.yml), opens a pull request and merges it, then starts
+the flake once more from GitHub. A build of main never gets there. By hand:
 
 ```
-version=0.15.0
-base=https://github.com/lxorb/orden/releases/download/v$version
-for a in x64 arm64; do curl -fsSL "$base/Orden-$version-linux-$a.deb" | sha256sum; done
-for a in x64 arm64; do curl -fsSL "$base/Orden-$version-linux-$a.AppImage" | sha256sum; done
+gh workflow run packaging-bump.yml --repo lxorb/orden -f tag=v0.15.0 -f dry_run=true
+node scripts/bump-packaging.mjs 0.15.0   # the same rewrite, locally
 ```
 
-- `aur/nib-bin/PKGBUILD`: `pkgver`, both `sha256sums_*`. Regenerate `.SRCINFO`
-  with `makepkg --printsrcinfo > .SRCINFO`, or let the validation workflow print
-  it - it fails if the committed one is stale.
+Flathub is the one it leaves alone, because it builds from source:
+
 - `flathub/ch.emilvinu.nib.yml`: the `tag` and the `commit` on the git source,
   plus a `<release>` entry in `ch.emilvinu.nib.metainfo.xml`. If either lockfile
   moved in that release, regenerate `cargo-sources.json` and `node-sources.json`
   as well - a stale one fails the build rather than building the wrong thing.
-- `snap/snapcraft.yaml`: `version` and the two URLs.
-- `nix/flake.nix`: `version` and both hashes, as SRI - `nix hash convert --hash-algo
-  sha256 --to sri <hex>`.

@@ -1,0 +1,234 @@
+name: nix
+
+# The flake in packaging/nix, the way somebody on NixOS meets it: `nix flake check`,
+# `nix build`, and then Orden started out of it, once on X11 and once on a Wayland
+# compositor with no X server at all, on both architectures. Orden has no
+# --version to ask, so a start is the test: a window has to come up and the app
+# has to stay up, with nothing in its log about a missing library or a display it
+# could not open.
+#
+# On a pull request it builds the flake in the checkout. On main, and by hand, it
+# builds the flake from GitHub, the way `nix run github:lxorb/orden?dir=packaging/nix`
+# does. packaging-bump.yml calls it twice: on the rewritten flake before it lands,
+# and from GitHub after.
+on:
+  pull_request:
+    paths:
+      - packaging/nix/**
+      - scripts/bump-packaging.mjs
+      - .github/workflows/nix.yml
+      - .github/workflows/packaging-bump.yml
+  push:
+    branches: [main]
+    paths:
+      - packaging/nix/**
+      - .github/workflows/nix.yml
+  workflow_dispatch:
+    inputs:
+      flake:
+        description: The flake to start, as `nix run` takes it
+        default: github:lxorb/orden?dir=packaging/nix
+  workflow_call:
+    inputs:
+      flake:
+        description: The flake to start; the checkout's packaging/nix when empty
+        type: string
+        default: ''
+      artifact:
+        description: An artifact of the calling run laid over packaging/ first
+        type: string
+        default: ''
+
+concurrency:
+  group: nix-${{ github.ref }}-${{ inputs.flake }}-${{ inputs.artifact }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Nothing here writes anywhere.
+permissions:
+  contents: read
+
+jobs:
+  start:
+    name: ${{ matrix.system }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            system: x86_64-linux
+            other: aarch64-linux
+          - runner: ubuntu-24.04-arm
+            system: aarch64-linux
+            other: x86_64-linux
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        if: inputs.artifact != ''
+        with:
+          name: ${{ inputs.artifact }}
+          path: packaging
+
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Which flake
+        id: flake
+        env:
+          ASKED: ${{ inputs.flake }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ -n "$ASKED" ]; then
+            flake="$ASKED"
+          elif [ "$GITHUB_EVENT_NAME" = push ]; then
+            flake="github:$GITHUB_REPOSITORY/$SHA?dir=packaging/nix"
+          else
+            flake="path:$PWD/packaging/nix"
+          fi
+          echo "flake=$flake" >>"$GITHUB_OUTPUT"
+          echo "### $flake" >>"$GITHUB_STEP_SUMMARY"
+
+      - name: nix flake check
+        env:
+          FLAKE: ${{ steps.flake.outputs.flake }}
+        run: nix flake check --all-systems --print-build-logs "$FLAKE"
+
+      # The other architecture only evaluates here; its own runner builds it.
+      - name: The ${{ matrix.other }} package evaluates
+        env:
+          FLAKE: ${{ steps.flake.outputs.flake }}
+        run: nix eval --raw "$FLAKE#packages.${{ matrix.other }}.default.name"
+
+      - name: nix build
+        env:
+          FLAKE: ${{ steps.flake.outputs.flake }}
+        run: |
+          nix build --print-build-logs "$FLAKE" -o result
+          nix build "$FLAKE#default.contents" -o contents
+          ls -la result/bin
+          test "$(readlink result/bin/nib)" = orden
+          find result/share -type f -o -type l | sort
+          nix shell nixpkgs#desktop-file-utils -c desktop-file-validate result/share/applications/orden.desktop
+          for size in 32x32 128x128 256x256; do
+            test -s "result/share/icons/hicolor/$size/apps/orden.png"
+          done
+
+      # What the AppImage itself sets before the program starts, which is what a
+      # display backend or a plugin path can be overridden by.
+      - name: What the AppImage sets on its way in
+        run: |
+          cat contents/AppRun
+          for hook in contents/apprun-hooks/*; do
+            [ -f "$hook" ] || continue
+            echo "::group::$hook"
+            cat "$hook"
+            echo "::endgroup::"
+          done
+          ls contents/usr/lib | grep -iE 'gst|webkit|wayland|egl|gbm' || true
+          ls contents/usr/share/icons/hicolor/*/apps
+
+      - name: X11, Wayland and the tools that look at them
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb xdotool x11-utils imagemagick sway grim jq
+          # appimageTools runs the app in a bubblewrap FHS environment, and Ubuntu
+          # 24.04 blocks the unprivileged user namespaces it needs by default.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: It starts on X11
+        env:
+          FLAKE: ${{ steps.flake.outputs.flake }}
+        run: |
+          export XDG_RUNTIME_DIR=$(mktemp -d)
+          Xvfb :99 -screen 0 1280x800x24 >xvfb.log 2>&1 &
+          export DISPLAY=:99
+          sleep 2
+          env -u WAYLAND_DISPLAY nix run "$FLAKE" >x11.log 2>&1 &
+          app=$!
+
+          window=$(timeout 120 xdotool search --sync --onlyvisible --class '.' | head -1) || {
+            echo "::error::no window on X11 within two minutes"
+            cat x11.log
+            exit 1
+          }
+          xprop -id "$window" WM_CLASS WM_NAME _NET_WM_NAME
+          # Long enough for the page to load and paint.
+          sleep 25
+          import -window root x11.png
+          if ! kill -0 "$app" 2>/dev/null; then
+            echo "::error::the app exited on its own"
+            cat x11.log
+            exit 1
+          fi
+          kill "$app" || true
+          cat x11.log
+          if grep -iE 'error while loading shared libraries|cannot open shared object|cannot open display|EGL_BAD|Failed to create GBM|gstreamer.*not found' x11.log; then
+            echo "::error::the log on X11 says something is missing"
+            exit 1
+          fi
+
+      # sway on its headless backend with Xwayland off: nothing for GTK to fall
+      # back to, so a window here is a native Wayland one.
+      - name: It starts on Wayland
+        env:
+          FLAKE: ${{ steps.flake.outputs.flake }}
+        run: |
+          export XDG_RUNTIME_DIR=$(mktemp -d)
+          chmod 700 "$XDG_RUNTIME_DIR"
+          printf 'xwayland disable\noutput HEADLESS-1 resolution 1280x800\n' >sway.conf
+          WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman \
+            env -u DISPLAY sway -c sway.conf >sway.log 2>&1 &
+          for _ in $(seq 30); do
+            socket=$(cd "$XDG_RUNTIME_DIR" && ls wayland-? 2>/dev/null | head -1)
+            [ -n "$socket" ] && break
+            sleep 1
+          done
+          [ -n "$socket" ] || { cat sway.log; exit 1; }
+          export WAYLAND_DISPLAY="$socket"
+          export SWAYSOCK=$(ls "$XDG_RUNTIME_DIR"/sway-ipc.*.sock)
+
+          env -u DISPLAY nix run "$FLAKE" >wayland.log 2>&1 &
+          app=$!
+
+          views='[recurse(.nodes[]?, .floating_nodes[]?) | select(.type == "con" or .type == "floating_con") | select(.pid != null)]'
+          for _ in $(seq 120); do
+            [ "$(swaymsg -t get_tree | jq "$views | length")" -gt 0 ] && break
+            kill -0 "$app" 2>/dev/null || break
+            sleep 1
+          done
+          swaymsg -t get_tree | jq "$views | map({app_id, name, shell})" | tee views.json
+          if [ "$(jq 'length' views.json)" -eq 0 ]; then
+            echo "::error::no window on Wayland within two minutes"
+            cat wayland.log
+            exit 1
+          fi
+          jq -e 'all(.shell == "xdg_shell")' views.json
+          sleep 25
+          grim wayland.png
+          if ! kill -0 "$app" 2>/dev/null; then
+            echo "::error::the app exited on its own"
+            cat wayland.log
+            exit 1
+          fi
+          kill "$app" || true
+          cat wayland.log
+          if grep -iE 'error while loading shared libraries|cannot open shared object|cannot open display|EGL_BAD|Failed to create GBM|failed to create EGL|wl_display|gstreamer.*not found' wayland.log; then
+            echo "::error::the log on Wayland says something is missing"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: nix-${{ matrix.system }}${{ inputs.artifact != '' && '-bumped' || '' }}${{ inputs.flake != '' && '-github' || '' }}
+          path: |
+            *.png
+            *.log
+            views.json
+          if-no-files-found: warn

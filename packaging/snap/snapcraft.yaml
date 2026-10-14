@@ -9,12 +9,12 @@
 # blank.
 #
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
-# account and `snapcraft upload --release=stable orden_0.13.1_amd64.snap`; see
+# account and `snapcraft upload --release=stable orden_0.15.0_amd64.snap`; see
 # packaging/linux.md.
 name: orden
 title: Orden
 base: core24
-version: '0.13.1'
+version: '0.15.0'
 summary: Markdown editor with live preview
 description: |
   Orden, formerly nibeditor, is a small markdown editor that formats what you
@@ -77,8 +77,8 @@ parts:
     plugin: dump
     source-type: deb
     source:
-      - on amd64: https://github.com/lxorb/orden/releases/download/v0.13.1/Nib-0.13.1-linux-x64.deb
-      - on arm64: https://github.com/lxorb/orden/releases/download/v0.13.1/Nib-0.13.1-linux-arm64.deb
+      - on amd64: https://github.com/lxorb/orden/releases/download/v0.15.0/Orden-0.15.0-linux-x64.deb
+      - on arm64: https://github.com/lxorb/orden/releases/download/v0.15.0/Orden-0.15.0-linux-arm64.deb
     # The bytes those two names stood for on the day the release was made. Every
     # other packaging path here pins a digest - scoop, chocolatey, homebrew, the
     # AUR, nix, and flathub by commit - and this one did not: a tampered release
@@ -87,8 +87,8 @@ parts:
     # lines per release from the digests the release page reports; see
     # packaging/linux.md.
     source-checksum:
-      - on amd64: sha256/d3ffa0ab64a64d5910f9f3dc45c56d000c6967307c8c17429b9b3799d4dd8907
-      - on arm64: sha256/fcb20ecb72ecd2fffe269d8ac0c8cf369420b82629ad0d863ab5cb8b37424d8c
+      - on amd64: sha256/c3dc5252c62c144451c2484a29f05f570762ff3fc728340cda3fd2dedd274441
+      - on arm64: sha256/fa276143e8fe1d63f8da427b8e5c8ed4609dd47d33fc3306770334b2987c3601
     override-build: |
       craftctl default
 
