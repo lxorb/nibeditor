@@ -130,7 +130,7 @@ static HELD: Mutex<State> = Mutex::new(State {
     change: false,
 });
 
-fn with<T>(on_held: impl FnOnce(&mut State) -> T) -> T {
+fn with_state<T>(on_held: impl FnOnce(&mut State) -> T) -> T {
     on_held(&mut HELD.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
@@ -147,7 +147,7 @@ pub fn hold(app: &AppHandle, which: Which, key: Option<String>) -> Option<String
 
 #[cfg(target_os = "linux")]
 fn by_portal(app: &AppHandle, which: Which, key: Option<String>) -> Option<String> {
-    let changed = with(|held| {
+    let changed = with_state(|held| {
         let was = held.wanted.get(&which).cloned();
         if was == key {
             return None;
@@ -161,13 +161,13 @@ fn by_portal(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
     if let Some(wanted) = changed {
         portal::want(app, wanted);
     }
-    with(|held| held.held.get(&which).cloned())
+    with_state(|held| held.held.get(&which).cloned())
 }
 
 fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<String> {
     use tauri_plugin_global_shortcut::{GlobalShortcutExt as _, ShortcutState};
 
-    let old = with(|held| held.held.get(&which).cloned());
+    let old = with_state(|held| held.held.get(&which).cloned());
     if old == key {
         return old;
     }
@@ -186,7 +186,7 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
                 })
                 .is_ok()
     });
-    with(|held| {
+    with_state(|held| {
         held.reach = Some(Reach::System);
         match &now {
             Some(now) => held.held.insert(which, now.clone()),
@@ -223,7 +223,7 @@ pub fn pressed(app: &AppHandle, which: Which, token: Option<String>) {
     allow(dead_code, reason = "only a Wayland session asks a portal")
 )]
 fn reached(app: &AppHandle, reach: Reach, change: bool) {
-    with(|held| {
+    with_state(|held| {
         held.reach = Some(reach);
         held.change = change;
     });
@@ -236,7 +236,7 @@ fn reached(app: &AppHandle, reach: Reach, change: bool) {
     allow(dead_code, reason = "only a Wayland session asks a portal")
 )]
 fn bound(app: &AppHandle, now: BTreeMap<Which, String>, refused: BTreeSet<Which>) {
-    with(|held| {
+    with_state(|held| {
         held.held = now;
         held.refused = refused;
     });
@@ -249,7 +249,7 @@ fn bound(app: &AppHandle, now: BTreeMap<Which, String>, refused: BTreeSet<Which>
     allow(dead_code, reason = "only a Wayland session asks a portal")
 )]
 fn changed(app: &AppHandle, shown: BTreeMap<Which, String>) {
-    with(|held| {
+    with_state(|held| {
         for (which, said) in shown {
             if let Some(now) = held.held.get_mut(&which) {
                 *now = said;
@@ -264,7 +264,7 @@ fn told(app: &AppHandle) {
 }
 
 fn keys() -> Keys {
-    with(|held| Keys {
+    with_state(|held| Keys {
         reach: held.reach.unwrap_or(if wayland() {
             Reach::Portal
         } else {
