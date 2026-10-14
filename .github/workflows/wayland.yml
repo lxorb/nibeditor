@@ -20,8 +20,8 @@ name: wayland
 # The packages are built the way release.yml builds them, on the same Ubuntu, as a
 # debug build: the bundles are the same and the compile is a third of the time.
 #
-# The Nix flake has a job of its own, launch under Wayland included, in
-# validate-linux-packaging.yml; this one leaves packaging/nix to it.
+# The Nix flake has a workflow of its own, its own launch under sway included, in
+# nix.yml; this one leaves packaging/nix to it.
 on:
   pull_request:
     paths:
