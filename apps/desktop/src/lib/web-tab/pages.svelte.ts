@@ -1029,6 +1029,11 @@ class Pages {
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
+  /** Every page parked, for a reload of the window; see reload-window.ts. */
+  async parkAll(): Promise<void> {
+    await Promise.all([...this.held.keys()].map((tabId) => this.park(tabId)))
+  }
+
   /** Reads where the page has got to and writes it down for this device, and whether
    *  something is typed into it. Quiet about failure: a page that has gone is a page
    *  whose place was already written when it went. */

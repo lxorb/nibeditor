@@ -40,7 +40,7 @@ cannot read a list of four thousand notes.
 ## Coming from another app
 
 The import above is for notes arriving in a space somebody already writes in.
-Somebody arriving *themselves* brings theirs in through Settings > Import: the
+Somebody arriving *themselves* brings theirs in through Settings > Import and export: the
 iPhone's "Transfer Your Apps & Data", one row per place the notes could come from.
 Obsidian, Notion, and every other app as one row, since the format is read off the
 file either way. Each brings its notes in as a space of their own, named after what
@@ -49,7 +49,7 @@ came in, and lands in it.
 - **Where it is.** Nothing asks on the way in. Emil, 2026-10-13: "rather welcome
   note instead of the where do your notes come from". A fresh start opens on the
   welcome note, in a space made for it (`fresh-start.ts`, `first-space.svelte.ts`),
-  and the note's last line is a link to Settings > Import (`nib://settings/import`,
+  and the note's last line is a link to Settings > Import and export (`nib://settings/import`,
   see `settingsPane` in `open-link.ts`). The same rows are the palette's Import from
   Obsidian and Import from Notion. See `MigrateRows.svelte` and `migrating.svelte.ts`.
 - **Obsidian's vaults by name.** On a desktop the Obsidian row lists the vaults

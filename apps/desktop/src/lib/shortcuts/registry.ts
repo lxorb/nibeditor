@@ -1216,6 +1216,16 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-0',
     run: () => modes.resetZoom(),
   },
+  {
+    // Ctrl+R is a shell's and Vim's, so a Mac's alone; see reload-window.ts.
+    id: 'app.reload',
+    label: () => t('Reload window'),
+    category: 'view',
+    scope: 'app',
+    key: null,
+    mac: 'Mod-r',
+    run: () => void import('../reload-window').then((one) => one.reloadWindow()),
+  },
 ]
 
 /** The ninth digit, which is the last tab rather than the ninth. */

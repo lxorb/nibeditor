@@ -274,11 +274,12 @@ describe('the release channel', () => {
     expect(hint).toContain('main')
   })
 
-  test('is a group of its own under General, where the app itself is set up', () => {
+  test('is in About, at the foot of General, beside the version', () => {
     const general = desktop.find((one) => one.id === 'general')
     const group = general?.groups.find((one) => one.fields.some((field) => field === row()))
 
-    expect(group?.title).toBe('Updates')
+    expect(group?.title).toBe('About')
+    expect(general?.groups.at(-1)).toBe(group)
   })
 })
 
@@ -334,7 +335,7 @@ describe('the spelling dictionary', () => {
   /** The same order the app's language list keeps: the default, the Latin
    *  names A to Z, Japanese at the foot. */
   test('is offered in the order every language list keeps', () => {
-    const one = field('spelling', 'Language')
+    const one = field('editor', 'Dictionary')
     if (one.kind !== 'select') throw new Error('the dictionary is a dropdown')
 
     const shown = one.options.map((option) => ({ id: option.value, name: option.label }))

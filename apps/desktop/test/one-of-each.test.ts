@@ -472,9 +472,9 @@ describe('the switch', () => {
       'lib/chats/view/PollSheet.svelte',
       // Do not disturb and Appear offline, under the account's name.
       'lib/people/ProfileRows.svelte',
-      // A host pinned, in Settings > Remote.
+      // A host pinned, in Settings > Terminal.
       'lib/remote/HostDetail.svelte',
-      // An extension on or off, in Settings > General > Browser.
+      // An extension on or off, in Settings > Browser.
       'lib/settings/ExtensionRows.svelte',
       // An automation of a base on or off.
       'lib/views/AutomationsBuilder.svelte',

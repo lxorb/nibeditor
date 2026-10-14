@@ -42,7 +42,8 @@ export async function mayStop(why: Why): Promise<boolean> {
 
   const window = await label()
   const idle = warning === 'always'
-  const rows = why === 'window' ? await rowsHere(window, idle) : await rowsEverywhere(window, idle)
+  const own = why === 'window' || why === 'reload'
+  const rows = own ? await rowsHere(window, idle) : await rowsEverywhere(window, idle)
   if (!asks(warning, rows)) return true
 
   // A window's own close stops its own shells only - unless it is the last, which ends

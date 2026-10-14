@@ -25,7 +25,7 @@ const COMMANDS = [
 
 const SETTINGS = [
   setting('Text size', 'Editor', { names: ['font', 'zoom'] }),
-  setting('Check spelling', 'Spelling', { section: 'spelling', names: ['spellcheck'] }),
+  setting('Check spelling', 'Editor', { section: 'editor', names: ['spellcheck'] }),
   setting('Mode', 'Appearance', { section: 'appearance', names: ['Dark', 'Light', 'theme'] }),
 ]
 

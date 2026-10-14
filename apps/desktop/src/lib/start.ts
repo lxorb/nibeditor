@@ -350,7 +350,7 @@ async function onQuit(window: Closable) {
  *  would never reach, and a plane has to go first - it writes into a document, and
  *  the document is what goes to the disk. Whoever owes a write has said so
  *  themselves rather than being reached for from here; see parting.ts. */
-function settle() {
+export function settle() {
   settleUp()
   workspace.graphSettings.flush()
 }

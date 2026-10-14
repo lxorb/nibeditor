@@ -200,10 +200,19 @@ export interface Caption {
   url?: string
 }
 
+/** The rows of a group that are written out by hand rather than declared, because they
+ *  ask the system something or hold a list: the panel draws each in the group's card,
+ *  before its fields or after them. See SettingsPanel.svelte. */
+export type Written =
+  'about' | 'browser' | 'export' | 'extensions' | 'import' | 'new-menu' | 'updates' | 'words'
+
 export interface Group {
+  /** Nothing for a page's first group where the page's own name is its heading. */
   title: string
   caption?: Caption
   fields: Field[]
+  before?: Written
+  after?: Written
 }
 
 /** Dictionaries the browser's checker can be pointed at, named the way their
@@ -344,9 +353,18 @@ function ownFields(): Field[] {
   return theme.settings.filter((one) => one.own === true && (one.when?.() ?? true)).map(themeField)
 }
 
-/** The panes that are only about settings. The account and the LLM connector are
- *  their own thing and stay written out by hand. */
-type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance' | 'glasses' | 'export'
+/** The pages that are mostly settings. The account, AI, sync and the others stay
+ *  written out by hand. */
+type PaneId =
+  | 'general'
+  | 'appearance'
+  | 'editor'
+  | 'markdown'
+  | 'browser'
+  | 'tasks'
+  | 'terminal'
+  | 'glasses'
+  | 'export'
 
 export interface Pane {
   id: PaneId
@@ -398,7 +416,8 @@ function terminalGroup(): Group {
   void shells.ask()
 
   return {
-    title: t('Terminal'),
+    // The page's own name is the heading: Terminal over Terminal said it twice.
+    title: '',
     fields: [
       {
         kind: 'select',
@@ -521,37 +540,37 @@ export function preferences(view?: EditorView): Pane[] {
 
   return [
     {
+      // The handful of things every app has: the language, how tabs go round, what
+      // pings for a chat, the hints, the versions kept of a note, and which build this
+      // is. Everything with a page of its own is on it, so this page stays short.
       id: 'general',
       label: t('General'),
       groups: [
         {
-          // A note being written in is kept every so often on top of the words
-          // each sitting began with, so an edit that went wrong is not the end of
-          // the story; History is where the versions are.
-          title: t('Recovery'),
+          title: t('Language'),
+          // Two things can be worth saying about a language, and both are one line.
+          //
+          // Most of the catalogues were written in one pass and never read through.
+          // Saying so is the honest part; the folder they live in is the useful part,
+          // because the reader who can see the wrong word is the only person who can
+          // put it right.
+          //
+          // And the glasses have one font baked into the firmware, with no Devanagari,
+          // Arabic, Thai, Burmese or Ethiopic in it at all - so for a reader in one of
+          // those scripts the panel is in English however the app is set. Said here,
+          // where the choice is made, and only to somebody who has a pair: it is the
+          // one place a reader could act on it, and noise to everybody else. The rule
+          // itself is `panelDrawable`; see even/panel-words.ts.
+          ...caption(),
           fields: [
             {
               kind: 'select',
-              label: t('Keep a version every'),
-              words: ['backup', 'history', 'snapshot'],
-              options: SNAPSHOT_MINUTES.map((minutes) => ({
-                value: String(minutes),
-                label: minutes ? t('{count} min', { count: minutes }) : t('Off'),
-              })),
-              initial: String(DEFAULT_MINUTES),
-              get: () => String(recovery.every),
-              set: (value) => recovery.setEvery(Number(value)),
-            },
-            {
-              kind: 'select',
-              label: t('Keep versions for'),
-              options: KEEP_DAYS.map((days) => ({
-                value: String(days),
-                label: plural(days, { one: '{count} day', other: '{count} days' }),
-              })),
-              initial: String(DEFAULT_DAYS),
-              get: () => String(recovery.days),
-              set: (value) => recovery.setDays(Number(value)),
+              label: t('Language'),
+              // Each row says for itself whether its catalogue was read through;
+              // see language-options.ts.
+              options: languageOptions(),
+              get: () => i18n.choice,
+              set: (value) => i18n.select(value),
             },
           ],
         },
@@ -592,10 +611,119 @@ export function preferences(view?: EditorView): Pane[] {
                     set: (on) => swipeChoice.set(on),
                   },
                 ] satisfies Field[])),
-            // What a space's own tabs do out of sight: the pages a desktop runs, which a
-            // phone and a browser tab do not. See workspace/hidden-tabs.svelte.ts.
-            ...(isDesktop
-              ? ([
+          ],
+        },
+
+        // What pings for every chat, where a chat can ping at all: a desktop and the
+        // browser, never a phone, whose push is off (docs/chats.md decision 7.4). None in
+        // the glasses' plugin, whose twin of the module has no chats; see
+        // chats-settings.even.ts.
+        ...(isMobile ? [] : chatsGroups()),
+
+        // Silent mode turns the hints off; see hints.svelte.ts. The glasses have none.
+        ...(__EVEN_PLUGIN__
+          ? []
+          : [
+              {
+                title: t('Hints'),
+                fields: [
+                  {
+                    kind: 'switch' as const,
+                    label: t('Silent mode'),
+                    words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
+                    initial: false,
+                    get: () => modes.silent,
+                    set: () => modes.toggleSilent(),
+                  },
+                ],
+              },
+            ]),
+        {
+          // A note being written in is kept every so often on top of the words
+          // each sitting began with, so an edit that went wrong is not the end of
+          // the story; History is where the versions are.
+          title: t('Recovery'),
+          fields: [
+            {
+              kind: 'select',
+              label: t('Keep a version every'),
+              words: ['backup', 'history', 'snapshot'],
+              options: SNAPSHOT_MINUTES.map((minutes) => ({
+                value: String(minutes),
+                label: minutes ? t('{count} min', { count: minutes }) : t('Off'),
+              })),
+              initial: String(DEFAULT_MINUTES),
+              get: () => String(recovery.every),
+              set: (value) => recovery.setEvery(Number(value)),
+            },
+            {
+              kind: 'select',
+              label: t('Keep versions for'),
+              options: KEEP_DAYS.map((days) => ({
+                value: String(days),
+                label: plural(days, { one: '{count} day', other: '{count} days' }),
+              })),
+              initial: String(DEFAULT_DAYS),
+              get: () => String(recovery.days),
+              set: (value) => recovery.setDays(Number(value)),
+            },
+          ],
+        },
+
+        // Which build this is, at the foot of General, where macOS, iOS and Obsidian say
+        // theirs: the version, written out by hand because it is words to copy rather
+        // than a choice (settings/AboutRows.svelte), then which releases this machine
+        // follows and the look for the next one.
+        //
+        // Only the desktop app installs anything: a page is the new version the moment it
+        // is reloaded, and a phone app is the store's business. So the channel is not
+        // there at all rather than there and answering nothing. The choice stays on this
+        // machine, since it is about this machine: one laptop can run the build of main
+        // while the desktop stays on the releases. See updates.svelte.ts.
+        {
+          title: t('About'),
+          before: 'about',
+          ...(isDesktop ? { after: 'updates' as const } : {}),
+          fields: isDesktop
+            ? [
+                {
+                  kind: 'segmented',
+                  label: t('Release channel'),
+                  words: ['beta', 'updates', 'nightly', 'edge', 'version'],
+                  hint: t(
+                    'Stable follows the official releases, Unstable every push to main and can break.',
+                  ),
+                  options: [
+                    { value: 'stable', label: t('Stable') },
+                    { value: 'unstable', label: t('Unstable') },
+                  ],
+                  initial: 'stable',
+                  get: () => updates.channel,
+                  set: (value) => updates.setChannel(asChannel(value)),
+                },
+              ]
+            : [],
+        },
+      ],
+    },
+
+    // Orden as a browser: where links from other programs open, the engine, where words
+    // typed in the address field go and the extensions, all written out by hand since
+    // each asks the system (settings/DefaultBrowser.svelte, EngineRow.svelte,
+    // ExtensionRows.svelte); and what pages do out of sight. A desktop's alone: a phone's
+    // links are its own browser's, and a page in a browser is inside one already.
+    ...(!__EVEN_PLUGIN__ && isDesktop
+      ? ([
+          {
+            id: 'browser',
+            label: t('Browser'),
+            groups: [
+              { title: '', fields: [], after: 'browser' },
+              {
+                title: t('Pages'),
+                fields: [
+                  // What a space's own tabs do out of sight. See
+                  // workspace/hidden-tabs.svelte.ts.
                   {
                     kind: 'segmented',
                     label: t('Hidden tabs'),
@@ -605,12 +733,11 @@ export function preferences(view?: EditorView): Pane[] {
                       { value: 'pause', label: t('Pause') },
                       { value: 'ask', label: t('Ask') },
                     ],
-                    initial: 'ask',
                     get: () => hiddenTabs.choice,
                     set: (value) => hiddenTabs.set(isHiddenTabs(value) ? value : 'ask'),
                   },
-                  // Off, so no page is ever closed for memory unless somebody asks; out of
-                  // sight it is frozen instead. See web-tab/resting.ts.
+                  // Off, so no page is ever closed for memory unless somebody asks; out
+                  // of sight it is frozen instead. See web-tab/resting.ts.
                   {
                     kind: 'select',
                     label: t('Memory saver'),
@@ -621,19 +748,31 @@ export function preferences(view?: EditorView): Pane[] {
                       { value: 'balanced', label: t('Balanced') },
                       { value: 'maximum', label: t('Maximum') },
                     ],
-                    initial: 'off',
                     get: () => saver.mode,
                     set: (value) => {
                       saver.set(isSaver(value) ? value : 'off')
                       pages.retime()
                     },
                   },
-                ] satisfies Field[])
-              : []),
-          ],
-        },
+                ],
+              },
+              // The extensions web tabs run, where the engine runs any: Windows, on both
+              // of its engines.
+              ...(platform() === 'windows'
+                ? [{ title: t('Extensions'), fields: [], after: 'extensions' as const }]
+                : []),
+            ],
+          },
+        ] satisfies Pane[])
+      : []),
+
+    {
+      // Quick add, and when a task reminds of itself. See docs/tasks.md.
+      id: 'tasks',
+      label: t('Tasks'),
+      groups: [
         {
-          // Quick add: whether its words are read as dates and fields at all (Todoist's
+          // Whether quick add's words are read as dates and fields at all (Todoist's
           // smart date switch), and whether its key reaches past the window. See
           // quick-add/asked.svelte.ts and docs/tasks.md 5.6.
           title: t('Add task'),
@@ -677,102 +816,27 @@ export function preferences(view?: EditorView): Pane[] {
               : []),
           ],
         },
-        // Silent mode turns the hints off; see hints.svelte.ts. The glasses have none.
-        ...(__EVEN_PLUGIN__
-          ? []
-          : [
-              {
-                title: t('Hints'),
-                fields: [
-                  {
-                    kind: 'switch' as const,
-                    label: t('Silent mode'),
-                    words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
-                    initial: false,
-                    get: () => modes.silent,
-                    set: () => modes.toggleSilent(),
-                  },
-                ],
-              },
-            ]),
-        {
-          title: t('Language'),
-          // Two things can be worth saying about a language, and both are one line.
-          //
-          // Most of the catalogues were written in one pass and never read through.
-          // Saying so is the honest part; the folder they live in is the useful part,
-          // because the reader who can see the wrong word is the only person who can
-          // put it right.
-          //
-          // And the glasses have one font baked into the firmware, with no Devanagari,
-          // Arabic, Thai, Burmese or Ethiopic in it at all - so for a reader in one of
-          // those scripts the panel is in English however the app is set. Said here,
-          // where the choice is made, and only to somebody who has a pair: it is the
-          // one place a reader could act on it, and noise to everybody else. The rule
-          // itself is `panelDrawable`; see even/panel-words.ts.
-          ...caption(),
-          fields: [
-            {
-              kind: 'select',
-              label: t('Language'),
-              // Each row says for itself whether its catalogue was read through;
-              // see language-options.ts.
-              options: languageOptions(),
-              get: () => i18n.choice,
-              set: (value) => i18n.select(value),
-            },
-          ],
-        },
 
         // The automatic reminder, and the tray or the alarms that keep reminders ringing;
         // never the glasses' plugin, which rings nothing.
         ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
-
-        // What pings for every chat, where a chat can ping at all: a desktop and the
-        // browser, never a phone, whose push is off (docs/chats.md decision 7.4). None in
-        // the glasses' plugin, whose twin of the module has no chats; see
-        // chats-settings.even.ts.
-        ...(isMobile ? [] : chatsGroups()),
-
-        // Which shell a new terminal opens, how large its type is and whether its lines
-        // come back after a restart: this machine's, like the release channel below,
-        // because a shell is a program on one computer and its screen is nobody else's.
-        // Only a desktop has a terminal; see docs/terminal.md.
-        ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalGroup()] : []),
-
-        // Only the desktop app installs anything: a page is the new version the
-        // moment it is reloaded, and a phone app is the store's business. So the
-        // row is not there at all rather than there and answering nothing.
-        //
-        // The choice stays on this machine, since it is about this machine: one
-        // laptop can run the build of main while the desktop stays on the
-        // releases. See updates.svelte.ts.
-        ...(isDesktop
-          ? ([
-              {
-                title: t('Updates'),
-                fields: [
-                  {
-                    kind: 'segmented',
-                    label: t('Release channel'),
-                    words: ['beta', 'updates', 'nightly'],
-                    hint: t(
-                      'Stable follows the official releases, Unstable every push to main and can break.',
-                    ),
-                    options: [
-                      { value: 'stable', label: t('Stable') },
-                      { value: 'unstable', label: t('Unstable') },
-                    ],
-                    initial: 'stable',
-                    get: () => updates.channel,
-                    set: (value) => updates.setChannel(asChannel(value)),
-                  },
-                ],
-              },
-            ] satisfies Group[])
-          : []),
       ],
     },
+
+    // Which shell a new terminal opens, how large its type is and whether its lines come
+    // back after a restart: this machine's, because a shell is a program on one computer
+    // and its screen is nobody else's. Only a desktop has one; see docs/terminal.md. The
+    // page goes on with the hosts a remote terminal reaches and the account's machine,
+    // which are written out by hand; see `terminalExtras` in SettingsPanel.svelte.
+    ...(__EVEN_PLUGIN__
+      ? []
+      : ([
+          {
+            id: 'terminal',
+            label: t('Terminal'),
+            groups: isDesktop ? [terminalGroup()] : [],
+          },
+        ] satisfies Pane[])),
 
     {
       id: 'editor',
@@ -862,71 +926,49 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => modes.ligatures,
               set: (value) => modes.setLigatures(value, view),
             },
-            {
-              // Where a pasted or dropped picture lands. What the note says
-              // stays relative to the note either way, so the choice changes
-              // nothing about notes already written.
-              kind: 'select',
-              label: t('Attachments'),
-              words: ['images', 'pictures', 'paste', 'assets'],
-              options: [
-                { value: 'space', label: t('Assets folder of the space') },
-                { value: 'note', label: t('Next to the note') },
-                { value: 'named', label: t('A folder named after the note') },
-              ],
-              initial: 'space',
-              get: () => modes.attachments,
-              set: (value) => modes.setAttachments(value),
-            },
           ],
         },
         {
-          // The paper a page note starts on. A page already written on is changed from
-          // its own menu in the panel, which is where somebody looking at a page is;
-          // this is only what a new one is given. See PagesNavigator.svelte.
-          title: t('Page notes'),
+          title: t('Spelling'),
           fields: [
             {
-              kind: 'select',
-              label: t('New pages'),
-              options: [
-                { value: 'a4', label: t('A4') },
-                { value: 'letter', label: t('Letter') },
-                { value: 'long', label: t('Long page') },
-              ],
-              initial: 'a4',
-              get: () => modes.pagesPaper,
-              set: (value) => modes.setPagesPaper(value),
+              kind: 'switch',
+              label: t('Check spelling'),
+              words: ['spellcheck', 'spell check', 'typos', 'spelling'],
+              initial: true,
+              get: () => modes.spellcheck,
+              set: () => modes.toggleSpellcheck(view),
             },
-          ],
-        },
-        {
-          // What "New unique note" names a note. Each option is labelled with
-          // what it would produce right now, which says more than the tokens do.
-          title: t('Unique note names'),
-          fields: [
             {
+              // The browser checks against the dictionary the surface's language
+              // names, so this is the one setting that decides whose words are
+              // wrong.
               kind: 'select',
-              label: t('Name'),
-              options: ID_FORMATS.map((format) => ({
-                value: format,
-                label: noteId(format, moment),
-              })),
-              initial: DEFAULT_ID_FORMAT,
-              get: () => settings.noteIdFormat,
-              set: (value) => settings.setNoteIdFormat(value),
+              label: t('Dictionary'),
+              words: ['spelling', 'language'],
+              options: DICTIONARIES.map((one) => ({ value: one.id, label: t(one.name) })),
+              initial: 'system',
+              get: () => modes.spellLanguage,
+              set: (value) => modes.setSpellLanguage(value, view),
             },
           ],
+          // The words the reader has said are words; see `dictionary` in the panel.
+          after: 'words',
         },
         {
-          // How a link to another note is written. Not what is read: both
-          // spellings are read whatever this says, so a space may hold both and
-          // nothing already written changes.
-          title: t('Links'),
+          // What a note is given as it is made, and nothing about notes already written:
+          // how a link to another note is spelt (both spellings are read whatever this
+          // says), where a pasted picture lands (what the note says stays relative to
+          // it either way), what "New unique note" names one, and the paper a page note
+          // starts on (a page already written on is changed from its own menu; see
+          // PagesNavigator.svelte). Obsidian's Files and links. Explorer's New menu after
+          // them on Windows, which is a note made from outside the app.
+          title: t('New notes'),
           fields: [
             {
               kind: 'select',
               label: t('New links'),
+              words: ['links', 'wikilinks', 'markdown links'],
               hint: t(
                 'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.',
               ),
@@ -940,7 +982,48 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => modes.linkFormat,
               set: (value) => modes.setLinkFormat(value),
             },
+            {
+              kind: 'select',
+              label: t('Attachments'),
+              words: ['images', 'pictures', 'paste', 'assets'],
+              options: [
+                { value: 'space', label: t('Assets folder of the space') },
+                { value: 'note', label: t('Next to the note') },
+                { value: 'named', label: t('A folder named after the note') },
+              ],
+              initial: 'space',
+              get: () => modes.attachments,
+              set: (value) => modes.setAttachments(value),
+            },
+            {
+              // Each option is labelled with what it would produce right now, which
+              // says more than the tokens do.
+              kind: 'select',
+              label: t('Unique note names'),
+              words: ['unique note', 'zettelkasten', 'id', 'timestamp'],
+              options: ID_FORMATS.map((format) => ({
+                value: format,
+                label: noteId(format, moment),
+              })),
+              initial: DEFAULT_ID_FORMAT,
+              get: () => settings.noteIdFormat,
+              set: (value) => settings.setNoteIdFormat(value),
+            },
+            {
+              kind: 'select',
+              label: t('Page notes'),
+              words: ['paper', 'pages', 'a4', 'letter'],
+              options: [
+                { value: 'a4', label: t('A4') },
+                { value: 'letter', label: t('Letter') },
+                { value: 'long', label: t('Long page') },
+              ],
+              initial: 'a4',
+              get: () => modes.pagesPaper,
+              set: (value) => modes.setPagesPaper(value),
+            },
           ],
+          after: 'new-menu',
         },
         {
           title: t('Code'),
@@ -961,42 +1044,6 @@ export function preferences(view?: EditorView): Pane[] {
               initial: false,
               get: () => modes.lineNumbers,
               set: () => modes.toggleLineNumbers(view),
-            },
-          ],
-        },
-      ],
-    },
-
-    {
-      id: 'spelling',
-      label: t('Spelling'),
-      groups: [
-        {
-          title: t('Checking'),
-          fields: [
-            {
-              kind: 'switch',
-              label: t('Check spelling'),
-              words: ['spellcheck', 'spell check', 'typos'],
-              initial: true,
-              get: () => modes.spellcheck,
-              set: () => modes.toggleSpellcheck(view),
-            },
-          ],
-        },
-        {
-          // The browser checks against the dictionary the surface's language
-          // names, so this is the one setting that decides whose words are
-          // wrong.
-          title: t('Dictionary'),
-          fields: [
-            {
-              kind: 'select',
-              label: t('Language'),
-              options: DICTIONARIES.map((one) => ({ value: one.id, label: t(one.name) })),
-              initial: 'system',
-              get: () => modes.spellLanguage,
-              set: (value) => modes.setSpellLanguage(value, view),
             },
           ],
         },
@@ -1205,37 +1252,22 @@ export function preferences(view?: EditorView): Pane[] {
           ],
         },
 
-        {
-          title: t('Pointer'),
-          fields: [
-            {
-              // A desktop app's arrow over its buttons, or a web page's hand. The
-              // arrow stays the default; the Claude app offers the same switch.
-              kind: 'switch',
-              label: t('Pointing hand on buttons'),
-              words: ['cursor', 'mouse', 'hand', 'click'],
-              initial: false,
-              get: () => modes.hand,
-              set: () => modes.toggleHand(),
-            },
-          ],
-        },
-
-        // The window itself: who draws its frame. Desktop only, because a browser tab
-        // has none - and on a phone the system draws everything. Orden's own frame stays
-        // the default: the bar it draws holds the menu, the sidebar toggle, the tabs
-        // and the window's three buttons, and it is the shape the whole shell is
-        // measured from. See appearance.rs.
+        // The window itself: who draws its frame, and what the pointer is over a button.
+        // The frame is a desktop's alone, because a browser tab has none - and on a phone
+        // the system draws everything. Orden's own frame stays the default: the bar it
+        // draws holds the menu, the sidebar toggle, the tabs and the window's three
+        // buttons, and it is the shape the whole shell is measured from. See
+        // appearance.rs. Where there is no frame to choose the group is the pointer's.
         //
         // Whether the desk shows through the window is not here: that is the glass
         // theme, chosen under Style above. A row of its own was a switch that took the
         // window's ground away and showed next to nothing, since every surface painted
         // over the ground; see material.ts.
-        ...(isDesktop
-          ? ([
-              {
-                title: t('Window'),
-                fields: [
+        {
+          title: isDesktop ? t('Window') : t('Pointer'),
+          fields: [
+            ...(isDesktop
+              ? ([
                   {
                     kind: 'segmented',
                     label: t('Frame'),
@@ -1248,10 +1280,20 @@ export function preferences(view?: EditorView): Pane[] {
                     get: () => modes.frame,
                     set: (value) => modes.setFrame(value),
                   },
-                ],
-              },
-            ] satisfies Group[])
-          : []),
+                ] satisfies Field[])
+              : []),
+            {
+              // A desktop app's arrow over its buttons, or a web page's hand. The
+              // arrow stays the default; the Claude app offers the same switch.
+              kind: 'switch',
+              label: t('Pointing hand on buttons'),
+              words: ['cursor', 'mouse', 'hand', 'click', 'pointer'],
+              initial: false,
+              get: () => modes.hand,
+              set: () => modes.toggleHand(),
+            },
+          ],
+        },
       ],
     },
 
@@ -1274,16 +1316,19 @@ export function preferences(view?: EditorView): Pane[] {
         ] satisfies Pane[])
       : []),
     {
-      // The page an export is laid out on. The ways of exporting are beside it on
-      // the pane and are commands rather than settings; see `exportExtras` in
-      // SettingsPanel.svelte.
+      // Notes in from another app, and out: the page an export is laid out on and the
+      // ways of exporting beside it.
       //
       // None of these says what it started as, so the pane offers no reset: a
       // margin somebody typed is a decision about their printer, and one button
       // that quietly replaced six of those is not worth having.
       id: 'export',
-      label: t('Export'),
+      label: __EVEN_PLUGIN__ ? t('Export') : t('Import and export'),
       groups: [
+        // Notes from another app, each into a space of its own: the first screen's rows,
+        // any time later, as Notion's Settings > Import. Written out by hand; see
+        // MigrateRows.svelte. The plugin has no file to be given.
+        ...(__EVEN_PLUGIN__ ? [] : [{ title: t('Import'), fields: [], after: 'import' as const }]),
         {
           title: t('Page'),
           fields: [
@@ -1340,6 +1385,9 @@ export function preferences(view?: EditorView): Pane[] {
             },
           ],
         },
+        // The ways of exporting the note in front, under the page they are laid out on.
+        // Commands rather than settings, so written out by hand.
+        { title: t('This note'), fields: [], after: 'export' },
       ],
     },
   ]
@@ -1362,7 +1410,8 @@ function caption(): { caption?: { text: string; url: string } } {
 
 /** Whether every field in the pane knows what it started as. */
 export function resettable(pane: Pane): boolean {
-  return pane.groups.every((group) => group.fields.every((field) => field.initial !== undefined))
+  const fields = pane.groups.flatMap((group) => group.fields)
+  return fields.length > 0 && fields.every((field) => field.initial !== undefined)
 }
 
 /** Puts every field in the pane back to what it started as; see reset-fields.ts. */

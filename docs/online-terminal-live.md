@@ -77,7 +77,7 @@ tunnel's route again, so Access can also be added later.
    minutes cloud-init takes (packages, node, cloudflared, nibd, swap), and is live after.
    Then Claude Code and Codex install in the background.
 3. `select at, kind, detail from machine_events where machine = '<id>' order by at desc`:
-   `wake fresh`, no `failed`. Settings > Online terminal: _CX43 · 8 vCPU · 16 GB · 160 GB ·
+   `wake fresh`, no `failed`. Settings > Terminal > Online terminal: _CX43 · 8 vCPU · 16 GB · 160 GB ·
    €… a month_ and the disk bar.
 
 ### 6. Prove it
@@ -93,7 +93,7 @@ tunnel's route again, so Access can also be added later.
 4. `sudo systemctl kill -s KILL nibd` with `sleep 9999` running in a terminal: within seconds
    `relink`, and the same `sleep` still running on the same screen (systemd restarts nibd; the
    sleep's holder is not in its unit, `docs/online-terminal.md` 4.16).
-5. Settings > Online terminal > **Restart**: a `restart` row, the terminal back in seconds.
+5. Settings > Terminal > Online terminal > **Restart**: a `restart` row, the terminal back in seconds.
 6. Admin Reboot, `POST /v2/online/admin/machines/<id>/reboot`: `reboot`, then `wake restart`
    a minute or two later; the files are all there.
 7. Push anything: the terminal shows _Starting machine…_ for a moment and comes back with a

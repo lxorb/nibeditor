@@ -15,23 +15,35 @@ type ExportAppearance = 'light' | 'dark' | 'app'
 
 export type Section =
   | 'general'
+  | 'appearance'
   | 'editor'
+  | 'markdown'
   | 'shortcuts'
   | 'mobile'
-  | 'spelling'
-  | 'markdown'
-  | 'appearance'
-  | 'glasses'
+  | 'browser'
+  | 'tasks'
+  | 'terminal'
   | 'ai'
-  | 'agents'
-  | 'remote'
-  | 'online'
+  | 'glasses'
   | 'account'
   | 'sync'
-  | 'llm'
   | 'trash'
-  | 'import'
   | 'export'
+
+/** Old pages, by the id a link may still say, and the page their rows are on now. */
+const MOVED = {
+  spelling: 'editor',
+  remote: 'terminal',
+  online: 'terminal',
+  import: 'export',
+  agents: 'ai',
+  llm: 'ai',
+} as const satisfies Record<string, Section>
+
+/** A page by its id now or by the one it had. */
+export type Asked = Section | keyof typeof MOVED
+
+const isMoved = (section: Asked): section is keyof typeof MOVED => section in MOVED
 
 class Settings {
   open = $state(false)
@@ -148,17 +160,19 @@ class Settings {
     }
   }
 
-  /** Where in a pane it was asked to open: Access, for what used to be panes of their
-   *  own. Read and cleared by the part it names. */
-  at = $state<'access' | null>(null)
+  /** Where in a page it was asked to open. Read and cleared by the part it names. */
+  at = $state<'access' | 'spelling' | null>(null)
 
   /** Opens on General, or on the list of panes where the screen is a phone's.
-   *  Asked for by name, a pane opens straight away on both. Agents and LLM access are
-   *  Settings > AI's Access now, and a link to either still lands there. */
-  show(section?: Section) {
-    const moved = section === 'agents' || section === 'llm'
-    this.at = moved ? 'access' : null
-    this.section = moved ? 'ai' : (section ?? 'general')
+   *  Asked for by name, a pane opens straight away on both; see `MOVED`. */
+  show(section?: Asked) {
+    this.at =
+      section === 'agents' || section === 'llm'
+        ? 'access'
+        : section === 'spelling'
+          ? 'spelling'
+          : null
+    this.section = section === undefined ? 'general' : isMoved(section) ? MOVED[section] : section
     this.listing = section === undefined
     this.open = true
     this.error = null

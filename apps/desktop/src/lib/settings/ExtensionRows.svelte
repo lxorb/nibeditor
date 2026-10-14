@@ -1,4 +1,4 @@
-<!-- The extensions, in Settings > General > Browser: one row each, with its switch, and
+<!-- The extensions, in Settings > Browser: one row each, with its switch, and
      what it may do and the way to take it away a press on its name away.
 
      chrome://extensions in nib's rows. A row is the extension's picture, its name, its

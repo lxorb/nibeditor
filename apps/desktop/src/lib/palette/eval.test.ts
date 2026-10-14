@@ -149,7 +149,8 @@ const CASES: [string, string, 1 | 3][] = [
   ['polybox', 'page polybox', 1],
   ['tauri', 'page tauri - Rust', 3],
   // Settings, which have to be asked for by name.
-  ['spelling', 'setting Spelling', 1],
+  // Spelling was a page and is a group of Editor now: its name finds its first row.
+  ['spelling', 'setting Check spelling', 1],
   ['spell check', 'setting Check spelling', 1],
   ['check spelling', 'setting Check spelling', 1],
   ['font', 'setting Text size', 1],
