@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Orden started the way a Wayland desktop starts it, with no X server anywhere: a
-# headless sway with Xwayland off, DISPLAY and GDK_BACKEND unset, three screens the way
-# a laptop at a desk has them - one turned to portrait at a fractional 1.77, one at 1,
-# one at 1.75 - and a session bus. Then the checks a reader would make by looking:
+# headless sway with Xwayland off, DISPLAY and GDK_BACKEND unset, four screens - one
+# turned to portrait at a fractional 1.77, one at 1, one at 1.75, one at 2 - and a
+# session bus. Then the checks a reader would make by looking:
 #
 #   - the window maps, on Wayland, as a window sway can see;
 #   - nothing the graphics stack says is a failure: no EGL display that could not be
@@ -11,7 +11,10 @@
 #     portal where there is one (PORTAL=1 starts scripts/wayland-portal.py, which binds
 #     and then presses quick add), or as `--quick-add` handed to the running app where
 #     there is none (SECOND names the command that starts a second copy) - quick add's
-#     window comes up either way, floating, as a compositor floats a fixed-size window.
+#     window comes up either way, floating, as a compositor floats a fixed-size window;
+#   - with DRIVE=1, Orden opened on a page of one colour in a web tab, and
+#     scripts/wayland-drive.py reading where that page is drawn on every screen, with
+#     the tab's menu over it and after a resize.
 #
 # Run inside `dbus-run-session`, with the command that starts Orden:
 #
@@ -32,12 +35,15 @@ chmod 700 "$XDG_RUNTIME_DIR"
 export HOME=${HOME:-/root}
 
 # sway with no GPU and no input: the headless backend, drawn in memory.
-export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 WLR_HEADLESS_OUTPUTS=3
+export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 WLR_HEADLESS_OUTPUTS=4
 cat > "$out/sway.conf" <<'CONF'
 xwayland disable
+default_border none
+default_floating_border none
 output HEADLESS-1 mode --custom 2560x1440@60Hz transform 90 scale 1.77 position 0 0
 output HEADLESS-2 mode --custom 2560x1440@60Hz scale 1 position 814 0
 output HEADLESS-3 mode --custom 1920x1080@60Hz scale 1.75 position 3374 0
+output HEADLESS-4 mode --custom 2560x1600@60Hz scale 2 position 4472 0
 CONF
 sway -c "$out/sway.conf" > "$out/sway.log" 2>&1 &
 sway_pid=$!
@@ -92,6 +98,22 @@ wait_for_views() {
   return 1
 }
 
+# The drive's page, one colour edge to edge, and the app's endpoint open to `eval`
+# before the app writes this launch's port into it.
+site_pid=""
+if [ "${DRIVE:-0}" = 1 ]; then
+  mkdir -p "$out/site"
+  printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>' > "$out/site/index.html"
+  python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
+  site_pid=$!
+  config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
+  mkdir -p "$config"
+  secret=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
+  printf '{"port":0,"secret":"%s","eval":true,"pid":0}' "$secret" > "$config/automation.json"
+  chmod 600 "$config/automation.json"
+  set -- "$@" http://127.0.0.1:8765/
+fi
+
 started=$(date +%s%N)
 "$@" > "$out/orden.log" 2>&1 &
 app_pid=$!
@@ -131,6 +153,10 @@ if [ "$status" = 0 ] && [ -n "$portal_pid" ]; then
   grep -q 'CTRL+ALT+space' "$out/portal.log" || { echo "::error::quick add's key was not the one preferred"; status=1; }
 fi
 
+if [ "$status" = 0 ] && [ -n "$site_pid" ]; then
+  python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
 if [ "$status" = 0 ] && [ -n "${QUICK_ADD_FLOATS:-}" ]; then
   views | grep -q '| floating |' || { echo "::error::quick add's window is tiled"; status=1; }
 fi
@@ -141,6 +167,7 @@ swaymsg -t get_tree > "$out/tree.json" || true
 kill "$app_pid" 2>/dev/null || true
 wait "$app_pid" 2>/dev/null || true
 [ -n "$portal_pid" ] && kill "$portal_pid" 2>/dev/null || true
+[ -n "$site_pid" ] && kill "$site_pid" 2>/dev/null || true
 kill "$sway_pid" 2>/dev/null || true
 
 # The app's own log, which says how keys from other apps reach it here.

@@ -2208,12 +2208,13 @@ pub async fn web_close(
 /// asks for this first, paints it in the hole, and then hides the webview, so what is
 /// behind the menu is the page.
 ///
-/// `WebView2` has `CapturePreview` and `WKWebView` has `takeSnapshot`, which are the
-/// engine photographing itself and the only way to get at those pixels: the app's own
-/// webview cannot draw the page and nothing outside the process may copy the screen.
-/// On Linux there is nothing to call - `WebKitGTK`'s snapshot is not reachable through
-/// what wry hands out - and the answer is `None`, which the window reads as "keep your
-/// own ground". Said in docs/web-tabs.md rather than hidden here.
+/// `WebView2` has `CapturePreview`, `WKWebView` has `takeSnapshot` and `WebKitGTK` has
+/// `webkit_web_view_get_snapshot`, which are the engine photographing itself and the only
+/// way to get at those pixels: the app's own webview cannot draw the page and nothing
+/// outside the process may copy the screen - least of all on Wayland. Without one the page
+/// went under every menu with nothing in its place, an empty pane under the menu bar's
+/// menus (Hyprland, 2026-10-14). Where there is no way in at all - nib's own Chromium -
+/// the answer is `None`, which the window reads as "keep your own ground".
 #[tauri::command]
 pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
     let view = found(&app, &tab)?;
@@ -3024,16 +3025,152 @@ mod shot {
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) use shot::png as read_stream;
 
-// Every build but the two system engines that can photograph a page: Linux, and nib's
-// own Chromium. See the two above.
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+// WebKitGTK: the engine photographing itself, as `webkit_web_view_get_snapshot` does it,
+// which wry hands out as the page's own `WebView`.
+#[cfg(all(target_os = "linux", not(feature = "cef")))]
+mod shot {
+    use gtk::cairo;
+    use tauri::async_runtime::Sender;
+    use tauri::webview::PlatformWebview;
+    use webkit2gtk::{SnapshotOptions, SnapshotRegion, WebViewExt as _};
+
+    /// What of the page is on screen, as the engine draws it, handed to `done` as a PNG:
+    /// the pixels copied on the window's thread, where the engine answers, and turned
+    /// into a PNG on a thread of their own, so the window's thread spends a copy on it
+    /// and no more.
+    #[allow(
+        clippy::unnecessary_wraps,
+        reason = "the signature matches the Windows photograph, which does fail"
+    )]
+    pub fn photograph(
+        webview: &PlatformWebview,
+        done: Sender<Option<Vec<u8>>>,
+    ) -> Result<(), String> {
+        webview.inner().snapshot(
+            SnapshotRegion::Visible,
+            SnapshotOptions::NONE,
+            None::<&gtk::gio::Cancellable>,
+            move |taken| {
+                let Some(pixels) = taken.ok().and_then(copied) else {
+                    let _ = done.try_send(None);
+                    return;
+                };
+                let _ = std::thread::Builder::new()
+                    .name("web shot".into())
+                    .spawn(move || {
+                        let _ = done.try_send(png(&pixels));
+                    });
+            },
+        );
+        Ok(())
+    }
+
+    /// A picture's pixels as cairo keeps them: premultiplied, blue first, rows `stride`
+    /// apart.
+    pub struct Pixels {
+        /// Across, in pixels.
+        pub width: u32,
+        /// Down, in pixels.
+        pub height: u32,
+        /// How many bytes one row takes, padding and all.
+        pub stride: usize,
+        /// The rows.
+        pub data: Vec<u8>,
+    }
+
+    fn copied(surface: cairo::Surface) -> Option<Pixels> {
+        let image = cairo::ImageSurface::try_from(surface).ok()?;
+        let opaque = match image.format() {
+            cairo::Format::ARgb32 => false,
+            cairo::Format::Rgb24 => true,
+            _ => return None,
+        };
+        let mut data = Vec::new();
+        image.with_data(|bytes| data.extend_from_slice(bytes)).ok()?;
+        // A picture with no alpha leaves the fourth byte to chance.
+        if opaque {
+            data.iter_mut().skip(3).step_by(4).for_each(|alpha| *alpha = 255);
+        }
+        Some(Pixels {
+            width: u32::try_from(image.width()).ok()?,
+            height: u32::try_from(image.height()).ok()?,
+            stride: usize::try_from(image.stride()).ok()?,
+            data,
+        })
+    }
+
+    /// The pixels as a PNG.
+    pub fn png(pixels: &Pixels) -> Option<Vec<u8>> {
+        let rgba = straight(pixels)?;
+        let mut out = Vec::new();
+        {
+            let mut encoder = ::png::Encoder::new(&mut out, pixels.width, pixels.height);
+            encoder.set_color(::png::ColorType::Rgba);
+            encoder.set_depth(::png::BitDepth::Eight);
+            let mut writer = encoder.write_header().ok()?;
+            writer.write_image_data(&rgba).ok()?;
+        }
+        Some(out)
+    }
+
+    /// The pixels in straight colour, red first, row after row with nothing between.
+    pub fn straight(pixels: &Pixels) -> Option<Vec<u8>> {
+        let wide = usize::try_from(pixels.width).ok()?;
+        let tall = usize::try_from(pixels.height).ok()?;
+        let mut rgba = Vec::with_capacity(wide * 4 * tall);
+        for row in pixels.data.chunks(pixels.stride.max(1)).take(tall) {
+            for one in row.get(..wide * 4)?.chunks_exact(4) {
+                let (blue, green, red, alpha) = (one[0], one[1], one[2], one[3]);
+                let unmixed = |value: u8| {
+                    if alpha == 0 {
+                        0
+                    } else {
+                        u8::try_from(u16::from(value) * 255 / u16::from(alpha)).unwrap_or(255)
+                    }
+                };
+                rgba.extend_from_slice(&[unmixed(red), unmixed(green), unmixed(blue), alpha]);
+            }
+        }
+        (rgba.len() == wide * 4 * tall).then_some(rgba)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::{png, straight, Pixels};
+
+        /// Two pixels and a byte of padding a row: magenta, and half of it see-through.
+        #[test]
+        fn a_picture_comes_out_red_first_in_straight_colour() {
+            let pixels = Pixels {
+                width: 2,
+                height: 1,
+                stride: 12,
+                data: vec![255, 0, 255, 255, 64, 0, 64, 128, 9, 9, 9, 9],
+            };
+            assert_eq!(
+                straight(&pixels),
+                Some(vec![255, 0, 255, 255, 127, 0, 127, 128])
+            );
+            let made = png(&pixels).expect("a picture");
+            assert_eq!(&made[..8], b"PNG
+
+
+");
+        }
+    }
+}
+
+// nib's own Chromium, and the BSDs: no way in, so the window keeps its own ground under
+// an overlay there; see the note on `web_shot`.
+#[cfg(any(
+    feature = "cef",
+    not(any(windows, target_os = "macos", target_os = "linux"))
+))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
 
-    /// No way in. `WebKitGTK`'s snapshot is not reachable through what wry hands out,
-    /// so the window keeps its own ground under an overlay here; see the note on
-    /// `web_shot`.
+    /// No way in.
     ///
     /// The `Result` is never an `Err` here, which clippy would flag on its own - but the
     /// signature has to match the Windows one `web_shot` calls, where the engine's own

@@ -127,6 +127,8 @@ jobs:
             apps/desktop/src-tauri/target/debug/bundle/rpm/*.rpm
             apps/desktop/src-tauri/target/debug/bundle/appimage/*.AppImage
 
+  # Also the one row that drives the app: a web tab opened on a page of one colour and
+  # read off pictures of every screen (scripts/wayland-drive.py).
   deb:
     needs: build
     runs-on: ubuntu-24.04
@@ -141,13 +143,18 @@ jobs:
       - name: The .deb, sway, Mesa and a session bus
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway dbus python3-gi gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0
+          sudo apt-get install -y ./packages/deb/*.deb sway grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0
       - name: Under Wayland, the portal's key reaching quick add
         env:
-          OUT: wayland-out
+          OUT: wayland-out/portal
           PORTAL: '1'
           KEYS: 'the desktop portal, version 2'
           QUICK_ADD_FLOATS: '1'
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      - name: A web tab's page where its tab is, on every screen, under the app's layers
+        env:
+          OUT: wayland-out/drive
+          DRIVE: '1'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
