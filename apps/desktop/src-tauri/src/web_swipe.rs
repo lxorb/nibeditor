@@ -3,8 +3,8 @@
 //!
 //! Emil, 2026-10-03: *"Swiping (left/right) to go to the previous / redo page."* Chrome and
 //! Edge take a sideways scroll the page left over as Back or Forward, with an arrow that
-//! follows the fingers. Both of Windows' engines are Chromium and have that swipe too, and
-//! nib starts both without it (`ENGINE_SWIPE` in engine.rs): it walks the engine's own
+//! follows the fingers. `WebView2` is Chromium and has that swipe too, and nib starts it
+//! without it (`ENGINE_SWIPE` in engine.rs): it walks the engine's own
 //! history, and a tab nib revived after a relaunch has none - its trail is this crate's
 //! (`Trail` in `web_tabs.rs`) - so the engine's swipe did nothing on most tabs after a
 //! restart, went the wrong way after any step the crate made itself, and on the pages where
@@ -19,9 +19,7 @@
 //! would have taken it, and says it a frame at a time. Every listener there is passive and
 //! only reads, so the page scrolls exactly as it did.
 //!
-//! **How it is said** is each engine's one road back from nib's world. On nib's own
-//! Chromium a function only that world has (`BINDING`, the `DevTools` protocol's
-//! `Runtime.addBinding` by the world's name), as `web_opens.rs` asks there. On `WebView2`
+//! **How it is said** is the engine's one road back from nib's world. On `WebView2`
 //! a window asked for under a name that carries it (`NAMED`), which `web_opens.rs` hears
 //! with the rest of the names and the engine never opens - the way that file asks for the
 //! find and the address field. A binding is not that road on `WebView2`: the engine puts
@@ -37,13 +35,12 @@
 //! The keyboard is not handed back to the window for any of it: a swipe is not a reason
 //! to take the typing out of a page.
 //!
-//! Windows' two engines; a Mac's and Linux's pages have no channel back to the app.
+//! `WebView2` alone; a Mac's and Linux's pages have no channel back to the app.
 
 // Elsewhere nothing but the tests reads any of it.
 #![cfg_attr(not(windows), allow(dead_code))]
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
 /// nib's script for every page and frame, as the file holds it; see `web_swipe.js`.
 const SCRIPT: &str = include_str!("web_swipe.js");
@@ -56,19 +53,12 @@ pub fn script() -> &'static str {
     SCRIPT.trim().trim_start_matches(';')
 }
 
-/// The function nib's world in a page says a swipe through on nib's own Chromium.
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
-pub const BINDING: &str = "nibSwiped";
-
 /// What the window name a swipe is said under on `WebView2` begins with; the rest is
-/// what the binding would have been handed. Orden's own Chromium hears a swipe through
-/// the binding instead, and has no such window.
-#[cfg(any(not(feature = "cef"), test))]
+/// what the page said.
 const NAMED: &str = "nib-swipe:";
 
 /// What a window asked for under `name` says of a swipe, or `None` for any other name.
 /// Pure, and the only reading of that name.
-#[cfg(any(not(feature = "cef"), test))]
 pub fn named(name: &str) -> Option<&str> {
     name.strip_prefix(NAMED)
 }
@@ -76,17 +66,11 @@ pub fn named(name: &str) -> Option<&str> {
 /// The event the window hears a swipe on.
 const SWIPED: &str = "nib://web-swipe";
 
-/// What the protocol is asked to give nib's world, and no other world, the function by.
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
-pub fn binding() -> Value {
-    json!({ "name": BINDING, "executionContextName": crate::web_worlds::WORLD })
-}
-
 /// The longest step a page may report, in its own pixels: past anything a hand makes,
 /// short of anything that would be a number gone wrong.
 const LONGEST: f64 = 10_000.0;
 
-/// What one call through `BINDING` said: a frame's worth of sideways scroll, a finger
+/// What one page said: a frame's worth of sideways scroll, a finger
 /// moving from the side of the screen, or that finger lifted. `l` and `r` are whether the
 /// page would have taken the scroll that way itself.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -125,7 +109,7 @@ pub struct Swiped {
     right: bool,
 }
 
-/// What a call through `BINDING` said, for `tab`, or `None` for anything that is not a
+/// What a page said, for `tab`, or `None` for anything that is not a
 /// swipe as the script says one. Pure, and the only reading of what a page says here.
 pub fn read(tab: &str, payload: &str) -> Option<Swiped> {
     let said: Said = serde_json::from_str(payload).ok()?;
@@ -148,7 +132,7 @@ pub fn read(tab: &str, payload: &str) -> Option<Swiped> {
     }
 }
 
-/// Says what a page said through `BINDING` to its window, for `tab`, which the caller
+/// Says what a page said to its window, for `tab`, which the caller
 /// knows from where it was listening; nothing the page says names it.
 pub fn heard(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
     use tauri::Emitter;
@@ -160,7 +144,7 @@ pub fn heard(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{binding, named, read, Swiped, BINDING, SCRIPT};
+    use super::{named, read, Swiped, SCRIPT};
 
     fn swiped(kind: &'static str, dx: f64, dy: f64, at: f64, left: bool, right: bool) -> Swiped {
         Swiped {
@@ -236,18 +220,13 @@ mod tests {
         assert_eq!(said.map(|one| one.kind), Some("wheel"));
     }
 
+    /// The script says under the window name, and every listener only listens.
     #[test]
-    fn the_binding_is_nib_s_world_s_alone() {
-        assert_eq!(binding()["name"], BINDING);
-        assert_eq!(binding()["executionContextName"], crate::web_worlds::WORLD);
-    }
-
-    /// The script says through the binding by its name, or under the window name where
-    /// there is none, and every listener only listens.
-    #[test]
-    fn the_script_asks_through_the_binding_and_only_listens() {
-        assert!(SCRIPT.contains(&format!("globalThis.{BINDING}")));
-        assert!(SCRIPT.contains(&format!("open('about:blank', '{}' + words)", super::NAMED)));
+    fn the_script_asks_under_the_name_and_only_listens() {
+        assert!(SCRIPT.contains(&format!(
+            "open('about:blank', '{}' + JSON.stringify(said))",
+            super::NAMED
+        )));
         assert_eq!(SCRIPT.matches("passive: true").count(), 5);
         assert!(!SCRIPT.contains("preventDefault()"));
         assert!(!SCRIPT.contains("stopPropagation"));

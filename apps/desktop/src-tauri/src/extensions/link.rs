@@ -59,27 +59,19 @@ fn store_of(url: &Url) -> Option<Store> {
     }
 }
 
-/// The store's own page for an extension: where nib's own Chromium sends a pasted link,
-/// for the store's own button to install it.
-#[cfg_attr(
-    not(feature = "cef"),
-    allow(
-        dead_code,
-        reason = "only nib's own Chromium installs through the store's own page"
-    )
-)]
-pub fn page_of(store: Store, id: &str) -> String {
-    match store {
-        Store::Chrome => format!("https://chromewebstore.google.com/detail/{id}"),
-        Store::Edge => format!("https://microsoftedge.microsoft.com/addons/detail/{id}"),
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{is_id, named, page_of, Store};
+    use super::{is_id, named, Store};
 
     const UBLOCK: &str = "ddkjiahejlhfcafbddmgiahcphecmpfh";
+
+    /// The store's own page for an extension, as each store writes it.
+    fn page_of(store: Store, id: &str) -> String {
+        match store {
+            Store::Chrome => format!("https://chromewebstore.google.com/detail/{id}"),
+            Store::Edge => format!("https://microsoftedge.microsoft.com/addons/detail/{id}"),
+        }
+    }
 
     #[test]
     fn every_store_page_shape_names_its_extension() {

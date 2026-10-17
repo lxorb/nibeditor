@@ -125,8 +125,7 @@ fn refresh_token() -> Result<Option<String>, String> {
 }
 
 fn client() -> Result<reqwest::Client, String> {
-    // Rustls with no provider of its own, as the updater builds it; see
-    // engine_switch/fetch.rs.
+    // Rustls with no provider of its own, as the updater builds it.
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
         .timeout(Duration::from_secs(30))

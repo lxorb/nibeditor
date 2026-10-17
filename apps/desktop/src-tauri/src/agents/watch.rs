@@ -28,7 +28,7 @@ use tauri::AppHandle;
 
 /// The event the pictures go out on.
 #[cfg_attr(
-    not(any(windows, feature = "cef")),
+    not(windows),
     allow(
         dead_code,
         reason = "only an engine with agent tabs has them to picture"
@@ -42,7 +42,7 @@ static WATCHED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
 /// One picture of a tab.
 #[derive(Clone, Serialize)]
 #[cfg_attr(
-    not(any(windows, feature = "cef")),
+    not(windows),
     allow(
         dead_code,
         reason = "only an engine with agent tabs has them to picture"
@@ -60,7 +60,7 @@ fn watched() -> std::sync::MutexGuard<'static, Option<HashSet<String>>> {
 }
 
 #[cfg_attr(
-    not(any(windows, feature = "cef")),
+    not(windows),
     allow(
         dead_code,
         reason = "only an engine with agent tabs has them to picture"
@@ -92,12 +92,12 @@ pub fn agents_watch(
 
 /// A page that went - parked, or closed - is a page whose frames nobody hears any more:
 /// the next one built under its label is heard afresh.
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(windows)]
 pub fn forget(label: &str) {
     engine::forget(label);
 }
 
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(windows)]
 mod engine {
     use std::collections::{HashMap, HashSet};
     use std::sync::{Mutex, PoisonError};
@@ -211,7 +211,7 @@ mod engine {
 }
 
 /// Every other engine has no agent tabs (section 12), and so nothing to picture.
-#[cfg(not(any(windows, feature = "cef")))]
+#[cfg(not(windows))]
 mod engine {
     use tauri::AppHandle;
 

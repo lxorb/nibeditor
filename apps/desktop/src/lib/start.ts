@@ -29,7 +29,7 @@ import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
 import { record } from './sync/record.svelte'
-import { settings } from './settings.svelte'
+import { hiddenKinds, settings } from './settings.svelte'
 import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, isDesktop, isMobile } from './tauri'
@@ -67,6 +67,7 @@ export function start(): () => void {
   toolbar.restore()
   // And which command a pull down past the top of a list runs.
   pull.restore()
+  hiddenKinds.restore()
   settings.restore()
   // The moment a hint may appear: long enough that the window has settled and the
   // reader has started on what they came for. The store is fetched then, not here,

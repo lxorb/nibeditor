@@ -123,8 +123,11 @@ def edit_filter(page: Page) -> None:
 def labels(page: Page) -> None:
     page.locator(".tasks .nib-row", has_text="admin").click(button="right")
     page.locator(".menu [role=menuitem]", has_text="Rename").click()
-    wait_for(page, "document.querySelector('[role=dialog] input')", "the label's name")
-    page.locator("[role=dialog] input").fill("office")
+    # The Rename dialog's own field: the filter's sheet from the step before may still
+    # be on its way out, with its two fields, in a page that is not drawing frames.
+    field = page.get_by_role("dialog", name="Rename").locator("input")
+    field.wait_for()
+    field.fill("office")
     page.keyboard.press("Enter")
     wait_for(
         page,

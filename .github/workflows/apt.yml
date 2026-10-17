@@ -1,0 +1,146 @@
+name: apt
+
+# The apt repository, lxorb/apt on GitHub Pages: one suite of it written again from a
+# release's .debs, signed with APT_SIGNING_KEY. `stable` comes from publish.yml, for a
+# stable release, and `unstable` from release.yml, once edge is up; both call this
+# workflow (`uses:`) rather than dispatching it, because a dispatch only finds a
+# workflow that is on the default branch already. By hand, once it is on main:
+#
+#   gh workflow run apt.yml -f suite=stable -f tag=v0.15.0
+#   gh workflow run apt.yml -f suite=unstable -f tag=edge
+#
+# Each suite holds its newest version alone, and the repository is pushed as one commit
+# with no history: every .deb that ever went in would otherwise stay in the history of a
+# repository Pages has to serve, thirty megabytes a build. What a run does not write -
+# the other suite - it takes from the repository as it finds it. See scripts/apt-repo.sh
+# and packaging/linux.md, "apt".
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: Which suite to write, stable or unstable
+        type: string
+        required: true
+      tag:
+        description: The release whose .debs go in, v1.2.3 for stable and edge for unstable
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to write
+        type: choice
+        options: [stable, unstable]
+        required: true
+      tag:
+        description: The release whose .debs go in, v1.2.3 for stable and edge for unstable
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  # The key the repository is signed with; its public half is
+  # packaging/apt/orden-archive-keyring.asc, and the run refuses a secret that is not it.
+  APT_KEY_FINGERPRINT: 44404B19539FB2C53F31086941F0103448A194DE
+  # Where the repository is served, written into its page; a repository variable moves
+  # it, to apt.orden.so for one.
+  APT_BASE_URL: ${{ vars.APT_BASE_URL || 'https://lxorb.github.io/apt' }}
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      # A suite takes only its own kind of release, and a run with no key or no token
+      # is skipped rather than failed, as publish.yml skips a manager with none.
+      - id: check
+        env:
+          SUITE: ${{ inputs.suite }}
+          TAG: ${{ inputs.tag }}
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+          PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }}
+        run: |
+          if [[ -z $APT_SIGNING_KEY || -z $PACKAGING_TOKEN ]]; then
+            echo "::notice::APT_SIGNING_KEY or PACKAGING_TOKEN is not set - nothing to publish."
+            echo 'go=false' >>"$GITHUB_OUTPUT"
+          elif [[ $SUITE == stable && $TAG == v*.*.* && $TAG != *-* ]] || [[ $SUITE == unstable && $TAG == edge ]]; then
+            echo 'go=true' >>"$GITHUB_OUTPUT"
+          else
+            echo "::error::$TAG does not go in $SUITE: stable takes a released v*.*.*, unstable takes edge."
+            exit 1
+          fi
+
+  publish:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    # One writer at a time, from either suite and whichever workflow called this one: both
+    # push the same branch, and a newer run waits rather than cancelling one half way
+    # through its push. On the job rather than the workflow, so the group is this job's
+    # own and never one a caller is holding (release.yml's and publish.yml's are theirs).
+    concurrency:
+      group: apt
+      cancel-in-progress: false
+    # The push goes to lxorb/apt on the PACKAGING_TOKEN; this token only downloads the
+    # release's .debs.
+    permissions:
+      contents: read
+    env:
+      SUITE: ${{ inputs.suite }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          sparse-checkout: |
+            scripts/apt-repo.sh
+            packaging/apt
+          persist-credentials: false
+
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          repository: lxorb/apt
+          path: apt
+          token: ${{ secrets.PACKAGING_TOKEN }}
+
+      - name: The release's .debs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir debs \
+            --pattern '*-linux-x64.deb' --pattern '*-linux-arm64.deb'
+          ls -l debs
+
+      - name: The signing key
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: |
+          gpg --batch --import <<<"$APT_SIGNING_KEY"
+          gpg --batch --list-secret-keys "$APT_KEY_FINGERPRINT"
+          # The secret signs what the published key verifies, or nothing is signed.
+          published=$(gpg --batch --show-keys --with-colons packaging/apt/orden-archive-keyring.asc | awk -F: '$1 == "fpr" { print $10; exit }')
+          [ "$published" = "$APT_KEY_FINGERPRINT" ] || { echo "::error::the published key is $published"; exit 1; }
+
+      - name: Write the suite
+        run: |
+          command -v apt-ftparchive >/dev/null || sudo apt-get install -y apt-utils
+          bash scripts/apt-repo.sh "$SUITE" debs apt
+
+      - name: Push
+        working-directory: apt
+        run: |
+          git config user.name lxorb
+          git config user.email 101118850+lxorb@users.noreply.github.com
+          git checkout --orphan written
+          git add -A
+          git commit -q -m "$SUITE: $TAG"
+          git push --force origin written:main
+          {
+            echo "### $SUITE: $TAG"
+            echo
+            for arch in amd64 arm64; do
+              echo "- $arch: $(awk '/^Version: / { print $2 }' "dists/$SUITE/main/binary-$arch/Packages")"
+            done
+          } >>"$GITHUB_STEP_SUMMARY"

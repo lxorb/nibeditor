@@ -57,9 +57,16 @@ UNANSWERED = (
 SESSION = "handed-over-token"
 
 
+#: Which two origins the build in FOLDER was told about, written beside it. They carry
+#: this run's port, so a build left by another run names origins nobody serves: the
+#: new address was then not the new address, and offered nothing.
+ORIGINS = FOLDER / ".handoff-origins"
+
+
 def built() -> None:
     """The drive build, told which two origins play the old address and the new."""
-    if os.environ.get("NIB_SKIP_BUILD") and (FOLDER / "index.html").exists():
+    said = ORIGINS.read_text(encoding="utf-8") if ORIGINS.exists() else ""
+    if os.environ.get("NIB_SKIP_BUILD") and (FOLDER / "index.html").exists() and said == f"{OLD} {NEW}":
         say(f"reusing the build in {FOLDER.name}")
         return
     say(f"building the web app into {FOLDER.name} for {OLD} and {NEW}")
@@ -79,6 +86,7 @@ def built() -> None:
     )
     if done.returncode != 0:
         raise SystemExit(f"the build failed:\n{done.stdout}\n{done.stderr}")
+    ORIGINS.write_text(f"{OLD} {NEW}", encoding="utf-8")
 
 
 @DRIVE.answers
@@ -92,7 +100,13 @@ def handoff_page(request: Files) -> bool:
 def context(browser: Browser) -> Any:
     # A new reader's browser: nothing in it but what the harness answers for every
     # drive, which is taken back below.
-    made = browser.new_context(viewport={"width": 1100, "height": 760}, first_look=True)
+    # No service worker: a request the page's worker answers is not handed to the
+    # routes below, so the session the handoff brings over went to the real orden.so,
+    # which said no in its own words - a 401 the page had no leave to read, which WebKit
+    # reports as an error the page threw.
+    made = browser.new_context(
+        viewport={"width": 1100, "height": 760}, first_look=True, service_workers="block"
+    )
     made.add_init_script(UNANSWERED)
     # The service is somebody else's; nothing here asks it anything that matters.
     made.route("https://orden.so/**", lambda route: route.abort())
@@ -140,8 +154,14 @@ def brought(browser: Browser) -> None:
     say("the new address: the row, pressed")
     new = opened(made, NEW)
     import_pane(new)
+    # Waited for rather than counted at once: the pane is drawn as the dialog opens,
+    # and the row joins it only once this visit has written its welcome note and so
+    # knows it is a first one (first-visit.svelte.ts). Counted at once, it was missed
+    # by a frame and the picture taken after showed it there.
     row = new.locator(ROW)
-    if not row.count():
+    try:
+        row.first.wait_for(timeout=10_000)
+    except Exception:  # noqa: BLE001 - a timeout is the answer "it is not there"
         wrong("the new address does not offer the old address's notes")
         shot(new, "01-no-row")
         return

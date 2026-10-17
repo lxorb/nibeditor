@@ -107,6 +107,30 @@ ROWS = """
 ORDER = "() => window.nibApp.workspace.bookmarks.list.map((one) => one.path || one.text)"
 
 
+#: The pages being reloaded right now; see `reload`.
+RELOADING: set[Page] = set()
+
+
+def page_error(page: Page, error: Exception) -> None:
+    """A script error is a failure, but for the one a reload makes: the chunks the app
+    fetches once it is up are cancelled by the reload, and WebKit reports each import
+    that was waiting on one as `Importing a module script failed` from the page being
+    left. Chromium says nothing. It is the drive's reload, not the app."""
+    if page in RELOADING and "Importing a module script failed" in str(error):
+        say(f"(a reload cancelled an import: {error})")
+        return
+    wrong(f"page error: {error}")
+
+
+def reload(page: Page) -> None:
+    RELOADING.add(page)
+    try:
+        page.reload(wait_until="domcontentloaded")
+        DRIVE.ready(page)
+    finally:
+        RELOADING.discard(page)
+
+
 def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = False) -> Page:
     options = (
         {
@@ -119,7 +143,8 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
         if finger
         else {"viewport": {"width": 1280, "height": 820}}
     )
-    page = DRIVE.page(browser, color_scheme=scheme, device_scale_factor=2, **options)
+    page = DRIVE.page(browser, errors=False, color_scheme=scheme, device_scale_factor=2, **options)
+    page.on("pageerror", lambda error: page_error(page, error))
     page.on(
         "console",
         lambda message: wrong(f"[{label}] console error: {message.text}")
@@ -128,13 +153,20 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
     )
     DRIVE.open(page)
     say(f"[{label}] kept: {page.evaluate(SEED, FILES)}")
-    page.reload(wait_until="domcontentloaded")
-    DRIVE.ready(page)
+    reload(page)
     page.evaluate(SHOW)
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the tiles")
     page.locator(".tiles .tile").first.click()
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     wait_for(page, "document.querySelectorAll('.tiles .tile').length === 5", f"[{label}] the tiles")
+    # The press opens Plan in place, which is a module fetched the first time an
+    # essential opens (essentials.svelte.ts) and so can take longer than the half a
+    # second below; its tile is lifted once it has.
+    wait_for(
+        page,
+        "/Plan\\.md$/.test(window.nibApp.workspace.active?.essential ?? '')",
+        f"[{label}] Plan open in place",
+    )
     page.wait_for_timeout(500)
     return page
 
@@ -296,8 +328,7 @@ def drive_hands(browser: Browser) -> None:
         wrong(f"the list did not come back: {listed}")
     sidebar(page, "12-as-a-list")
     page.evaluate("() => localStorage.setItem('nib:essentials-look', 'tiles')")
-    page.reload(wait_until="domcontentloaded")
-    DRIVE.ready(page)
+    reload(page)
     page.evaluate(SHOW)
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the tiles")
     page.locator(".tiles .tile").first.click()
@@ -336,7 +367,11 @@ def drive_hands(browser: Browser) -> None:
 
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
-    # The press that opened Plan put the drawer away, as a press on a phone does.
+    # The press that opened Plan put the drawer away, as a press on a phone does - once
+    # the note has opened, which can be after the press. Asked for before then, the file
+    # list is still the panel showing, so showing it again is nothing, and then the
+    # drawer goes.
+    wait_for(page, "window.nibApp.workspace.panel === null", "the drawer put away")
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
     tiles = page.evaluate(TILES)

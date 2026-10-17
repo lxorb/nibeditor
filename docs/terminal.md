@@ -59,8 +59,8 @@ it with no field of their own - the one path every tab with no file comes back b
 duplicate is given a key of its own the first time it is drawn, so two tabs never write
 one file.
 
-**After a restart** - the app quit, the window closed, the engine switched, an update
-put in place, a crash - it comes back in its place in the strip, under its name, with its
+**After a restart** - the app quit, the window closed, an update put in place, a crash -
+it comes back in its place in the strip, under its name, with its
 shell, in **the folder it was last in**, with **its last thousand lines** above a fresh
 prompt and one dim line between the two saying when they are from: VS Code's revive,
 Windows Terminal's restored buffer, Warp's restoration. The folder is the one people miss
@@ -551,7 +551,7 @@ test/weight.test.ts).
 - **A shell that survives a restart.** iTerm2 runs every session inside a server of its
   own and VS Code every terminal inside a pty host, so a crash or an upgrade reconnects to
   the running shell. Every restart nib has - a crash, an update (the installer takes the
-  process down), the engine switch's relaunch - ends the one process that holds the
+  process down) - ends the one process that holds the
   pseudo consoles, and a console ends with its owner; keeping shells alive would be a
   second long-lived program with the rules under _Who may_ proved again across a pipe to
   it. The one event the crate outlives is the page loading again, which in a release is

@@ -36,7 +36,8 @@ import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
 import { present } from './slides/present.svelte'
-import { isDesktop, openExternal } from './tauri'
+import { DOWNLOAD_URL } from './links'
+import { isDesktop, isNative, openExternal } from './tauri'
 import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -584,6 +585,10 @@ export function appMenu(context: Context): MenuGroup[] {
         ...(isDesktop
           ? [{ label: t('Check for updates'), asks: true, run: () => void updates.check() }]
           : []),
+        // In a browser, the app itself, which nothing else in the page offers.
+        ...(isNative
+          ? []
+          : [{ label: t('Download the app'), run: () => void openExternal(DOWNLOAD_URL) }]),
         { label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
         { label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
         { label: t('Source code'), run: () => void openExternal(SOURCE_URL) },

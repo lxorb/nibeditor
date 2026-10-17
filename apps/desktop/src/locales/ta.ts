@@ -21,6 +21,11 @@ export const ta: Dictionary = {
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
+  // Settings: note types
+  'Page note': 'பக்கக் குறிப்பு',
+  'Web note': 'இணையக் குறிப்பு',
+  'Private tab': 'தனிப்பட்ட தாவல்',
+  'Note types': 'குறிப்பு வகைகள்',
   // Tasks: Upcoming's weeks
   'Previous week': 'முந்தைய வாரம்',
   // Tasks: projects placed in the panel, and their folder
@@ -993,6 +998,7 @@ export const ta: Dictionary = {
   Comment: 'கருத்து',
   'Always on top': 'எப்போதும் மேலே',
   'What is new': 'புதியது என்ன',
+  'Download the app': 'செயலியைப் பதிவிறக்கு',
   'Report an issue': 'சிக்கலைத் தெரிவி',
   'Move the line up': 'வரியை மேலே நகர்த்து',
   'Move the line down': 'வரியை கீழே நகர்த்து',
@@ -1169,6 +1175,13 @@ export const ta: Dictionary = {
   'Export as PNG': 'PNG ஆக ஏற்றுமதி செய்',
   'Export as SVG': 'SVG ஆக ஏற்றுமதி செய்',
   'Export as PDF': 'PDF ஆக ஏற்றுமதி செய்',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF இறக்குமதி',
+  'Choose how to add the pages to the canvas.':
+    'பக்கங்களை கேன்வாஸில் எப்படி சேர்க்க வேண்டும் என்பதைத் தேர்ந்தெடு.',
+  'Single page': 'ஒரு பக்கம்',
+  'All pages': 'எல்லா பக்கங்களும்',
+  'Choose a page': 'ஒரு பக்கத்தைத் தேர்ந்தெடு',
   // The canvas: what its own keys are called
   'Delete what is picked': 'தேர்ந்ததை நீக்கு',
   'Nudge left': 'இடப்புறம் தள்ளு',
@@ -1229,8 +1242,8 @@ export const ta: Dictionary = {
   'Release channel': 'வெளியீட்டு சேனல்',
   Stable: 'நிலையானது',
   Unstable: 'நிலையற்றது',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'நிலையானது அதிகாரப்பூர்வ வெளியீடுகளைப் பின்தொடரும்; நிலையற்றது main இல் ஒவ்வொரு புஷ்ஷையும் பின்தொடரும், உடையவும் கூடும்.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'நிலையானது வெளியிடப்பட்ட பதிப்புகளைப் பின்தொடரும்; நிலையற்றது edge பில்டுகளைப் பின்தொடரும், உடையவும் கூடும்.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'இறக்குமதி',
@@ -1828,16 +1841,6 @@ export const ta: Dictionary = {
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
   // Orden as the default browser
   'Default browser': 'இயல்புநிலை உலாவி',
-  // The engine web tabs run on
-  Engine: 'இன்ஜின்',
-  Relaunch: 'மீண்டும் தொடங்கு',
-  'Chromium did not start': 'Chromium தொடங்கவில்லை',
-  'No connection': 'இணைப்பு இல்லை',
-  'Not in this release': 'இந்த வெளியீட்டில் இல்லை',
-  'Needs an update': 'புதுப்பிப்பு தேவை',
-  'Signature did not match': 'கையொப்பம் பொருந்தவில்லை',
-  'Disk full': 'வட்டு நிரம்பியது',
-  'Could not be installed': 'நிறுவ முடியவில்லை',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} செய்த திருத்தங்களைச் செயல்தவிர்',
   // The archive: a row put away and taken back, and what refuses to delete it

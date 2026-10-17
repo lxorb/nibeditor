@@ -42,7 +42,7 @@
   import { preferences } from './preferences'
   import { search } from './search.svelte'
   import { paletteWords } from './surfaces.svelte'
-  import { settings } from './settings.svelte'
+  import { hiddenKinds, settings } from './settings.svelte'
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
@@ -192,7 +192,10 @@
 
   /** The note Shift+Enter would make out of what was typed, whatever else answers:
    *  only where the words read as a name, and not one the space already has. */
-  const makes = $derived(mode === 'everything' && root ? makeable(term, taken) : null)
+  // Not where Settings turned notes off; see kind-choice.ts.
+  const makes = $derived(
+    mode === 'everything' && root && hiddenKinds.offers('note') ? makeable(term, taken) : null,
+  )
 
   /** An address typed, where it is one. */
   const address = $derived.by(() => {

@@ -119,10 +119,11 @@ describe('a phone and a tablet', () => {
     await workspace.openCanvas('/space/Plan.canvas')
     expect(open()).toEqual(['Plan'])
 
-    workspace.openPdf('/space/Paper.pdf')
-    // A paper keeps its ending, which is the whole of the name it has; see note-name.ts.
-    expect(open()).toEqual(['Paper.pdf'])
-    expect(workspace.active?.kind).toBe('pdf')
+    // A paper opens the page note beside it, which is the document that takes the
+    // place of the plane; see `openPdf` in workspace.svelte.ts.
+    await workspace.openPdf('/space/Paper.pdf')
+    expect(open()).toEqual(['Paper'])
+    expect(workspace.active?.kind).toBe('pages')
   })
 
   test('the note that went is on the closed stack, and comes back whole', async () => {

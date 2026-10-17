@@ -10,7 +10,7 @@
 use tauri::Webview;
 
 /// Stops the page where it is, the way the cross over the reload glyph does.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "Stop is WebView2's own, reached through its COM interfaces"
@@ -22,7 +22,7 @@ pub fn stop(view: &Webview) -> Result<(), String> {
 }
 
 /// The page again, with nothing of it taken from the cache.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "the DevTools Protocol is reached through WebView2's COM interfaces"
@@ -45,7 +45,7 @@ pub fn fresh(view: &Webview) -> Result<(), String> {
 /// Runs one call on the engine behind a tab's webview, on the window's own thread.
 /// A call the engine refuses has nothing to say to anybody: the glyph stays as it
 /// was, which is what it would have shown anyway.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "the engine is reached through WebView2's controller, a COM interface"
@@ -69,14 +69,14 @@ fn engine(
 
 /// Every other engine: what the page itself can do, which stops everything but a
 /// navigation the engine was sent on.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn stop(view: &Webview) -> Result<(), String> {
     view.eval("window.stop()")
         .map_err(|error| format!("that page could not be stopped: {error}"))
 }
 
 /// Every other engine: an ordinary reload, which is what the engine offers.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn fresh(view: &Webview) -> Result<(), String> {
     view.reload()
         .map_err(|error| format!("that page could not be reloaded: {error}"))

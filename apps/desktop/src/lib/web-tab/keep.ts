@@ -33,8 +33,17 @@ import { readWebFile, writeShortcut } from './shortcut'
 export interface Kept {
   /** The file, which must already exist: this never makes one. */
   path: string
-  /** What the file says now, so nothing is read from the disk to find out. */
-  text: string
+  /** What the file says, asked again at the moment the write is made rather than
+   *  handed over as the words were a moment ago.
+   *
+   *  A write waits for the reading to settle (`SAVE_DELAY`), and the keys this never
+   *  touches - the title, the day it was made, and the note's own web data - are read
+   *  out of the file and written back. Read once, when the page moved, they were the
+   *  file as it was before anything a reader did in that pause: choosing Separate web
+   *  data on a page that had just moved wrote `Nib-Data` into the file, and the write
+   *  still waiting then wrote the file again without it, which is the option not
+   *  applying (#353). Asked here instead, so the pause cannot carry stale words. */
+  text: () => string
   /** Where the tab is. */
   url: string
   /** The site's own mark, or null while the page has not said. */
@@ -63,7 +72,7 @@ owes(() => {
 export function keepPage(kept: Kept) {
   if (!isWebAddress(kept.url)) return
 
-  const said = readWebFile(kept.path, kept.text)
+  const said = readWebFile(kept.path, kept.text())
   if (!said) return
 
   // The home is whatever the file already says it is, and the address it was written
@@ -111,7 +120,8 @@ export function keepNow(path: string) {
 }
 
 async function writeFile(kept: Kept, home: string | null, icon: string | null): Promise<void> {
-  const said = readWebFile(kept.path, kept.text)
+  const text = kept.text()
+  const said = readWebFile(kept.path, text)
   const title = said?.title ?? ''
   const added = said?.added
   const when = added ? new Date(added) : new Date()
@@ -124,7 +134,7 @@ async function writeFile(kept: Kept, home: string | null, icon: string | null): 
     icon,
     said?.own,
   )
-  if (content === kept.text) return
+  if (content === text) return
 
   kept.wrote(content)
   // The index is told what the file now says, exactly as the workspace's own saves

@@ -73,7 +73,20 @@ class FullScreen {
     if (panes) panes.fills = this.filledBefore === panes.focusedId ? this.filledBefore : null
     this.panes = null
     this.filledBefore = null
+    if (typeof document !== 'undefined')
+      document.removeEventListener('fullscreenchange', this.given)
     await this.window(false)
+  }
+
+  /** The browser's own full screen, ended by the browser. A browser that granted it
+   *  keeps Escape for itself - the key never reaches the page, and the page is told only
+   *  that the document left full screen - so the app was left out of the way in a
+   *  window that was not full screen any more, until a second Escape. The window going
+   *  is the reader asking for the screen back, the way the key would have. */
+  private readonly given = () => {
+    if (document.fullscreenElement !== null) return
+    document.removeEventListener('fullscreenchange', this.given)
+    void this.leave()
   }
 
   /** Something moved, so the way out is lit again and fades once nothing has
@@ -108,6 +121,11 @@ class FullScreen {
     try {
       const window = await currentWindow()
       await window.setFullscreen(on)
+      // Only a browser's document is ever full screen; the desktop's frame is the
+      // window's, and a webview on a phone has none to give.
+      if (on && this.on && typeof document !== 'undefined' && document.fullscreenElement) {
+        document.addEventListener('fullscreenchange', this.given)
+      }
     } catch {
       // Nothing to say to the reader: the document is full screen either way.
     }

@@ -96,9 +96,19 @@ def look(page: Page) -> dict:
     return page.evaluate(LOOK)
 
 
+#: Every hint card already put away, as on a device that has seen them. The palette's
+#: comes up under the space's name a few seconds into a session (hints.svelte.ts) and
+#: lies over the first rows of the list of spaces, which is where this drive presses.
+HINTS_SEEN = "try { localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
+
+#: Tabs pressed in the space's menu, and its two choices in the menu's place.
+TABS_OPEN = "[...document.querySelectorAll('.menu .nib-row-label')].some((one) => one.textContent.trim() === 'Space')"
+
+
 def opened(browser: Browser, scheme: str, motion: str = "reduce") -> tuple[Page, dict]:
     context = browser.new_context(viewport=SIZE, color_scheme=scheme, reduced_motion=motion)
     context.add_init_script(HIDE_CARET)
+    context.add_init_script(HINTS_SEEN)
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
@@ -133,7 +143,7 @@ def the_row(page: Page, scheme: str) -> None:
     DRIVE.steady(page, f"{scheme}-01-menu")
 
     page.locator(".menu [role=menuitem]").filter(has_text="Tabs").click()
-    wait_for(page, "[...document.querySelectorAll('.menu .nib-row-label')].some((one) => one.textContent.trim() === 'Space')", "Tabs to open into its choices")
+    wait_for(page, TABS_OPEN, "Tabs to open into its choices")
     choices = page.locator(".menu [role=menuitem]").all_inner_texts()
     say(f"[{scheme}] Tabs: {choices}")
     if [one.split("\n")[0].strip() for one in choices] != ["Global", "Space"]:
@@ -207,7 +217,12 @@ def drive(browser: Browser) -> None:
     page, ids = opened(browser, "light", motion="no-preference")
     space_menu(page, "Notes")
     page.locator(".menu [role=menuitem]").filter(has_text="Tabs").click()
+    # Waited for, as `the_row` waits: with the motion on, the menu is still the space's
+    # own for a moment after Tabs is pressed, and "Space" there is Delete space - which
+    # opened the question over everything and left every later press under it.
+    wait_for(page, TABS_OPEN, "Tabs to open into its choices")
     page.locator(".menu [role=menuitem]").filter(has_text="Space").click()
+    wait_for(page, "!document.querySelector('[role=menu].menu')", "the menu to close")
     switch(page, "Home")
     page.evaluate(
         "async () => { const ws = window.nibApp.workspace; const food = ws.notes.find((one) => one.name.startsWith('Food')); await ws.openEntry(food.path, { activate: true }) }"

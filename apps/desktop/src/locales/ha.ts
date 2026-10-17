@@ -21,6 +21,11 @@ export const ha: Dictionary = {
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
+  // Settings: note types
+  'Page note': 'Bayanin kula na shafuka',
+  'Web note': 'Bayanin yanar gizo',
+  'Private tab': 'Shafi na sirri',
+  'Note types': "Nau'ikan bayanin kula",
   // Tasks: Upcoming's weeks
   'Previous week': 'Makon da ya gabata',
   // Tasks: projects placed in the panel, and their folder
@@ -992,6 +997,7 @@ export const ha: Dictionary = {
   Comment: 'Sharhi',
   'Always on top': 'Kullum a sama',
   'What is new': 'Abin da ke sabo',
+  'Download the app': 'Sauke manhajar',
   'Report an issue': 'Bayar da rahoton matsala',
   'Move the line up': 'Matsar da layin sama',
   'Move the line down': 'Matsar da layin ƙasa',
@@ -1168,6 +1174,12 @@ export const ha: Dictionary = {
   'Export as PNG': 'Fitar a matsayin PNG',
   'Export as SVG': 'Fitar a matsayin SVG',
   'Export as PDF': 'Fitar a matsayin PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Shigar da PDF',
+  'Choose how to add the pages to the canvas.': 'Zaɓi yadda za a saka shafukan a kanbas.',
+  'Single page': 'Shafi ɗaya',
+  'All pages': 'Dukkan shafuka',
+  'Choose a page': 'Zaɓi shafi',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Share abin da aka zaɓa',
   'Nudge left': 'Tura hagu',
@@ -1228,8 +1240,8 @@ export const ha: Dictionary = {
   'Release channel': 'Tashar fitarwa',
   Stable: 'Kwanciyar hankali',
   Unstable: 'Ba kwanciyar hankali',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Kwanciyar hankali na bin fitarwa na hukuma, Ba kwanciyar hankali na bin kowane tura zuwa main kuma zai iya lalacewa.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Kwanciyar hankali na bin fitattun sigogi, Ba kwanciyar hankali na bin gine-ginen gefe kuma zai iya lalacewa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Shigar',
@@ -1830,16 +1842,6 @@ export const ha: Dictionary = {
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
   // Orden as the default browser
   'Default browser': 'Birawuza na asali',
-  // The engine web tabs run on
-  Engine: 'Injin',
-  Relaunch: 'Sake buɗewa',
-  'Chromium did not start': 'Chromium bai fara ba',
-  'No connection': 'Babu haɗi',
-  'Not in this release': 'Ba ya cikin wannan sakin',
-  'Needs an update': 'Yana buƙatar sabuntawa',
-  'Signature did not match': 'Sa hannu bai dace ba',
-  'Disk full': 'Faifai ya cika',
-  'Could not be installed': 'Ba a iya shigarwa ba',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Soke gyare-gyaren {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

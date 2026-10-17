@@ -69,14 +69,21 @@ async (notes) => {
 
 # What the pane is showing: how many columns, which is active, what each spine says,
 # and how many editors are alive in it.
+#: The pane's row of columns. Its class alone is not enough: the sidebar has a `.stack`
+#: of its own, the two panels crossing as a space switches (Sidebar.svelte), which comes
+#: first in the page and answered for the pane's, so a pane that was not stacked read
+#: as stacked and the columns as never scrolling.
+STACKED = '.stack[data-region="editor"]'
+
 STACK = """
 () => {
-  const stack = document.querySelector('.stack')
-  const columns = [...document.querySelectorAll('.stack .column')]
+  const STACKED = '.stack[data-region="editor"]'
+  const stack = document.querySelector(STACKED)
+  const columns = [...document.querySelectorAll(`${STACKED} .column`)]
   return {
     stacked: !!stack,
     columns: columns.length,
-    editors: document.querySelectorAll('.stack .cm-content').length,
+    editors: document.querySelectorAll(`${STACKED} .cm-content`).length,
     spines: columns.map((one) => one.querySelector('.spine')?.textContent?.trim() ?? ''),
     active: columns.findIndex((one) => one.classList.contains('is-active')),
     widths: columns.map((one) => Math.round(one.getBoundingClientRect().width)),
@@ -90,8 +97,9 @@ STACK = """
 # sticky spine keeps its distance from the left edge of the scroller.
 SPINE_AT = """
 (index) => {
-  const stack = document.querySelector('.stack')
-  const spine = document.querySelectorAll('.stack .column')[index]?.querySelector('.spine')
+  const STACKED = '.stack[data-region="editor"]'
+  const stack = document.querySelector(STACKED)
+  const spine = document.querySelectorAll(`${STACKED} .column`)[index]?.querySelector('.spine')
   if (!stack || !spine) return null
   return Math.round(spine.getBoundingClientRect().left - stack.getBoundingClientRect().left)
 }
@@ -185,7 +193,7 @@ def the_columns(page: Page) -> None:
 
 def the_spine(page: Page) -> None:
     before = page.evaluate(SPINE_AT, 0)
-    page.evaluate("() => { document.querySelector('.stack').scrollLeft = 260 }")
+    page.evaluate(f"() => {{ document.querySelector('{STACKED}').scrollLeft = 260 }}")
     quiet(page)
     after = page.evaluate(SPINE_AT, 0)
     say(f"[spine] the first spine was {before} from the edge and is now {after}")
@@ -193,11 +201,11 @@ def the_spine(page: Page) -> None:
     # Sticky: it keeps its distance from the left edge of the scroller rather than being
     # carried off with the words beside it.
     is_true(after is not None and after >= 0, f"the spine went off the edge: {after}")
-    page.evaluate("() => { document.querySelector('.stack').scrollLeft = 0 }")
+    page.evaluate(f"() => {{ document.querySelector('{STACKED}').scrollLeft = 0 }}")
     quiet(page)
 
     # And pressing one makes that column the active one, which is the press a tab is.
-    page.locator(".stack .column .spine").first.click()
+    page.locator(f"{STACKED} .column .spine").first.click()
     quiet(page)
     said = stack(page)
     say(f"[spine] the active column is now {said['active']}")

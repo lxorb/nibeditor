@@ -33,11 +33,6 @@ What it asks, and how:
     python scripts/agent-tab-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
       --identifier ch.emilvinu.nib.probe.<name>
 
-`--chromium` drives nib's own Chromium (`nib-chromium.exe`, src-tauri/cef), whose agent tabs
-are browsers with no window at all (src/agents/engines/cef.rs). Off-screen rendering is a
-switch CEF reads as it starts, and only a run that starts with an agent paired turns it on,
-so this pairs the agent in a launch of its own and measures in the next.
-
 Prints one JSON document; exits non-zero when a check fails.
 """
 
@@ -436,7 +431,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
     parsed.add_argument("--identifier", required=True)
     parsed.add_argument("--out", type=pathlib.Path, default=pathlib.Path(tempfile.gettempdir()))
     parsed.add_argument("--host", action="store_true", help="also measure agent tabs in a hidden and a minimised window")
-    parsed.add_argument("--chromium", action="store_true", help="the build is nib's own Chromium: pair first, measure in the next launch")
     args = parsed.parse_args()
 
     wipe(args.identifier)
@@ -464,18 +458,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         time.sleep(1)
 
         token = ""
-        if args.chromium:
-            running = run_probe(args.exe, quiet=True)
-            paired_port, secret, _ = endpoint(args.identifier, unlike=first_port)
-            until = time.perf_counter() + 90
-            while time.perf_counter() < until and not main_window(running.pid):
-                time.sleep(0.2)
-            time.sleep(2)
-            token = pair(Endpoint(paired_port, secret), check, said)
-            close_app(running)
-            first_port = paired_port
-            time.sleep(1)
-
         running = run_probe(args.exe, quiet=True)
         port_now, secret, pid = endpoint(args.identifier, unlike=first_port)
         if pid and pid != running.pid:

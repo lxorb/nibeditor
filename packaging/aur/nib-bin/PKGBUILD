@@ -16,8 +16,17 @@ pkgdesc="Lightweight markdown editor with realtime inline preview"
 arch=('x86_64' 'aarch64')
 url="https://orden.so"
 license=('AGPL-3.0-only')
-depends=('gtk3' 'webkit2gtk-4.1' 'hicolor-icon-theme')
-optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
+# WebKitGTK 2.40 is the oldest the program runs on: it calls into a script world
+# with `webkit_web_view_call_async_javascript_function`, new in 2.40. Arch's
+# webkit2gtk-4.1 needs none of GStreamer's plugins, only its libraries, so the two
+# a recording and its playback cannot do without are named here: Opus is in
+# gst-plugins-base, WebM, MP4 and the sound server's source and sink in -good.
+# See packaging/linux.md.
+depends=('gtk3' 'webkit2gtk-4.1>=2.40' 'gst-plugins-base' 'gst-plugins-good'
+         'hicolor-icon-theme')
+optdepends=('gst-libav: play AAC and H.264 - a recording made on a Mac, a video from a phone'
+            'gst-plugins-bad: play the remaining formats WebKitGTK hands to it'
+            'pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
             'xdg-utils: open links and attachments in the desktop default application')
 provides=("orden=${pkgver}" "${_pkgname}=${pkgver}")
 conflicts=("${_pkgname}" 'nib-bin' 'nibeditor')

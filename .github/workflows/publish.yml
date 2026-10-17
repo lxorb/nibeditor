@@ -4,15 +4,18 @@ name: publish
 # job per manager, none depending on another, so a rate-limited push or a
 # rejected pull request never holds up the rest.
 #
-# Every push to main replaces a rolling `edge` pre-release, and that fires this
-# same event. None of it should run for those: a package manager wants the
-# release people install, not the build that follows main. The gate below is
-# where that is decided, once, instead of in every job.
+# Only published stable releases are sent to package managers. The rolling
+# `edge` prerelease is built from `unstable` and is deliberately not published
+# through this release channel.
+#
+# Started by release.yml's publish job, once the release and every file on it are up:
+# a dispatch, because a release that job makes on its own token raises no event any
+# other workflow hears. Nothing listens for `release: published` either. A release made
+# by hand would raise it before its installers were uploaded, and the run after the
+# dispatch would publish it a second time. A release can be sent through again by hand,
+# `gh workflow run publish.yml -f tag=v0.15.0`, and every job is safe to run twice: the
+# bucket and the tap commit only what changed, and Chocolatey skips a version it has.
 on:
-  release:
-    types: [published]
-  # A release published before this workflow existed, or one whose push failed
-  # on a bad token, can be sent through again by hand.
   workflow_dispatch:
     inputs:
       tag:
@@ -47,12 +50,11 @@ jobs:
     steps:
       - id: release
         env:
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
-          PRERELEASE: ${{ github.event.release.prerelease }}
+          TAG: ${{ inputs.tag }}
         run: |
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
-          if [[ "$TAG" == v*.*.* && "$TAG" != *-* && "$PRERELEASE" != 'true' ]]; then
+          if [[ "$TAG" == v*.*.* && "$TAG" != *-* ]]; then
             echo 'publish=true' >> "$GITHUB_OUTPUT"
           else
             echo 'publish=false' >> "$GITHUB_OUTPUT"
@@ -105,6 +107,20 @@ jobs:
           # fine-grained one.
           token: ${{ secrets.WINGET_TOKEN }}
 
+  # lxorb/apt, the apt repository: its `stable` suite, written by apt.yml, which
+  # release.yml calls as well for `unstable`. A workflow of its own, so the two never
+  # push the repository at once; it skips itself where the key or the token is missing.
+  apt:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/apt.yml
+    with:
+      suite: stable
+      tag: ${{ needs.gate.outputs.tag }}
+    secrets: inherit
+
   # lxorb/scoop-bucket is ours, so this is a commit rather than a pull request.
   scoop:
     needs: gate
@@ -126,7 +142,7 @@ jobs:
       # The manifest as this release has it, rather than as the bucket last had it,
       # the same way the cask below is taken: a line other than the version, the
       # urls and the digests can change with a release, the way the product's name
-      # did. The package keeps its id, nib, because Scoop has no rename.
+      # did.
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: ${{ env.TAG }}
@@ -134,12 +150,34 @@ jobs:
           sparse-checkout: packaging/scoop
           persist-credentials: false
 
-      - name: Bump nib
+      # A release from before the rename has no orden.json; this run's own is the
+      # manifest then. Its version, urls and digests are written below either way.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          path: current
+          sparse-checkout: packaging/scoop
+          persist-credentials: false
+
+      - name: Bump orden
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp source/packaging/scoop/nib.json bucket/nib.json
-          rm -r source
+          manifest=source/packaging/scoop/orden.json
+          [ -f "$manifest" ] || manifest=current/packaging/scoop/orden.json
+          cp "$manifest" bucket/orden.json
+          rm -r source current
+
+          # The app was nib in this bucket up to 0.15.0. Scoop has no rename; what it has
+          # is `bucket/deprecated/`: a manifest there still updates what it installed,
+          # and `scoop status` says Deprecated beside it. So nib's goes there, once, saying
+          # where Orden is now, and is not touched again.
+          if [ -f bucket/nib.json ]; then
+            mkdir -p bucket/deprecated
+            git mv bucket/nib.json bucket/deprecated/nib.json
+            jq --indent 4 '.notes = ["Renamed: Orden is the orden package now. scoop uninstall nib, then scoop install orden; what nib kept in its persist folder comes over."] + ([.notes] | flatten | map(select(. != null)))' \
+              bucket/deprecated/nib.json > bucket/deprecated/nib.json.next
+            mv bucket/deprecated/nib.json.next bucket/deprecated/nib.json
+          fi
 
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl \
             --pattern "Orden-$VERSION-windows-x64-setup.exe" \
@@ -160,16 +198,16 @@ jobs:
              | .architecture["64bit"].hash = $x64hash
              | .architecture.arm64.url = $armurl
              | .architecture.arm64.hash = $armhash' \
-            bucket/nib.json > bucket/nib.json.next
-          mv bucket/nib.json.next bucket/nib.json
+            bucket/orden.json > bucket/orden.json.next
+          mv bucket/orden.json.next bucket/orden.json
           rm -r dl
 
       - name: Commit
         run: |
           git config user.name lxorb
           git config user.email 101118850+lxorb@users.noreply.github.com
-          git add bucket/nib.json
-          git diff --quiet --cached || git commit -m "feat: nib $VERSION"
+          git add -A bucket
+          git diff --quiet --cached || git commit -m "feat: orden $VERSION"
           git push
 
   # lxorb/homebrew-tap, likewise ours. Homebrew/homebrew-cask is not: it has a
@@ -236,7 +274,11 @@ jobs:
           git push
 
   # Chocolatey is a push of a built package, and the only one of the four that
-  # needs Windows, because `choco` is what builds it.
+  # needs Windows, because `choco` is what builds it. Two packages: `orden`, the app,
+  # and `nib`, its name up to 0.15.0, which is now empty and depends on `orden` - the
+  # way Chocolatey deprecates a package (packaging/chocolatey/nib.nuspec). A version the
+  # community repository has already is a 409, which is a package already published
+  # rather than a failure: a run again after a partial one finishes the rest.
   chocolatey:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.chocolatey == 'true'
@@ -255,7 +297,7 @@ jobs:
       # MSI rather than the per-user NSIS setup. The install script spells every
       # url and checksum out as a literal so the community repository's validator
       # can read them, so the version in both urls and both digests are rewritten.
-      - name: Bump nib
+      - name: Bump orden and nib
         shell: bash
         working-directory: packaging/chocolatey
         env:
@@ -275,11 +317,20 @@ jobs:
           done
           rm -r dl
 
-          sed -i -E "s|<version>.*</version>|<version>$VERSION</version>|" nib.nuspec
-          sed -i -E "s|(orden@v)[0-9][^/]*|\\1$VERSION|" nib.nuspec
-          sed -i -E "s|(releases/tag/v)[0-9].*<|\\1$VERSION<|" nib.nuspec
+          sed -i -E "s|<version>.*</version>|<version>$VERSION</version>|" orden.nuspec
+          sed -i -E "s|(orden@v)[0-9][^/]*|\\1$VERSION|" orden.nuspec
+          sed -i -E "s|(releases/tag/v)[0-9].*<|\\1$VERSION<|" orden.nuspec
+
+          # nib's version is the release's and the day it was published, so it is newer
+          # than every nib before it and the same on every run for one release.
+          day=$(date -u -d "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json publishedAt --jq .publishedAt)" +%Y%m%d)
+          sed -i -E "s|<version>.*</version>|<version>$VERSION.$day</version>|" nib.nuspec
+          sed -i -E "s|(<dependency id=\"orden\" version=\")[^\"]*\"|\\1$VERSION\"|" nib.nuspec
+          echo "NIB_VERSION=$VERSION.$day" >> "$GITHUB_ENV"
+
           grep -E "releases/download|'[0-9A-Fa-f]{64}'" tools/chocolateyinstall.ps1
-          grep -E '<version>|orden@v|releases/tag' nib.nuspec
+          grep -E '<version>|orden@v|releases/tag' orden.nuspec
+          grep -E '<version>|<dependency ' nib.nuspec
 
       - name: Pack and push
         shell: pwsh
@@ -287,5 +338,17 @@ jobs:
         env:
           CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
         run: |
-          choco pack nib.nuspec
-          choco push "nib.$env:VERSION.nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+          # `orden` first, so the package `nib` depends on is there when `nib` is read.
+          foreach ($package in @(@{ id = 'orden'; version = $env:VERSION }, @{ id = 'nib'; version = $env:NIB_VERSION })) {
+            choco pack "$($package.id).nuspec"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $said = choco push "$($package.id).$($package.version).nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY 2>&1 | Out-String
+            Write-Output $said
+            if ($LASTEXITCODE -eq 0) {
+              "- ``$($package.id)`` $($package.version): pushed" >> $env:GITHUB_STEP_SUMMARY
+            } elseif ($said -match '409 \(Conflict\)') {
+              "- ``$($package.id)`` $($package.version): already on the community repository, skipped" >> $env:GITHUB_STEP_SUMMARY
+            } else {
+              exit $LASTEXITCODE
+            }
+          }

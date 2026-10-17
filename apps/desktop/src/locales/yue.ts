@@ -21,6 +21,11 @@ export const yue: Dictionary = {
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
+  // Settings: note types
+  'Page note': '分頁筆記',
+  'Web note': '網頁筆記',
+  'Private tab': '私人分頁',
+  'Note types': '筆記類型',
   // Tasks: Upcoming's weeks
   'Previous week': '上一個星期',
   // Tasks: projects placed in the panel, and their folder
@@ -969,6 +974,7 @@ export const yue: Dictionary = {
   Comment: '註釋',
   'Always on top': '永遠喺最上層',
   'What is new': '更新內容',
+  'Download the app': '下載應用程式',
   'Report an issue': '報告問題',
   'Move the line up': '呢行上移',
   'Move the line down': '呢行下移',
@@ -1141,6 +1147,12 @@ export const yue: Dictionary = {
   'Export as PNG': '匯出為PNG',
   'Export as SVG': '匯出為SVG',
   'Export as PDF': '匯出為PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '匯入 PDF',
+  'Choose how to add the pages to the canvas.': '揀頁面點樣擺上畫布。',
+  'Single page': '單一頁',
+  'All pages': '所有頁面',
+  'Choose a page': '揀一頁',
   // The canvas: what its own keys are called
   'Delete what is picked': '刪除揀咗嘅範圍',
   'Nudge left': '向左微移',
@@ -1201,8 +1213,8 @@ export const yue: Dictionary = {
   'Release channel': '發佈通道',
   Stable: '穩定版',
   Unstable: '開發版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '穩定版跟着正式發佈走，開發版跟着main嘅每次推送，可能會壞掉。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '穩定版跟着已發佈嘅版本走，開發版跟着edge建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',
@@ -1761,16 +1773,6 @@ export const yue: Dictionary = {
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
   // Orden as the default browser
   'Default browser': '預設瀏覽器',
-  // The engine web tabs run on
-  Engine: '引擎',
-  Relaunch: '重新啟動',
-  'Chromium did not start': 'Chromium 開唔到',
-  'No connection': '冇連線',
-  'Not in this release': '呢個版本冇',
-  'Needs an update': '要更新',
-  'Signature did not match': '簽名唔對',
-  'Disk full': '磁碟滿咗',
-  'Could not be installed': '裝唔到',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '復原 {name} 嘅編輯',
   // The archive: a row put away and taken back, and what refuses to delete it

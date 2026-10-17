@@ -1,7 +1,8 @@
 # Conventions
 
 What the code is held to, and how to check it before a commit. CI runs the
-same commands on every push to `main`.
+same commands on every pull request into `main` that is ready for review, and on
+every push to `main`; see "CI" below.
 
 ## Product
 
@@ -281,6 +282,33 @@ The Rust crate: `cargo fmt --check`, `cargo clippy -- -D warnings` (the lint
 policy lives in `Cargo.toml`), `cargo test`. It does not compile on every
 machine; CI is the reference.
 
+## CI
+
+What runs, and when. The repository is public, so GitHub's own runners are all of it.
+
+| when | what runs |
+| --- | --- |
+| a pull request into `main`, ready for review | `check.yml`: types, tests, lint, prettier, knip, the sync walks, the smoke, launch and layout drives, WebKit's core drives on Linux and on a Mac, the crate on all three systems, and the Android build where the crate changed. With it, whichever of `nix.yml`, `agents.yml`, `machine.yml`, `mac-update.yml`, `upgrade.yml` and `agent-engines.yml` the change touches the paths of |
+| a draft pull request | nothing |
+| a push to `main` | `check.yml` again, which the deploy of the Worker and the web app waits for; `publish-even.yml` where the glasses' manifest changed |
+| a push to `unstable` | `release.yml` (the `edge` build) and `publish-mobile.yml` (the phones'). Nothing checks it on the push: `unstable` is checked when it comes to `main`, and by the night's drives |
+| a tag `v*` | `release.yml` and `publish-mobile.yml`, at once |
+| every night | `drives.yml` (every drive, on `unstable`'s head, on a night something was pushed to it), `walks.yml` (new seeds), `agents.yml`'s scenarios |
+
+**A draft is not checked.** Every pull request workflow skips a draft, and the whole run
+starts the moment it is marked ready for review (`ready_for_review` is one of the events
+each listens for). So a long-lived pull request such as #362 runs nothing until it is
+marked ready, and is checked in full from then on; mark it a draft again to stop.
+
+**A burst of pushes to `unstable` builds once.** `release.yml`'s `settle` waits until the
+branch has been still for `NIB_CI_SETTLE_S` seconds (a repository variable, 300 by
+default), counted from the push, and then builds only if the push is still the branch's
+head: the newest push of a burst builds, and the ones before it end there. A tag or a
+dispatch does not wait. And a push to `unstable` that changes only documents, Markdown
+or tests (`paths-ignore` in `release.yml`) builds nothing at all; a tag always builds.
+
+Most workflows also take a dispatch, `gh workflow run <file>`, for a run by hand.
+
 ## Drives
 
 `apps/desktop/test/e2e/*.py` is a drive each: it opens the built web app in
@@ -289,8 +317,12 @@ it found into `apps/desktop/test/e2e/shots/`. A drive that checks something exit
 non-zero when it does not find it; the rest print what they saw. They are not in
 `pnpm test`, because each one is a build and a browser. They run every night
 instead, in `.github/workflows/drives.yml`, and whenever that workflow is
-dispatched; `smoke.py` and `layout-sweep.py` also run on every change, in
-`check.yml`. The sweep holds every settings pane and the big surfaces, at three
+dispatched. The night drives `unstable`, where the work is, rather than `main`,
+which only takes releases - a schedule runs from `main`, and the workflow checks
+out `unstable`'s head - and only when something was pushed to `unstable` since the
+night before; a dispatch drives the branch it names
+(`gh workflow run drives.yml --ref unstable`), always; `smoke.py` and `layout-sweep.py` also run on every pull request into
+`main`, in `check.yml`. The sweep holds every settings pane and the big surfaces, at three
 desktop widths and a phone, light and dark, signed out and in, to the facts a layout
 keeps: no word broken across lines, nothing past the window or spilling out of its
 box, nothing drawn over its neighbour, no control at no size, a row's name readable.
@@ -338,7 +370,10 @@ What that one import gives it, so that no drive writes any of it again:
   own; `DRIVE.side` starts a second server, such as a fake OpenAI-compatible
   provider.
 - **The browser CI has.** Playwright's own Chromium, headless; `NIB_BROWSER=chrome`
-  drives the machine's own Chrome instead.
+  drives the machine's own Chrome instead. `NIB_ENGINE=webkit` drives Playwright's
+  WebKit, which is what a Mac, an iPhone and Linux run the app in: every key a drive
+  presses is the Mac's (Cmd for Ctrl, and the registry's own Mac key where it has one),
+  and a drive that needs Chromium's DevTools is skipped there, saying so.
 - **The app's own word, not a clock.** `DRIVE.open` returns once the handle, the
   space and the launch order's last mark (`nib: launch order finished`, see
   `apps/desktop/src/lib/startup.svelte.ts`) are there, `DRIVE.open_note` once the
@@ -490,9 +525,7 @@ cannot be, by construction:
   the primary screen. Under the switch the process hooks the making of every window on
   every thread (an in-context event hook), and every top-level window is born or sent
   to the corner a minimised window is parked in, and held there through every move and
-  show that would put a pixel of it on a screen. nib's own Chromium's GPU process and
-  utilities do the same, and the engine is started with `--noerrdialogs` and
-  `--disable-hang-monitor`, so the dialogs it can be talked out of are never raised.
+  show that would put a pixel of it on a screen.
   The boxes the system raises for a process - "has stopped working", a missing disk -
   are not the process's windows; `run_probe` starts every probe with an error mode
   that raises none of them, as Chromium's own test runner does.
@@ -530,12 +563,11 @@ window had a taskbar button and could be activated (`WS_EX_APPWINDOW`); now it a
 other top-level window of the process, tao's and the single-instance plugin's included,
 are `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW`.
 
-Measured 2026-10-03, nib's own Chromium started with `--load-extension` of a folder with
-no manifest, every window of the family looked at every twenty milliseconds: before the
-hook, the load error's box was on the primary screen 254 ms and one second into two
-launches; with the hook but the switches not yet reaching Chromium (the runtime takes a bare switch only with its dashes), five launches of five raised it, and in
-every look it was at -32000,-32000; with both on, twenty launches of twenty logged the
-error, raised no box, and had nothing on a screen.
+Measured 2026-10-03, on nib's own Chromium while there was one, started with
+`--load-extension` of a folder with no manifest, every window of the family looked at every
+twenty milliseconds: before the hook, the load error's box was on the primary screen 254 ms
+and one second into two launches; with the hook, five launches of five raised it, and in
+every look it was at -32000,-32000.
 
 ## The launch
 
@@ -727,7 +759,7 @@ machine this fast the page's own work is a quarter of a launch.
 What is next, in the order the table asks. The webview's start, the largest phase of
 every launch, overlapped with building the window rather than after it - a change to
 the crate's engine and window builder (`engine.rs`, `launch.rs` and the builder in
-`lib.rs`, under `apps/desktop/src-tauri/src`) that waits for the engine switch. Then the restored note on a slow device, 0.3 s of the
+`lib.rs`, under `apps/desktop/src-tauri/src`). Then the restored note on a slow device, 0.3 s of the
 slowed launch over five thousand notes: the note drawn as it reads first and its editor
 mounted a frame later, with nothing moving and the caret where it was. Then the listing
 of a big space, 0.2 s slowed. Tried and not kept: dropping the JavaScript side of Vite's

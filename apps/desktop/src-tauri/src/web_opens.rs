@@ -100,9 +100,8 @@
 //! (`full_screen.rs`): anywhere else it is nothing, and the keyboard stays in the page.
 //! All a page gets by asking is the screen given back, which its reader's own key did.
 //!
-//! `WebView2`'s, and nib's own Chromium's, which hands the host no window name: there the
-//! script asks through a function only nib's world has (`BINDING`). Elsewhere nothing is
-//! known, and every tab a page asks for opens in front, as before.
+//! `WebView2`'s. Elsewhere nothing is known, and every tab a page asks for opens in
+//! front, as before.
 
 use serde::Serialize;
 
@@ -150,7 +149,7 @@ const TWICE_CTRL: &str = "nib-twice-ctrl";
 const TWICE_ALT: &str = "nib-twice-alt";
 
 /// The event the window hears those on.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 const PASSED: &str = "nib://web-passed";
 
 /// A key the page let go by, as what it asks of nib: to open the find (Ctrl+F), to step
@@ -159,7 +158,7 @@ const PASSED: &str = "nib://web-passed";
 /// of what a page can say this way.
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub enum Passed {
     Find,
     Next,
@@ -181,7 +180,7 @@ pub enum Passed {
 impl Passed {
     /// Whether it is a modifier tapped twice, or Escape, which no engine says a person
     /// asked for: neither grants a page an activation in Chromium.
-    #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+    #[cfg_attr(not(windows), allow(dead_code))]
     pub const fn is_tap(self) -> bool {
         matches!(
             self,
@@ -192,7 +191,7 @@ impl Passed {
     /// Whether the window `window` has a use for it: Escape gives back a screen the app
     /// put the window over, and is nothing anywhere else, so it is never said there and
     /// the keyboard stays in the page.
-    #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+    #[cfg_attr(not(windows), allow(dead_code))]
     pub fn wanted_by(self, window: &str) -> bool {
         self != Self::Escape || crate::full_screen::is_on(window)
     }
@@ -200,7 +199,7 @@ impl Passed {
 
 /// One page's ask, named by the tab it came from.
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 struct Ask {
     tab: String,
     key: Passed,
@@ -212,7 +211,7 @@ struct Ask {
 ///
 /// `tab` is the tab whose page this was heard on, which the caller knows from where it
 /// was listening; nothing the page says names it.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
     let ask = Ask {
         tab: tab.to_string(),
@@ -223,13 +222,13 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 
 /// Says a chord the page let go by to its window, as the key it was; see the top of this
 /// file.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn played(app: &tauri::AppHandle, window: &str, key: Pressed) {
     told(app, window, PRESSED, key);
 }
 
 /// The keyboard back to the app's own page, and the word said to it.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str, said: S) {
     use tauri::{Emitter, Manager};
 
@@ -282,10 +281,10 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// And on a store's page for an extension, its own install button - "Add to Chrome" on
 /// the Chrome Web Store, whose words always name Chrome, and Edge Add-ons' "Get", by its
 /// id - is taken before the store's own script hears it, and asks under
-/// `nib-install-extension`: neither engine installs from a store for a host, and nib does
+/// `nib-install-extension`: the engine installs from no store for a host, and nib does
 /// (extensions.rs). All a page gets by asking is the store page it is on installed, which
 /// the bar's own Add does too.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
 
@@ -409,29 +408,9 @@ pub const SCRIPT: &str = r"(function () {
   }
 })()";
 
-/// Where the store's own install button is taken, in `SCRIPT`, and where that part ends.
-const STORE_PART: &str = "  var here = typeof location";
-const STORE_END: &str = "    }, true)\n  }\n";
-
-/// `script` without the part that takes the store's own install button: nib's own
-/// Chromium's, whose store installs for itself (extensions.rs). Pure, so it has a test.
-#[cfg_attr(
-    not(feature = "cef"),
-    allow(dead_code, reason = "only nib's own Chromium leaves it out")
-)]
-fn without_store_button(script: &str) -> String {
-    let Some(start) = script.find(STORE_PART) else {
-        return script.to_owned();
-    };
-    let end = script[start..]
-        .find(STORE_END)
-        .map_or(start, |at| start + at + STORE_END.len());
-    format!("{}{}", &script[..start], &script[end..])
-}
-
 /// The key a window asked for under `name` hands back, or `None`. Pure, and the only
 /// reading of that name.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn chord(name: &str) -> Option<Pressed> {
     match name {
         CTRL_D => Some(Pressed::with_ctrl("d", "KeyD", false)),
@@ -446,7 +425,7 @@ pub fn chord(name: &str) -> Option<Pressed> {
 
 /// What a window asked for under `name` asks of nib, or `None` for a window. Pure, and
 /// the only reading of those names.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn sought(name: &str) -> Option<Passed> {
     match name {
         FIND => Some(Passed::Find),
@@ -464,7 +443,7 @@ pub fn sought(name: &str) -> Option<Passed> {
 
 /// Whether a window asked for under `name` is Ctrl+0 that the page let go by. Pure, and
 /// the only reading of that name.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn actual(name: &str) -> bool {
     name == ACTUAL
 }
@@ -472,14 +451,14 @@ pub fn actual(name: &str) -> bool {
 /// How long ago a key may have been pressed for a tap to be a person's: the second
 /// release and the ask arriving here are a few milliseconds apart, and a second is the
 /// widest a loaded machine could stretch that.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 const LATELY_MS: u32 = 1000;
 
 /// Whether an ask is one a person made. The engine says so for a key that grants the
 /// page an activation; a modifier grants none, so a tap is taken when a key was
 /// pressed `since` milliseconds ago, at most `LATELY_MS`, and this page has the
 /// keyboard. Pure, so the rule has tests; the two facts are read in `typing_here`.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn taken_as_a_person_s(key: Passed, user: bool, since: u32, focused: bool) -> bool {
     user || (key.is_tap() && focused && since <= LATELY_MS)
 }
@@ -490,7 +469,7 @@ pub fn taken_as_a_person_s(key: Passed, user: bool, since: u32, focused: bool) -
 /// `name` is the window name the page asked for; `user` whether the engine says a
 /// person asked; `held` the keys held; `menu` whether the page's own menu was just
 /// raised on this address. Pure, so the order above has tests.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
     match name {
         BEHIND => return Some(Asked::Behind),
@@ -517,10 +496,10 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
 
 /// Starts listening on one page, under the tab it belongs to and in the window it is in.
 /// Called on the window's thread, once, as the page is built.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub use heard::{closing, listen, taken};
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod heard {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -741,62 +720,9 @@ mod heard {
     }
 }
 
-/// The name of the one function nib's world in a page has on nib's own Chromium: what
-/// `SCRIPT` asks through there, in place of a window name. The engine's `DevTools`
-/// protocol puts it in nib's world alone (`Runtime.addBinding` by the world's name), so
-/// the page's own world never has it, and says each call to this app as
-/// `Runtime.bindingCalled`, which nothing in a page can raise.
-#[cfg(feature = "cef")]
-pub const BINDING: &str = "nibAsked";
-
-/// `SCRIPT` as nib's own Chromium runs it: the engine hands the host no window name, so
-/// the script asks through `BINDING` instead, with the address and the name it would
-/// have opened a window under - and through a window after all where the binding is not
-/// there, which opens the link as a tab in front rather than not at all.
-#[cfg(feature = "cef")]
-pub fn script() -> String {
-    without_store_button(SCRIPT).replacen(
-        "var open = window.open.bind(window)",
-        concat!(
-            "var open = typeof nibAsked === 'function'",
-            " ? function (url, name) { nibAsked(JSON.stringify([url, name])) }",
-            " : window.open.bind(window)",
-        ),
-        1,
-    )
-}
-
-/// What one call through `BINDING` asked, read as the window name `SCRIPT` names it
-/// with: a tab of its own for a link, the find or the address field, a chord, or a tap.
-/// Only ever raised for a press a person made (`isTrusted`), which is what a window
-/// name's user flag says on `WebView2`.
-#[cfg(feature = "cef")]
-pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
-    let Ok((url, name)) = serde_json::from_str::<(String, String)>(payload) else {
-        return;
-    };
-    if let Some(key) = sought(&name) {
-        if key.wanted_by(window) {
-            passed(app, window, tab, key);
-        }
-        return;
-    }
-    if let Some(key) = chord(&name) {
-        played(app, window, key);
-        return;
-    }
-    if actual(&name) {
-        crate::web_page::actual_size(app, window, tab);
-        return;
-    }
-    if let Some(asked) = placed(&name, true, Held::default(), false) {
-        crate::web_tabs::opened_beside(app, window, tab, &url, asked == Asked::Behind);
-    }
-}
-
 /// Every other engine: nothing is known about a request, and every tab a page asks for
 /// opens in front; see the top of this file.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: tauri::AppHandle,
@@ -805,7 +731,7 @@ pub fn listen(
 ) {
 }
 
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn taken(_tab: &str) -> Option<Asked> {
     None
 }
@@ -831,27 +757,6 @@ mod tests {
         shift: true,
         alt: false,
     };
-
-    /// The one line nib's own Chromium swaps for its binding is there to swap: a script
-    /// that no longer opened its windows through it would ask through nothing there.
-    #[test]
-    fn the_script_opens_its_windows_through_the_line_chromium_swaps() {
-        assert_eq!(
-            SCRIPT
-                .matches("var open = window.open.bind(window)")
-                .count(),
-            1
-        );
-    }
-
-    #[cfg(feature = "cef")]
-    #[test]
-    fn on_chromium_the_script_asks_through_the_binding_where_there_is_one() {
-        let script = super::script();
-        assert!(script.contains("typeof nibAsked === 'function'"));
-        assert!(script.contains(super::BINDING));
-        assert!(!script.contains("var open = window.open.bind(window)"));
-    }
 
     #[test]
     fn the_script_names_the_window_for_a_press_on_a_link() {
@@ -1054,26 +959,6 @@ mod tests {
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }
-    }
-
-    /// On nib's own Chromium the store's own button installs, so nothing takes it there;
-    /// everything else in the script is the same.
-    #[test]
-    fn chromium_leaves_the_store_s_button_to_the_store() {
-        let left = super::without_store_button(SCRIPT);
-        assert!(!left.contains("nib-install-extension"));
-        assert!(!left.contains("chromewebstore"));
-        assert!(left.contains("'nib-ctrl-d'") && left.contains("'nib-twice-shift'"));
-        assert!(left.trim_end().ends_with("})()"));
-        assert_eq!(
-            SCRIPT.len() - left.len(),
-            SCRIPT.find(super::STORE_PART).map_or(0, |start| {
-                SCRIPT[start..]
-                    .find(super::STORE_END)
-                    .expect("the part ends")
-                    + super::STORE_END.len()
-            })
-        );
     }
 
     /// Escape asks only once the page let it go by, takes nothing from the engine, needs

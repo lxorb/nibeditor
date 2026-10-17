@@ -192,6 +192,14 @@ def waited(page: Page, expression: str, what: str, patience: float = 30) -> bool
     return DRIVE.waited(page, expression, what, patience)
 
 
+def keyboard_in_the_list(page: Page) -> bool:
+    """Until the thread list's field has the keyboard. It takes it a frame after the
+    list is drawn (Threads.svelte), so a key pressed the moment the list is there went
+    to the composer instead, now and then on a busy machine: the search typed nowhere,
+    and a Delete archived nothing."""
+    return waited(page, "document.activeElement?.closest('.ask .threads')", "the list's field to take the keyboard")
+
+
 def idle(page: Page) -> bool:
     return waited(page, "!document.querySelector('.ask .go[aria-label=\"Stop\"]')", "the answer to end")
 
@@ -252,7 +260,7 @@ def drive(browser: Browser, scheme: str) -> None:
     # The thinking row opens to what the provider said of it.
     page.locator(".ask .row .line").first.click()
     page.wait_for_timeout(250)
-    if "at the note" not in page.locator(".ask .row .detail").first.inner_text():
+    if "at the note" not in (page.locator(".ask .row .detail").first.text_content() or ""):
         wrong("the thinking row does not open to the summary")
 
     # Escape stops an answer; what arrived stays.
@@ -440,6 +448,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Control+Shift+A")
     waited(page, "document.querySelectorAll('.ask .threads .row').length === 2", "two threads")
+    keyboard_in_the_list(page)
     page.keyboard.type("heron")
     page.wait_for_timeout(200)
     found = page.locator(".ask .threads .row .title").all_inner_texts()
@@ -450,6 +459,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Control+Shift+A")
     waited(page, "document.querySelector('.ask .threads')", "the thread list again")
+    keyboard_in_the_list(page)
     page.keyboard.press("Delete")
     waited(page, "document.querySelector('.ask .threads .group.archived')", "the archived group")
     shot(page, f"{tag}11-archived")
@@ -720,12 +730,14 @@ def shape(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}04-worked-side")
     page.locator(".ask .answer.last .worked .line").click()
     waited(page, "document.querySelector('.ask .answer.last .work')", "the steps")
-    verbs = page.locator(".ask .answer.last .work .verb").all_inner_texts()
+    # Read as text rather than as what is drawn: WebKit draws nothing of a row while it
+    # is still sliding open, and innerText is only what is drawn.
+    verbs = page.locator(".ask .answer.last .work .verb").all_text_contents()
     if verbs != ["Thought", "Explored", "Ran", "Edited"]:
         wrong(f"the steps are not Codex's rows: {verbs}")
     page.locator(".ask .answer.last .work .line", has_text="Ran").click()
     waited(page, "document.querySelector('.ask .work .detail.said')", "the command's output")
-    said = page.locator(".ask .work .detail.said").inner_text()
+    said = page.locator(".ask .work .detail.said").text_content() or ""
     if "$ wc -w Herons.md" not in said or "19 Herons.md" not in said:
         wrong(f"a command does not open to its output: {said!r}")
     page.locator(".ask .card .bar .what").click()

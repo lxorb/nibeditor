@@ -4,9 +4,7 @@
 //! (-10000, -10000) in the window's own coordinates: a child is clipped to its parent, so
 //! no pixel of it reaches a screen, and to the engine it is a visible page at a desktop
 //! size, which paints, runs its timers at full speed and takes input. The spike measured
-//! it (section 3); `scripts/agent-tab-probe.py` keeps measuring it. On nib's own Chromium
-//! it is better still: a browser with no window at all (`engines/cef.rs`), and everything
-//! below but how it is built is the same.
+//! it (section 3); `scripts/agent-tab-probe.py` keeps measuring it.
 //!
 //! **Where they live.** In the reader's first window, and not in a window of their own
 //! that nobody sees. Measured both ways: a page in a window that is hidden keeps running
@@ -30,13 +28,13 @@
 //! agent that said goodbye has its tabs closed ten minutes later.
 
 use std::sync::atomic::{AtomicU64, Ordering};
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 use std::sync::mpsc::sync_channel;
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Emitter as _, Url};
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 use tauri::{LogicalPosition, LogicalSize, Manager as _, WebviewBuilder, WebviewUrl};
 
 use super::cdp;
@@ -49,7 +47,7 @@ pub const LABEL: &str = "agent-";
 
 /// Where an agent's page sits in the window's own coordinates: far enough past the
 /// window's corner that a popup the page raises lands on no screen either (6.5).
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 const AWAY: f64 = -10_000.0;
 
 /// An agent tab's size when none is asked for, in CSS pixels.
@@ -422,24 +420,8 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
     Ok(())
 }
 
-/// Builds a tab's page on nib's own Chromium: a browser with no window.
-#[cfg(feature = "cef")]
-fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
-    super::engines::cef::build(
-        app,
-        &Owner {
-            agent: tab.agent.clone(),
-            tab: tab.id.clone(),
-            label: tab.label(),
-        },
-        tab.store_name.as_deref(),
-        tab.size,
-        address.map(Url::as_str),
-    )
-}
-
 /// Builds a tab's page on `WebView2`: a child of the reader's window, out of its sight.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     let window =
         super::shell::host(app).ok_or("Orden has no window for an agent's tab to live in")?;
@@ -506,7 +488,7 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
 }
 
 /// Sends a page somewhere, on the window's thread.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "the page is sent through WebView2's own COM interface"
@@ -518,7 +500,7 @@ fn navigate_now(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebVi
 
 /// Follows what a tab's page does: where it goes, what it calls itself, and a site the
 /// agent may not visit, stopped before it loads (9.2).
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "navigation and title events are WebView2's own, reached through its COM interfaces"
@@ -643,7 +625,7 @@ pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
 
 /// Builds the page for a window a page asked for and hands it to the engine. On the
 /// window's thread, in the event loop's own turn.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub fn build_popup(app: &AppHandle, id: &str) {
     let Some(tab) = tabs().iter().find(|one| one.id == id).cloned() else {
         quiet::hand_over(id, None);
@@ -685,7 +667,7 @@ pub fn shown_as(id: &str) -> Option<String> {
     unsafe_code,
     reason = "the page's settings are WebView2's own, reached through its COM interfaces"
 )]
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     let tab = tabs()
         .iter()
@@ -737,30 +719,6 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
         },
     );
     Ok(())
-}
-
-/// On nib's own Chromium an agent's page has no window to put in the pane: it was never
-/// a view, only pictures (`engines/cef.rs`). So Show opens its address as the reader's
-/// tab, which loads it again (the window builds it the ordinary way when this answers
-/// no page), and the agent's own tab closes; the agent acts on in the reader's tab by
-/// either id, as it does after a Show on `WebView2`.
-#[cfg(feature = "cef")]
-pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
-    if find_any(id).is_none() {
-        return Err("there is no such agent tab".into());
-    }
-    SHOWN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .push((id.to_string(), reader.to_string()));
-    close(app, id);
-    Err("an agent's page on nib's own Chromium has no window: the tab loads its address".into())
-}
-
-/// Any agent's tab, by its id.
-#[cfg(feature = "cef")]
-fn find_any(id: &str) -> Option<Tab> {
-    tabs().iter().find(|one| one.id == id).cloned()
 }
 
 /// Starts the one timer agents have, the first time a tab opens: every fifteen seconds

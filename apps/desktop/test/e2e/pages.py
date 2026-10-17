@@ -51,6 +51,11 @@ say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 
+#: The page navigator in the left sidebar, the panel this drive opens. The right side
+#: shows the outline of the note in front as well, with a navigator of its own, so a
+#: bare `.navigator` is two of them.
+NAVIGATOR = "aside:not(.right) .navigator"
+
 
 def fail(what: str) -> None:
     failures.append(what)
@@ -616,7 +621,7 @@ def check_adding(page: Page, label: str) -> None:
     page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(700)
 
-    add = page.locator(".navigator .add")
+    add = page.locator(f"{NAVIGATOR} .add")
     if add.count() < 1:
         shot(page, f"{label}-no-navigator")
         fail(f"[{label}] the navigator has no Add a page (panel is {panel_of(page)!r})")
@@ -634,7 +639,7 @@ def check_adding(page: Page, label: str) -> None:
     if pages[1]["y"] != pages[0]["height"] + 40:
         fail(f"[{label}] the second page sits at y={pages[1]['y']}, not one gutter down")
 
-    thumbs = page.locator(".navigator .page").count()
+    thumbs = page.locator(f"{NAVIGATOR} .page").count()
     if thumbs != len(pages):
         fail(f"[{label}] {len(pages)} pages, {thumbs} thumbnails")
 
@@ -673,7 +678,7 @@ def check_adding(page: Page, label: str) -> None:
 
     # The drag's own drop: the second thumbnail dragged above the first, which is the
     # gesture, through the navigator's own handlers rather than round them.
-    rows = page.locator(".navigator .page")
+    rows = page.locator(f"{NAVIGATOR} .page")
     if rows.count() < 2:
         fail(f"[{label}] fewer than two thumbnails to drag between")
         return
@@ -791,7 +796,7 @@ def paper_menu(page: Page, at: int, disabled: bool = False) -> list[str]:
     page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(500)
 
-    thumb = page.locator(".navigator .page").nth(at)
+    thumb = page.locator(f"{NAVIGATOR} .page").nth(at)
     if thumb.count() < 1:
         return []
 
@@ -808,7 +813,7 @@ def paper_menu(page: Page, at: int, disabled: bool = False) -> list[str]:
 
 def press_menu(page: Page, label: str) -> bool:
     """One row of the page menu, pressed the way somebody presses it."""
-    thumb = page.locator(".navigator .page").first
+    thumb = page.locator(f"{NAVIGATOR} .page").first
     thumb.click(button="right")
     page.wait_for_timeout(350)
 

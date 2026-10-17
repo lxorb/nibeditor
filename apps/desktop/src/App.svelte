@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, tick } from 'svelte'
+  import { onDestroy, tick, untrack } from 'svelte'
   import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
@@ -38,7 +38,7 @@
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
   import { prompt } from './lib/prompt.svelte'
-  import { settings } from './lib/settings.svelte'
+  import { hiddenKinds, settings } from './lib/settings.svelte'
   import {
     contextMenu,
     fillBar,
@@ -98,6 +98,8 @@
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
+
+  const fabLabel = $derived(hiddenKinds.offers('note') ? t('New note') : t('New tab'))
 
   // Where a right click keeps the Mac's own menu; see system-menu.ts.
   let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
@@ -216,6 +218,7 @@
         shortcuts.receive(remote)
         toolbar.receive(remote)
         pull.receive(remote)
+        void import('./lib/kind-choice').then((one) => one.receive(remote))
         recovery.receive(remote)
         // What pings for every chat, fetched with the chats rather than in front of the
         // first paint; see lib/chats/hush.svelte.ts.
@@ -450,14 +453,28 @@
 
   // Syncing only runs while there is an account behind it - and not before a
   // fresh sign-in has settled what happens to the notes already here.
+  //
+  // Keyed on whose sync it is and which engine, and nothing else. The effect used to
+  // run again whenever anything it read changed - the account's user read back a
+  // moment after signing in, say - and each run started a second loop over the first:
+  // two first passes, the second finding the first already running and lifting the
+  // waiting state with nothing counted, while the notes went on arriving behind it
+  // (test/e2e/signin.py).
+  const syncing = $derived(
+    account.syncable ? `${account.user?.id ?? ''}:${account.user?.syncVersion === 2}` : null,
+  )
   $effect(() => {
-    if (account.syncable) {
-      sync.start()
-      // The bytes are an account's, and a guest is writing into somebody else's.
-      if (account.user) void usage.refresh()
+    if (syncing !== null) {
+      untrack(() => {
+        sync.start()
+        // The bytes are an account's, and a guest is writing into somebody else's.
+        if (account.user) void usage.refresh()
+      })
     } else {
-      sync.stop()
-      rooms.clear()
+      untrack(() => {
+        sync.stop()
+        rooms.clear()
+      })
     }
   })
 
@@ -1067,7 +1084,7 @@
            keyboard is up, because then you are already writing one, and over a
            canvas or a page note, where it read as adding to the page. -->
       {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !fullscreen.on}
-        <button class="fab" aria-label={t('New note')} onclick={writeNew}>
+        <button class="fab" aria-label={fabLabel} onclick={writeNew}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       {/if}

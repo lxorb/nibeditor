@@ -19,6 +19,8 @@
 import { foreignCopy } from '@nib/sync-core/foreign'
 import { account } from './account.svelte'
 import { folderNote, nestedIn } from './folder-notes'
+import { hiddenKinds, type KindName } from './settings.svelte'
+import { kindLabel } from './kind-words'
 import { key, plural, t } from './i18n.svelte'
 import {
   archiveEntry,
@@ -77,7 +79,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...openElsewhere(entry, own),
     ...compareEntry(entry),
     DIVIDER,
-    ...(holds
+    ...(holds && hiddenKinds.offers('note')
       ? [{ label: t('New note inside'), run: () => void workspace.createInside(entry.path) }]
       : []),
     DIVIDER,
@@ -360,4 +362,25 @@ function revealEntry(entry: Entry): MenuEntry[] {
   if (!isDesktop) return []
   const label = platform() === 'macos' ? t('Reveal in Finder') : t('Show in folder')
   return [{ label, run: () => void import('./reveal').then((one) => one.reveal(entry.path)) }]
+}
+
+/** What the file list's own New rows make: a named file, as its row waiting for a name,
+ *  of each kind that is a file and that Settings › Note types offers. The new tab's
+ *  gesture is the other one, a tab first and a file when saved; see new-kinds.ts. A shell
+ *  and a private tab are tabs and never files. */
+const MAKERS: Partial<Record<KindName, () => unknown>> = {
+  note: () => workspace.createNote(),
+  canvas: () => workspace.createCanvas(),
+  pages: () => workspace.createPages(),
+  web: () => workspace.createWebsite(),
+  ...(__EVEN_PLUGIN__
+    ? {}
+    : { chat: () => import('./chats/view/open').then(({ makeChat }) => makeChat()) }),
+}
+
+export function newFileRows(): MenuEntry[] {
+  return hiddenKinds.shown.flatMap((kind) => {
+    const make = MAKERS[kind]
+    return make ? [{ label: kindLabel(kind), run: () => void make() }] : []
+  })
 }

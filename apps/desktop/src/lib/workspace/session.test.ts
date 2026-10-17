@@ -130,6 +130,18 @@ describe('reading one tab', () => {
     )
   })
 
+  // #346: a web tab with no file comes back on the web note's data it took along; a tab
+  // with a file reads its own from the file.
+  test('keeps the web data a tab with no file took along', () => {
+    const apart = '3f9a0c17e2b4d685'
+    expect(readDraft({ kind: 'web', path: null, name: 'a', doc: '', apart })).toMatchObject({
+      apart,
+    })
+    expect(
+      readDraft({ kind: 'web', path: '/s/a.url', name: 'a', doc: '', apart }),
+    ).not.toHaveProperty('apart')
+  })
+
   test('is being written in unless it says otherwise', () => {
     // Absent rather than false, so a tab that was being written in - which is
     // nearly every tab - costs the entry nothing.

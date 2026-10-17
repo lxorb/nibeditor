@@ -6,13 +6,21 @@ name: publish-linux
 # packaging/linux.md has the steps for each one.
 #
 # Not here on purpose:
-#   Flathub  - updates arrive as a pull request from Flathub's own
-#              flatpak-external-data-checker, which reads the x-checker-data in
-#              packaging/flathub/ch.emilvinu.nib.yml. Nothing to push.
+#   Flathub  - Orden is not published there; see packaging/linux.md.
 #   AppImage - the release page is the distribution channel.
+#
+# Called by release.yml for every stable release, once its files are up, and run by
+# hand the same way (`gh workflow run publish-linux.yml -f tag=v0.15.0`). Called rather
+# than dispatched, because a dispatch only finds a workflow on the default branch; and
+# nothing listens for `release: published`, which a release made on the workflow's own
+# token never raises and one made by hand would raise before its files were up.
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag to publish (e.g. v0.4.0)
+        type: string
+        required: true
   workflow_dispatch:
     inputs:
       tag:
@@ -34,11 +42,11 @@ jobs:
     # https. The push to aur.archlinux.org travels on an ssh key.
     permissions:
       contents: read
-    # `edge` is remade on every push to main and is not a release anyone should
+    # `edge` is remade on every push to unstable and is not a release anyone should
     # be installing from a package manager.
-    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    if: ${{ startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-') }}
     env:
-      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      TAG: ${{ inputs.tag }}
       HAS_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -115,86 +123,12 @@ jobs:
           echo "The PKGBUILD builds, but AUR_SSH_PRIVATE_KEY is not set, so nothing was pushed." >> "$GITHUB_STEP_SUMMARY"
           echo "See packaging/linux.md for how to create the account and add the secrets." >> "$GITHUB_STEP_SUMMARY"
 
+  # The snap's own workflow, which release.yml calls as well for edge; see snap.yml.
   snap:
-    name: Snap Store (${{ matrix.arch }})
-    # It reads the repository and uploads an artifact, which travels on the
-    # runtime's own token rather than on this one. The upload to the Snap Store
-    # goes on SNAPCRAFT_STORE_CREDENTIALS.
+    if: ${{ startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-') }}
     permissions:
       contents: read
-    # One snap per architecture, each built on a runner of that architecture:
-    # snapcraft cross-builds nothing here, it only unpacks the matching .deb.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-24.04
-            arch: amd64
-          - runner: ubuntu-24.04-arm
-            arch: arm64
-    runs-on: ${{ matrix.runner }}
-    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
-    env:
-      TAG: ${{ inputs.tag || github.event.release.tag_name }}
-      HAS_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS != '' }}
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-
-      - name: Point snapcraft.yaml at this release
-        working-directory: packaging/snap
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
-          version="${TAG#v}"
-
-          # The digests the release page reports for the two files this unpacks, read
-          # rather than computed: the bytes are snapcraft's to fetch, and what is
-          # wanted here is what the release says they are. A missing one fails the
-          # step - a snap built with no digest is a snap nobody checked.
-          amd64="$(gh release view "$TAG" --repo "$REPO" --json assets --jq ".assets[] | select(.name == \"Orden-$version-linux-x64.deb\") | .digest" | sed 's|^sha256:||')"
-          arm64="$(gh release view "$TAG" --repo "$REPO" --json assets --jq ".assets[] | select(.name == \"Orden-$version-linux-arm64.deb\") | .digest" | sed 's|^sha256:||')"
-
-          for said in "$amd64" "$arm64"; do
-            if [ -z "$said" ]; then
-              echo "::error::the release page reports no sha256 for a linux .deb of $version"
-              exit 1
-            fi
-          done
-
-          sed -i \
-            -e "s/^version: .*/version: '$version'/" \
-            -e "s|/download/v[0-9][^/]*/[A-Za-z]*-[0-9][^-]*-linux-|/download/$TAG/Orden-$version-linux-|g" \
-            -e "s|on amd64: sha256/.*|on amd64: sha256/$amd64|" \
-            -e "s|on arm64: sha256/.*|on arm64: sha256/$arm64|" \
-            snapcraft.yaml
-          grep -nE "^version:|releases/download|sha256/" snapcraft.yaml
-
-      # Pinned for the same reason: `v1` is a moving name, and the second of the
-      # two is handed the Snap Store's credentials.
-      - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1.3.0
-        id: build
-        with:
-          path: packaging/snap
-
-      - uses: snapcore/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
-        if: env.HAS_CREDENTIALS == 'true'
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: ${{ steps.build.outputs.snap }}
-          release: stable
-
-      - name: No Snapcraft credentials yet
-        if: env.HAS_CREDENTIALS != 'true'
-        run: |
-          echo "### Snap not published" >> "$GITHUB_STEP_SUMMARY"
-          echo "The snap builds, but SNAPCRAFT_STORE_CREDENTIALS is not set, so nothing was uploaded." >> "$GITHUB_STEP_SUMMARY"
-          echo "See packaging/linux.md for how to register the name and add the secret." >> "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always()
-        with:
-          name: snap-${{ matrix.arch }}
-          path: packaging/snap/*.snap
-          if-no-files-found: warn
+    uses: ./.github/workflows/snap.yml
+    with:
+      tag: ${{ inputs.tag }}
+    secrets: inherit

@@ -23,10 +23,9 @@
 //! finger landing while another program is is never said; a lift always is, once a landing
 //! was. Nothing but the count leaves this file: not where the fingers are, not which.
 //!
-//! Both of Windows' engines alike: the reports are this process's and not the engine's,
-//! and both reach the window the same way. A pad that is not a precision one sends no such
-//! reports, and a Mac and Linux have none of this; there the swipe ends when the wheel goes
-//! quiet, as before.
+//! The reports are this process's and not the engine's. A pad that is not a precision one
+//! sends no such reports, and a Mac and Linux have none of this; there the swipe ends when
+//! the wheel goes quiet, as before.
 
 // Elsewhere nothing but the tests reads any of it.
 #![cfg_attr(not(windows), allow(dead_code))]

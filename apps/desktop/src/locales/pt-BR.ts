@@ -21,6 +21,11 @@ export const ptBR: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contêineres ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler as abas do Zen.',
+  // Settings: note types
+  'Page note': 'Nota de páginas',
+  'Web note': 'Nota da web',
+  'Private tab': 'Guia privada',
+  'Note types': 'Tipos de nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
   // Tasks: projects placed in the panel, and their folder
@@ -995,6 +1000,7 @@ export const ptBR: Dictionary = {
   Comment: 'Comentário',
   'Always on top': 'Sempre na frente',
   'What is new': 'Novidades',
+  'Download the app': 'Baixar o app',
   'Report an issue': 'Relatar um problema',
   'Move the line up': 'Subir a linha',
   'Move the line down': 'Descer a linha',
@@ -1170,6 +1176,12 @@ export const ptBR: Dictionary = {
   'Export as PNG': 'Exportar como PNG',
   'Export as SVG': 'Exportar como SVG',
   'Export as PDF': 'Exportar como PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importar PDF',
+  'Choose how to add the pages to the canvas.': 'Escolha como adicionar as páginas ao quadro.',
+  'Single page': 'Uma página',
+  'All pages': 'Todas as páginas',
+  'Choose a page': 'Escolher uma página',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Excluir o que está selecionado',
   'Nudge left': 'Deslocar à esquerda',
@@ -1230,8 +1242,8 @@ export const ptBR: Dictionary = {
   'Release channel': 'Canal de versões',
   Stable: 'Estável',
   Unstable: 'Instável',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Estável segue as versões oficiais; Instável, cada push na main, e pode quebrar.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Estável segue as versões lançadas; Instável segue as compilações de ponta e pode quebrar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -1835,16 +1847,6 @@ export const ptBR: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Navegador padrão',
-  // The engine web tabs run on
-  Engine: 'Mecanismo',
-  Relaunch: 'Reiniciar',
-  'Chromium did not start': 'O Chromium não iniciou',
-  'No connection': 'Sem conexão',
-  'Not in this release': 'Não está nesta versão',
-  'Needs an update': 'Precisa de atualização',
-  'Signature did not match': 'A assinatura não confere',
-  'Disk full': 'Disco cheio',
-  'Could not be installed': 'Não foi possível instalar',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Desfazer as edições de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

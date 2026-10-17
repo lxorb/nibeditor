@@ -17,10 +17,10 @@
 /// each. Beside rather than inside, because `web` is a `WebView2` user data folder and
 /// what is inside it is the engine's.
 #[cfg_attr(
-    any(feature = "cef", target_os = "macos"),
+    target_os = "macos",
     allow(
         dead_code,
-        reason = "a Mac's own engine is handed an identifier rather than a folder, and nib's own Chromium keeps every store in its primary profile; the folder is what Windows and Linux use"
+        reason = "a Mac's own engine is handed an identifier rather than a folder; the folder is what Windows and Linux use"
     )
 )]
 pub(crate) const STORES: &str = "web-stores";
@@ -64,7 +64,7 @@ pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
 /// So they come from the name and from nothing else - two FNV-1a hashes of it, which
 /// are fixed by their definition and not by this build's hasher, whose seed changes
 /// from run to run. A store's cookies depend on these bytes never changing.
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(any(test, target_os = "macos"))]
 pub(crate) fn identifier(name: &str) -> [u8; 16] {
     /// FNV-1a over the name, from a given start.
     fn hashed(name: &str, start: u64) -> u64 {

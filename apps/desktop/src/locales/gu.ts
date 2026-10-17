@@ -21,6 +21,11 @@ export const gu: Dictionary = {
   'Import from Zen': 'Zen માંથી આયાત કરો',
   'Containers stay in Zen': 'કન્ટેનર Zen માં જ રહે છે',
   'Zen’s tabs could not be read.': 'Zen ના ટૅબ વાંચી શકાયા નહીં.',
+  // Settings: note types
+  'Page note': 'પાનાંવાળી નોંધ',
+  'Web note': 'વેબ નોંધ',
+  'Private tab': 'ખાનગી ટૅબ',
+  'Note types': 'નોંધના પ્રકાર',
   // Tasks: Upcoming's weeks
   'Previous week': 'પાછલું અઠવાડિયું',
   // Tasks: projects placed in the panel, and their folder
@@ -983,6 +988,7 @@ export const gu: Dictionary = {
   Comment: 'ટિપ્પણી',
   'Always on top': 'હંમેશાં ઉપર',
   'What is new': 'નવું શું છે',
+  'Download the app': 'ઍપ ડાઉનલોડ કરો',
   'Report an issue': 'સમસ્યા જણાવો',
   'Move the line up': 'લીટી ઉપર ખસેડો',
   'Move the line down': 'લીટી નીચે ખસેડો',
@@ -1158,6 +1164,12 @@ export const gu: Dictionary = {
   'Export as PNG': 'PNG તરીકે નિકાસ કરો',
   'Export as SVG': 'SVG તરીકે નિકાસ કરો',
   'Export as PDF': 'PDF તરીકે નિકાસ કરો',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF આયાત કરો',
+  'Choose how to add the pages to the canvas.': 'પાનાં કેનવાસમાં કેવી રીતે ઉમેરવાં તે પસંદ કરો.',
+  'Single page': 'એક પાનું',
+  'All pages': 'બધાં પાનાં',
+  'Choose a page': 'પાનું પસંદ કરો',
   // The canvas: what its own keys are called
   'Delete what is picked': 'પસંદ કરેલું કાઢો',
   'Nudge left': 'ડાબે સહેજ ખસેડો',
@@ -1218,8 +1230,8 @@ export const gu: Dictionary = {
   'Release channel': 'પ્રકાશન માર્ગ',
   Stable: 'સ્થિર',
   Unstable: 'અસ્થિર',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'સ્થિર અધિકૃત પ્રકાશન અનુસરે છે, અસ્થિર mainમાં દરેક ધકેલ અનુસરે છે અને તૂટી શકે.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'સ્થિર પ્રકાશિત આવૃત્તિઓ અનુસરે છે, અસ્થિર એજ બિલ્ડ અનુસરે છે અને તૂટી શકે.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'આયાત',
@@ -1792,16 +1804,6 @@ export const gu: Dictionary = {
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
   // Orden as the default browser
   'Default browser': 'મૂળ બ્રાઉઝર',
-  // The engine web tabs run on
-  Engine: 'એન્જિન',
-  Relaunch: 'ફરી શરૂ કરો',
-  'Chromium did not start': 'Chromium શરૂ થયું નહીં',
-  'No connection': 'કનેક્શન નથી',
-  'Not in this release': 'આ રિલીઝમાં નથી',
-  'Needs an update': 'અપડેટ જરૂરી છે',
-  'Signature did not match': 'સહી મેળ ખાતી નથી',
-  'Disk full': 'ડિસ્ક ભરાઈ ગઈ',
-  'Could not be installed': 'ઇન્સ્ટોલ થઈ શક્યું નહીં',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
   // The archive: a row put away and taken back, and what refuses to delete it

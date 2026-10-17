@@ -185,6 +185,13 @@ class Worker(harness.Worker):
         return token
 
 
+#: Every space on this device gone, one at a time, as Delete space does it.
+ERASE = """async () => {
+  const ws = window.nibApp.workspace
+  for (const one of [...ws.spaces]) await ws.deleteSpace(one.id)
+}"""
+
+
 def opened(browser, name: str, width: int, height: int, agent: str, finger: bool, token: str):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -194,8 +201,6 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
         color_scheme="light" if finger else "dark",
         device_scale_factor=2,
     )
-    context.add_init_script(f"try {{ localStorage.setItem('nib:session', '{token}') }} catch {{}}")
-
     page = context.new_page()
     page.set_default_timeout(20000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
@@ -207,9 +212,17 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
     # is what somebody who wants only what the account holds arrives as. The same
     # opening as first-sync.py, and the reason is the same: a device with a space
     # of its own has two spaces after signing in, and which one is "the space" is
-    # then a question this drive should not have to ask.
-    page.evaluate("async () => await window.nibApp.workspace.eraseLocalSpaces()")
+    # then a question this drive should not have to ask. Each space deleted the way
+    # the space's own menu deletes it: the erase-everything answer that did this in
+    # one call went with the sign-in question it answered (be28f5e9).
+    #
+    # Erased before the session is handed over, as first-sync.py does it. That question
+    # used to hold syncing back until it was answered; with it gone, a session already
+    # in place starts the first pass at once, and in WebKit the account's spaces came
+    # down while the erasing went on, so the device never stood empty.
+    page.evaluate(ERASE)
     page.wait_for_function("() => window.nibApp.workspace.spaces.length === 0", timeout=60000)
+    page.evaluate("(token) => localStorage.setItem('nib:session', token)", token)
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=60000)
     page.wait_for_function("() => !!window.nibApp.account.user", timeout=60000)

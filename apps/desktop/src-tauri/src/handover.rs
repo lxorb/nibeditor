@@ -56,10 +56,6 @@ static ENDED: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
 /// should now go. Called before anything of the app is built.
 #[cfg(windows)]
 pub fn handed_over(identifier: &str) -> bool {
-    // A relaunch waits for the app it replaces to go, rather than handing itself to it.
-    if crate::engine_switch::relaunching() {
-        return false;
-    }
     let names = Names::of(identifier);
     let launch = arguments();
     match handed(&names, &launch, ANSWER) {

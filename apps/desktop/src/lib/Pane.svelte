@@ -54,7 +54,6 @@
     findBar,
     graphSurface,
     pagesSurface,
-    pdfSurface,
     readingSurface,
     terminalSurface,
     viewSurface,
@@ -533,17 +532,6 @@
     {#key tab.id}
       {#await pagesSurface() then Pages}
         <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
-  {:else if tab?.kind === 'pdf'}
-    <!-- A paper being read, beside the notes about it. Keyed like the reading
-         view: a PDF is a document of its own and nothing about it is swapped
-         into an editor. -->
-    {#key tab.id}
-      {#await pdfSurface() then Pdf}
-        <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
       {:catch}
         {@render unreachable()}
       {/await}

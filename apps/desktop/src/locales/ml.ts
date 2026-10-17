@@ -21,6 +21,11 @@ export const ml: Dictionary = {
   'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
+  // Settings: note types
+  'Page note': 'താൾ കുറിപ്പ്',
+  'Web note': 'വെബ് കുറിപ്പ്',
+  'Private tab': 'സ്വകാര്യ ടാബ്',
+  'Note types': 'കുറിപ്പ് തരങ്ങൾ',
   // Tasks: Upcoming's weeks
   'Previous week': 'മുൻപത്തെ ആഴ്ച',
   // Tasks: projects placed in the panel, and their folder
@@ -992,6 +997,7 @@ export const ml: Dictionary = {
   Comment: 'കമന്റ്',
   'Always on top': 'എപ്പോഴും മുകളിൽ',
   'What is new': 'പുതിയത് എന്ത്',
+  'Download the app': 'ആപ്പ് ഡൗൺലോഡ് ചെയ്യുക',
   'Report an issue': 'പ്രശ്നം അറിയിക്കുക',
   'Move the line up': 'വരി മുകളിലേക്ക് നീക്കുക',
   'Move the line down': 'വരി താഴേക്ക് നീക്കുക',
@@ -1168,6 +1174,13 @@ export const ml: Dictionary = {
   'Export as PNG': 'PNG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as SVG': 'SVG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as PDF': 'PDF ആയി എക്സ്പോർട്ട് ചെയ്യുക',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ഇംപോർട്ട് ചെയ്യുക',
+  'Choose how to add the pages to the canvas.':
+    'പേജുകൾ ക്യാൻവാസിൽ എങ്ങനെ ചേർക്കണമെന്ന് തിരഞ്ഞെടുക്കുക.',
+  'Single page': 'ഒരു പേജ്',
+  'All pages': 'എല്ലാ പേജുകളും',
+  'Choose a page': 'ഒരു പേജ് തിരഞ്ഞെടുക്കുക',
   // The canvas: what its own keys are called
   'Delete what is picked': 'തിരഞ്ഞെടുത്തത് ഇല്ലാതാക്കുക',
   'Nudge left': 'ഇടത്തേക്ക് ചെറുതായി നീക്കുക',
@@ -1228,8 +1241,8 @@ export const ml: Dictionary = {
   'Release channel': 'റിലീസ് ചാനൽ',
   Stable: 'സ്ഥിരം',
   Unstable: 'അസ്ഥിരം',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'സ്ഥിരം ഔദ്യോഗിക റിലീസുകൾ പിന്തുടരുന്നു; അസ്ഥിരം mainലേക്കുള്ള എല്ലാ പുഷും പിന്തുടരുന്നു, തകരാനും മതി.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'സ്ഥിരം റിലീസ് ചെയ്ത പതിപ്പുകൾ പിന്തുടരുന്നു; അസ്ഥിരം എഡ്ജ് ബിൽഡുകൾ പിന്തുടരുന്നു, തകരാനും മതി.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ഇംപോർട്ട്',
@@ -1820,16 +1833,6 @@ export const ml: Dictionary = {
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
   // Orden as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
-  // The engine web tabs run on
-  Engine: 'എഞ്ചിൻ',
-  Relaunch: 'വീണ്ടും തുടങ്ങുക',
-  'Chromium did not start': 'Chromium തുടങ്ങിയില്ല',
-  'No connection': 'കണക്ഷനില്ല',
-  'Not in this release': 'ഈ റിലീസിൽ ഇല്ല',
-  'Needs an update': 'അപ്ഡേറ്റ് വേണം',
-  'Signature did not match': 'ഒപ്പ് പൊരുത്തപ്പെട്ടില്ല',
-  'Disk full': 'ഡിസ്ക് നിറഞ്ഞു',
-  'Could not be installed': 'ഇൻസ്റ്റാൾ ചെയ്യാനായില്ല',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
   // The archive: a row put away and taken back, and what refuses to delete it

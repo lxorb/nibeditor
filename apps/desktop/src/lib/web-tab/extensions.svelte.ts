@@ -124,14 +124,7 @@ class Extensions {
     this.installing = link
     this.failed = null
     try {
-      const said = await invoke<{ store?: unknown } | null>('extensions_install', { link })
-      // nib's own Chromium installs from the store's own page, with the store's own
-      // button: the link opens there. See src-tauri/src/extensions/chromium.rs.
-      if (typeof said?.store === 'string') {
-        const { workspace } = await import('../workspace.svelte')
-        workspace.openPage(said.store, 'front')
-        return true
-      }
+      await invoke('extensions_install', { link })
       await this.load()
       return true
     } catch (error) {

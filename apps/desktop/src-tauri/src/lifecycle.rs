@@ -110,9 +110,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             crate::terminal::end_all(app);
             // Nor any Claude Code or Codex a question started; see ai_cli.rs.
             crate::ai_cli::end_all(app);
-            // And the next launch, where the engine is being switched; see
-            // engine_switch.rs.
-            crate::engine_switch::on_leaving();
             // And no notice left on the screen to answer into a nib that has gone; see
             // notices.rs.
             crate::notices::clear_all(app);
@@ -261,9 +258,9 @@ pub fn quit_now(app: &AppHandle) {
         // there is still only the one question, and a Cancel after it leaves nothing
         // but a login that lasts, which every page load does anyway. See
         // web_cookies.rs.
-        #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+        #[cfg(any(windows, target_os = "macos"))]
         crate::web_cookies::kept(&window, ask);
-        #[cfg(not(all(any(windows, target_os = "macos"), not(feature = "cef"))))]
+        #[cfg(not(any(windows, target_os = "macos")))]
         ask();
     }
 }
@@ -273,7 +270,6 @@ pub fn quit_now(app: &AppHandle) {
 /// than finishing a quit nobody still wants.
 #[tauri::command]
 pub fn keep_running(app: AppHandle) {
-    crate::engine_switch::relaunch_called_off();
     let quitting = state(&app);
     if quitting.now() == ASKING || quitting.now() == CONFIRMING {
         quitting.set(RUNNING);

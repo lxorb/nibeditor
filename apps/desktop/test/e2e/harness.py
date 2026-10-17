@@ -50,7 +50,9 @@ What that one import does, in the order a run meets it:
     by their paths asks for a Vite dev server instead: `Drive(__file__, dev=True)`.
   - **The browser CI has.** Playwright's own Chromium, headless, so a drive says the
     same thing here as on the nightly run; `NIB_BROWSER=chrome` for the machine's
-    own Chrome.
+    own Chrome. `NIB_ENGINE=webkit` drives Playwright's WebKit instead, which is what
+    a Mac runs the app in: the drive's keys are pressed the way a Mac presses them
+    (`mac_key`), on the loopback address rather than a name below `.localhost`.
   - **The app's own signals.** `open` waits for the handle, the space and the last
     mark of the launch order (`nib: launch order finished`, lib/startup.svelte.ts),
     which is the app saying it is up, instead of a number of milliseconds.
@@ -111,6 +113,13 @@ OWN_BUILD = "NIB_DIST" not in os.environ
 #: The build a Worker serves, asking its own origin for the API; see `Worker`.
 WORKER_DIST = APP / os.environ.get("NIB_WORKER_DIST", "dist-worker")
 SERVICE = ROOT / "services" / "sync"
+#: The online machine's bundle, which the Worker carries inside itself to hand a
+#: machine at its boot (`services/sync/src/machines/entry.ts` imports it). It is built
+#: by `services/machine/build.ts` and is in no checkout until something builds it, and
+#: `wrangler dev` will not bundle the Worker without it: every drive against the
+#: Worker failed on a fresh runner with `ENOENT ... services/machine/dist/machine.bin`.
+MACHINE = ROOT / "services" / "machine"
+MACHINE_BUNDLE = MACHINE / "dist" / "machine.bin"
 SHOTS = HERE / "shots"
 
 #: Which of the two builds a folder holds, written beside it, so a run can tell
@@ -130,14 +139,50 @@ SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 #: (`FIRST_LOOK` in src/lib/theme.svelte.ts), and every drive but the one about that look
 #: photographs and measures the built-in palette. A context made with `first_look=True`
 #: is a new reader's.
+#:
+#: And the app's new name taken as already said. Settings under `nib:` written before
+#: the app is up are what an install from before the rename looks like, so these very
+#: lines made every drive's window an old reader's, and every one of them opened with
+#: "nibeditor is now Orden" over the foot of the note for six seconds - over the paper
+#: theme-options measures, among others. See renamed.svelte.ts.
 BUILT_IN = (
     "try { if (localStorage.getItem('nib:theme') === null) {"
-    " localStorage.setItem('nib:theme', 'default'); localStorage.setItem('nib:theme-moved', 'yes') } }"
+    " localStorage.setItem('nib:theme', 'default'); localStorage.setItem('nib:theme-moved', 'yes') }"
+    " if (localStorage.getItem('nib:renamed') === null) localStorage.setItem('nib:renamed', 'told') }"
     " catch {}"
+)
+
+#: What a Mac's WebKit says its platform is. Playwright's WebKit says it is a Mac in its
+#: agent wherever it runs, and on Windows says `Win32` here, so CodeMirror - which asks
+#: this - and the app - which asks the agent - would disagree about which key is `Mod`,
+#: which no Mac ever does. Only where the agent is a Mac's: a phone's stays a phone's.
+MAC_PLATFORM = (
+    "if (/Macintosh/.test(navigator.userAgent) && navigator.platform !== 'MacIntel')"
+    " Object.defineProperty(Navigator.prototype, 'platform', { get: () => 'MacIntel' })"
+)
+
+#: And a clipboard that answers: Playwright's WebKit grants no permission to read it,
+#: where a Mac asks the reader once. So in WebKit what the page wrote is what a read
+#: hands back when the engine refuses, as a reader who allowed it would see.
+WEBKIT_CLIPBOARD = (
+    "(() => { const c = navigator.clipboard; if (!c) return; let kept = '';"
+    " const write = c.writeText.bind(c), read = c.readText.bind(c);"
+    " c.writeText = (text) => { kept = String(text); return write(text).catch(() => undefined) };"
+    " c.readText = () => read().catch(() => kept) })()"
 )
 
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
+
+#: Which engine a drive's browser is: Playwright's Chromium, which is what WebView2
+#: is, or with `NIB_ENGINE=webkit` its WebKit, which is what a Mac, an iPhone and
+#: Linux run the app in. Every drive runs on either; one whose question only Chromium
+#: can answer - a DevTools session, a GPU flag - says `NEEDS = ("chromium",)`.
+ENGINE = os.environ.get("NIB_ENGINE", "chromium")
+WEBKIT = ENGINE == "webkit"
+
+#: The modifier a drive's `Mod` is: WebKit says it is a Mac, and the app believes it.
+MOD = "Meta" if WEBKIT else "Control"
 
 #: How long a Worker is given to answer, and a build to finish.
 WORKER_PATIENCE = 90
@@ -156,6 +201,7 @@ TEARDOWN = 90
 #: run-all.py off the drive's source, which is why it is a word and not a function.
 NEEDS = {
     "native": "a native probe build (Windows, NIB_PROBE_EXE and NIB_PROBE_IDENTIFIER)",
+    "chromium": "Chromium's own DevTools or flags, which WebKit does not have",
 }
 
 #: The identifier every release is built under, which is the nib the reader is using
@@ -194,6 +240,9 @@ def answering(browser: Any) -> Any:
     made_page = browser.new_page
 
     def answered(context: Any, first_look: bool) -> None:
+        if WEBKIT:
+            context.add_init_script(MAC_PLATFORM)
+            context.add_init_script(WEBKIT_CLIPBOARD)
         if not first_look:
             context.add_init_script(BUILT_IN)
 
@@ -211,6 +260,193 @@ def answering(browser: Any) -> Any:
     browser.new_context = new_context
     browser.new_page = new_page
     return browser
+
+
+# ------------------------------------------------------------- a Mac's keys
+
+#: Where the app's keys are written, each with the Mac's own where it has one: the
+#: app's, and the editor's.
+REGISTRIES = (
+    APP / "src" / "lib" / "shortcuts" / "registry.ts",
+    ROOT / "packages" / "editor" / "src" / "keymap.ts",
+)
+
+_MODIFIERS = ("Control", "Meta", "Alt", "Shift")
+
+#: Playwright's names for the keys the registry writes as the character they carry.
+_CHARACTERS = {
+    "Backquote": "`",
+    "BracketLeft": "[",
+    "BracketRight": "]",
+    "Minus": "-",
+    "Equal": "=",
+    "Slash": "/",
+    "Backslash": "\\",
+    "Semicolon": ";",
+    "Quote": "'",
+    "Comma": ",",
+    "Period": ".",
+    **{f"Digit{digit}": str(digit) for digit in range(10)},
+    **{f"Key{chr(letter)}": chr(letter).lower() for letter in range(65, 91)},
+}
+
+#: Ctrl and a key that moves through text, as a Mac presses it: the modifier and the key.
+TEXT_KEYS = {
+    "ArrowLeft": ("Alt", "ArrowLeft"),
+    "ArrowRight": ("Alt", "ArrowRight"),
+    "Backspace": ("Alt", "Backspace"),
+    "Delete": ("Alt", "Delete"),
+    "Home": ("Meta", "ArrowUp"),
+    "End": ("Meta", "ArrowDown"),
+}
+
+
+def _chord(written: str, mod: str) -> tuple[frozenset[str], str]:
+    """A combination as its modifiers and its key, from either spelling: the
+    registry's `Mod-Shift-k` or Playwright's `Control+Shift+K`. `Mod` is `mod`."""
+    parts = re.split(r"[-+](?!$)", written)
+    named = {"mod": mod, "ctrl": "Control", "control": "Control", "cmd": "Meta", "meta": "Meta"}
+    named |= {"alt": "Alt", "option": "Alt", "shift": "Shift"}
+    held = frozenset(named[one.lower()] for one in parts[:-1] if one.lower() in named)
+    key = _CHARACTERS.get(parts[-1], parts[-1])
+    return held, key.lower() if len(key) == 1 else key
+
+
+def _written(held: frozenset[str], key: str) -> str:
+    return "+".join([*(one for one in _MODIFIERS if one in held), key])
+
+
+@functools.cache
+def mac_bindings() -> dict[tuple[frozenset[str], str], str]:
+    """Every key the registry gives a Mac of its own, by the key everywhere else:
+    Back is Alt+ArrowLeft off a Mac and Ctrl+[ on one. A Mac with none (`mac: null`)
+    is left out, and the key everywhere else then reaches nothing there either."""
+    found: dict[tuple[frozenset[str], str], str] = {}
+    source = "".join(one.read_text(encoding="utf-8") for one in REGISTRIES)
+    for entry in re.finditer(r"\{[^{}]*?\bkey: '([^']+)',[^{}]*?\bmac: '([^']+)'", source):
+        held, key = _chord(entry.group(1), "Control")
+        # A bare Delete or Backspace a drive presses is a character taken out of a
+        # field, not the file list's Move to trash, which is Cmd's on a Mac.
+        if not held and key in ("Delete", "Backspace"):
+            continue
+        found[held, key] = _written(*_chord(entry.group(2), "Meta"))
+    # Redo, which the editor takes over from CodeMirror's own keymap with its Mac key.
+    found[frozenset({"Control"}), "y"] = "Meta+Shift+z"
+    return found
+
+
+def mac_key(pressed: str) -> str:
+    """What a Mac presses for what a drive wrote for Windows: the registry's own Mac
+    key where it has one, and otherwise Cmd for Ctrl."""
+    # Ctrl held down on its own, for a press or a hover that wants it.
+    if pressed in ("Control", "ControlOrMeta"):
+        return "Meta"
+    chord = _chord(pressed, "Control")
+    if chord in mac_bindings():
+        return mac_bindings()[chord]
+    held, key = chord
+    # Moving through text, which a Mac does with other keys: a word at a time is
+    # Option's, and the top and the bottom of a note are Cmd and an arrow.
+    if "Control" in held and key in TEXT_KEYS:
+        moved, to = TEXT_KEYS[key]
+        return _written((held - {"Control"}) | {moved}, to)
+    if "Control" not in held:
+        return pressed
+    return _written((held - {"Control"}) | {"Meta"}, pressed.rsplit("+", 1)[-1])
+
+
+def _mac_modifiers(modifiers: Sequence[str] | None) -> list[str] | None:
+    if modifiers is None:
+        return None
+    return ["Meta" if one in ("Control", "ControlOrMeta") else one for one in modifiers]
+
+
+def _press_as_a_mac() -> None:
+    """Every key a drive presses, pressed the way a Mac would: a drive is written once,
+    with Windows' keys, and in WebKit - which says it is a Mac, so the app reads Cmd as
+    its `Mod` - each chord is the Mac's. A held Ctrl on a click is Cmd as well. Not in a
+    context the drive gave an agent of its own, a phone's say, where the app reads the
+    keys of whatever that agent names."""
+    import weakref
+
+    from playwright.sync_api import (
+        Browser,
+        BrowserContext,
+        ElementHandle,
+        Frame,
+        Keyboard,
+        Locator,
+        Page,
+    )
+
+    #: The keyboards and contexts whose page says it is a Mac, by the object.
+    other: weakref.WeakSet[Any] = weakref.WeakSet()
+
+    def noted(method: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(method)
+        def making(*args: Any, **kwargs: Any) -> Any:
+            # WebKit has no permission to write the clipboard: a page may, unasked.
+            if "permissions" in kwargs:
+                kwargs["permissions"] = [one for one in kwargs["permissions"] if one != "clipboard-write"]
+            made = method(*args, **kwargs)
+            agent = kwargs.get("user_agent")
+            context = made.context if isinstance(made, Page) else made
+            if (agent and "Mac" not in agent) or context in other:
+                other.add(context)
+                for page in context.pages:
+                    other.add(page.keyboard)
+            if isinstance(made, Page) and made.context in other:
+                other.add(made.keyboard)
+            return made
+
+        return making
+
+    Browser.new_context = noted(Browser.new_context)  # type: ignore[method-assign]
+    Browser.new_page = noted(Browser.new_page)  # type: ignore[method-assign]
+    BrowserContext.new_page = noted(BrowserContext.new_page)  # type: ignore[method-assign]
+
+    def a_mac(owner: Any) -> bool:
+        if isinstance(owner, Keyboard):
+            return owner not in other
+        page = owner if isinstance(owner, Page) else getattr(owner, "page", None)
+        if page is None and isinstance(owner, Frame):
+            page = owner.page
+        return page is None or page.context not in other
+
+    def keyed(method: Callable[..., Any], at: int) -> Callable[..., Any]:
+        @functools.wraps(method)
+        def pressing(*args: Any, **kwargs: Any) -> Any:
+            if a_mac(args[0]):
+                if "key" in kwargs:
+                    kwargs["key"] = mac_key(kwargs["key"])
+                elif len(args) > at:
+                    args = (*args[:at], mac_key(args[at]), *args[at + 1 :])
+            return method(*args, **kwargs)
+
+        return pressing
+
+    def modified(method: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(method)
+        def clicking(*args: Any, **kwargs: Any) -> Any:
+            if "modifiers" in kwargs and a_mac(args[0]):
+                kwargs["modifiers"] = _mac_modifiers(kwargs["modifiers"])
+            return method(*args, **kwargs)
+
+        return clicking
+
+    for name in ("press", "down", "up"):
+        setattr(Keyboard, name, keyed(getattr(Keyboard, name), 1))
+    for kind in (Page, Frame):
+        kind.press = keyed(kind.press, 2)  # type: ignore[method-assign]
+    for kind in (Locator, ElementHandle):
+        kind.press = keyed(kind.press, 1)  # type: ignore[method-assign]
+    for kind in (Page, Frame, Locator, ElementHandle):
+        for name in ("click", "dblclick", "hover", "tap"):
+            setattr(kind, name, modified(getattr(kind, name)))
+
+
+if WEBKIT:
+    _press_as_a_mac()
 
 
 # ---------------------------------------------------------------------- the build
@@ -238,6 +474,8 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     kind = "worker" if served_by_worker else "plain"
     if os.environ.get("NIB_SKIP_BUILD") and built(into, kind):
         say(f"reusing the build in {into.name}")
+        if served_by_worker:
+            machine_bundle(fresh=False)
         return
 
     say(f"building the web app into {into.name}")
@@ -265,6 +503,29 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     (into / POINTED).write_text(kind, encoding="utf-8")
     (into / SEED_PATH.lstrip("/")).write_text(SEED_PAGE, encoding="utf-8")
     say(f"built in {time.monotonic() - started:.0f}s")
+    if served_by_worker:
+        machine_bundle(fresh=True)
+
+
+def machine_bundle(fresh: bool) -> None:
+    """The bundle the Worker imports, built beside the build it serves: afresh with it,
+    and otherwise only when there is none yet, so drives reusing one build - the way
+    run-all.py runs them, several at once - never write it under each other."""
+    if not fresh and MACHINE_BUNDLE.exists():
+        return
+    say("building the online machine's bundle the Worker carries")
+    done = subprocess.run(
+        [shutil.which("node") or "node", "build.ts"],
+        cwd=MACHINE,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=BUILD_PATIENCE,
+        check=False,
+    )
+    if done.returncode != 0:
+        raise SystemExit(f"the machine's bundle failed:\n{done.stdout}\n{done.stderr}")
 
 
 def built(into: Path, kind: str) -> bool:
@@ -644,7 +905,10 @@ class Drive:
         elif dev:
             self.origin = f"http://{self.name}.localhost:{self.dev_port}"
         elif self.server:
-            self.origin = self.server.origin(f"{self.name}.localhost")
+            # WebKit is driven on the loopback address: under a name below `.localhost`
+            # it is not a secure context, where the app in a Mac's WKWebView is, and it
+            # never runs a sandboxed frame there. The port is the drive's own either way.
+            self.origin = self.server.origin("127.0.0.1" if WEBKIT else f"{self.name}.localhost")
         else:
             self.origin = ""
 
@@ -720,7 +984,12 @@ class Drive:
 
     def browser(self, play: Any, **options: Any) -> Any:
         """Playwright's own Chromium, new headless, which is what the nightly run has;
-        the machine's Chrome with `NIB_BROWSER=chrome`."""
+        the machine's Chrome with `NIB_BROWSER=chrome`; Playwright's WebKit with
+        `NIB_ENGINE=webkit`, where a Chromium switch is no option at all."""
+        if WEBKIT:
+            options.pop("channel", None)
+            options.pop("args", None)
+            return answering(play.webkit.launch(**options))
         channel = os.environ.get("NIB_BROWSER", "chromium")
         options.setdefault("channel", channel)
         return answering(play.chromium.launch(**options))
@@ -731,8 +1000,15 @@ class Drive:
     def persistent(self, play: Any, profile: Path, **options: Any) -> Any:
         """A browser with its profile on disk, for a drive whose question is what
         survives the browser being closed and opened again."""
-        options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
-        context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
+        if WEBKIT:
+            options.pop("channel", None)
+            options.pop("args", None)
+            context = play.webkit.launch_persistent_context(user_data_dir=str(profile), **options)
+        else:
+            options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
+            context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
+        if WEBKIT:
+            context.add_init_script(MAC_PLATFORM)
         context.add_init_script(BUILT_IN)
         return context
 
@@ -1340,6 +1616,14 @@ def needs_of(source: str) -> tuple[str, ...]:
     said = tuple(one.strip().strip("\"'") for one in found.group(1).split(",") if one.strip()) if found else ()
     if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"nib\.exe\"", source):
         said = (*said, "native")
+    # A DevTools session is Chromium's alone, so a drive that opens one needs it too; and
+    # so are a microphone that plays a file and a finger made in the page, which a
+    # desktop's WebKit has no constructor for.
+    chromium_only = (
+        r"\bnew_cdp_session\b|\bconnect_over_cdp\b|use-fake-device-for-media-stream|new Touch\("
+    )
+    if "chromium" not in said and re.search(chromium_only, source):
+        said = (*said, "chromium")
     return said
 
 
@@ -1353,6 +1637,8 @@ def missing(needs: Sequence[str]) -> str:
             exe = Path(os.environ["NIB_PROBE_EXE"])
             if why := refused(exe, identifier_of(exe)):
                 return f"refused: {why}"
+        if one == "chromium" and WEBKIT:
+            return f"needs {NEEDS['chromium']}"
         if one not in NEEDS:
             return f"needs {one}, which the harness does not know"
     return ""

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { withOwn } from './own-file'
-import { readShortcut, readWebloc, writeShortcut } from './shortcut'
+import { apartOf, readShortcut, readWebloc, writeShortcut } from './shortcut'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
 
@@ -48,6 +48,21 @@ describe('the file a website is written as', () => {
     expect(written).toContain('Nib-Data=3f9a0c17e2b4d685\r\n')
     expect(readShortcut(written)?.own).toBe('3f9a0c17e2b4d685')
     expect(writeShortcut('https://a.example', 'A', WHEN)).not.toContain('Nib-Data')
+  })
+
+  // #346: one answer for every way a page is opened - a tab, an essential, a copy.
+  test('a tab is on its file’s web data, and one with no file on what it took along', () => {
+    const own = '3f9a0c17e2b4d685'
+    const doc = writeShortcut('https://a.example', 'A', WHEN, null, null, own)
+    expect(apartOf({ path: '/s/a.url', doc })).toBe(own)
+    expect(apartOf({ path: '/s/a.url', doc, apart: null })).toBe(own)
+    expect(apartOf({ path: '/s/a.url', doc: writeShortcut('https://a.example', 'A', WHEN) })).toBe(
+      null,
+    )
+    // The file decides once there is one, whatever the tab carried before.
+    expect(apartOf({ path: '/s/b.url', doc: '', apart: own })).toBeNull()
+    expect(apartOf({ path: null, doc: '', apart: own })).toBe(own)
+    expect(apartOf({ path: null, doc: '' })).toBeNull()
   })
 
   test('and reads anything else in that key as a note that shares the one store', () => {

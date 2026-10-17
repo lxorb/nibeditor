@@ -27,6 +27,7 @@ import { hostOf } from '../../web-tab/web-data'
 import { agentMarks } from '../../agent-marks.svelte'
 import { lend, unlend } from '../../web-tab/lending'
 import { pages } from '../../web-tab/pages.svelte'
+import { apartOf } from '../../web-tab/shortcut'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { fileNamed, isDraft, isUnsaved } from '../../workspace/drafts'
 import type { ReaderTab } from '../verbs'
@@ -520,6 +521,7 @@ export async function lendTab(id: string): Promise<null> {
   page.space ??= workspace.spaceOf(tab.note)
   page.path = tab.path
   page.pinned = tab.pinned
+  if (!page.live) page.own = apartOf(tab)
   await lend(tab.id)
   setTimeout(() => {
     if (!(tab.id in agentMarks.on)) unlend(tab.id)

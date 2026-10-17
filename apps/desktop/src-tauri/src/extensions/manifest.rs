@@ -46,7 +46,6 @@ pub fn read(folder: &Path) -> Result<About, String> {
 }
 
 /// Writes the developer's key into the manifest in `folder`, as base64 of its DER.
-#[cfg(not(feature = "cef"))]
 pub fn keyed(folder: &Path, key: &[u8]) -> Result<(), String> {
     use base64::Engine as _;
 

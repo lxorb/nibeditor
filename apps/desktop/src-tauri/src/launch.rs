@@ -176,12 +176,12 @@ pub fn take_startup_pdfs(window: tauri::Window, pending: tauri::State<'_, Pendin
 }
 
 /// A second launch of the app, as the single instance plugin hears it: inside the window
-/// procedure its message arrived in. On nib's own Chromium a question to a window from in
-/// there - is it focused? - is answered by running the event loop's handler again inside
-/// the one already running, which never returns (measured: the running app stopped
-/// answering, and the second launch never ended, since it waits for the message to be
-/// handled). So the launch is handed to the event loop, to be answered in a turn of its
-/// own, on either engine; see `second_launch`.
+/// procedure its message arrived in. A question to a window from in there - is it
+/// focused? - can run the event loop's handler again inside the one already running,
+/// which never returns (measured on nib's own Chromium, while there was one: the running
+/// app stopped answering, and the second launch never ended, since it waits for the
+/// message to be handled). So the launch is handed to the event loop, to be answered in
+/// a turn of its own; see `second_launch`.
 pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
     // Asked for from a thread of its own, because from inside the window procedure the
     // runtime runs a task at once, in the middle of the message it is handling.
@@ -321,7 +321,7 @@ fn window_builder<'a>(
 
     // The same switches as the first window, which is running on the same user data
     // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
 
     builder

@@ -21,6 +21,11 @@ export const te: Dictionary = {
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
+  // Settings: note types
+  'Page note': 'పేజీ నోట్',
+  'Web note': 'వెబ్ నోట్',
+  'Private tab': 'ప్రైవేట్ ట్యాబ్',
+  'Note types': 'నోట్ రకాలు',
   // Tasks: Upcoming's weeks
   'Previous week': 'మునుపటి వారం',
   // Tasks: projects placed in the panel, and their folder
@@ -985,6 +990,7 @@ export const te: Dictionary = {
   Comment: 'వ్యాఖ్య',
   'Always on top': 'ఎప్పుడూ పైన',
   'What is new': 'కొత్తది ఏమిటి',
+  'Download the app': 'యాప్‌ను డౌన్‌లోడ్ చేయండి',
   'Report an issue': 'సమస్య తెలియజేయి',
   'Move the line up': 'పంక్తిని పైకి తరలించు',
   'Move the line down': 'పంక్తిని కిందికి తరలించు',
@@ -1162,6 +1168,12 @@ export const te: Dictionary = {
   'Export as PNG': 'PNGగా ఎక్స్‌పోర్ట్ చేయి',
   'Export as SVG': 'SVGగా ఎక్స్‌పోర్ట్ చేయి',
   'Export as PDF': 'PDFగా ఎక్స్‌పోర్ట్ చేయి',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ఇంపోర్ట్ చేయి',
+  'Choose how to add the pages to the canvas.': 'పేజీలను క్యాన్వాస్‌కు ఎలా జోడించాలో ఎంచుకో.',
+  'Single page': 'ఒక పేజీ',
+  'All pages': 'అన్ని పేజీలు',
+  'Choose a page': 'ఒక పేజీని ఎంచుకో',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ఎంచుకున్నది తొలగించు',
   'Nudge left': 'ఎడమకు జరుపు',
@@ -1222,8 +1234,8 @@ export const te: Dictionary = {
   'Release channel': 'రిలీజ్ ఛానెల్',
   Stable: 'స్థిరం',
   Unstable: 'అస్థిరం',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'స్థిరం అధికారిక రిలీజ్‌లను అనుసరిస్తుంది; అస్థిరం mainకు ప్రతి పుష్‌ను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'స్థిరం విడుదలైన వెర్షన్‌లను అనుసరిస్తుంది; అస్థిరం edge బిల్డ్‌లను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ఇంపోర్ట్',
@@ -1810,16 +1822,6 @@ export const te: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
-  // The engine web tabs run on
-  Engine: 'ఇంజిన్',
-  Relaunch: 'మళ్లీ ప్రారంభించు',
-  'Chromium did not start': 'Chromium ప్రారంభం కాలేదు',
-  'No connection': 'కనెక్షన్ లేదు',
-  'Not in this release': 'ఈ విడుదలలో లేదు',
-  'Needs an update': 'అప్‌డేట్ అవసరం',
-  'Signature did not match': 'సంతకం సరిపోలలేదు',
-  'Disk full': 'డిస్క్ నిండింది',
-  'Could not be installed': 'ఇన్‌స్టాల్ చేయలేకపోయింది',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} చేసిన సవరణలను రద్దు చేయి',
   // The archive: a row put away and taken back, and what refuses to delete it

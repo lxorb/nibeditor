@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>so.orden.Orden</id>
+
+  <name>Orden</name>
+  <summary>Markdown editor with live preview</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+
+  <developer id="so.orden">
+    <name>Emil Vinu</name>
+  </developer>
+
+  <description>
+    <p>
+      Orden, formerly nibeditor, is a small markdown editor that formats what
+      you write as you write it. There is no split screen and no preview pane: headings, emphasis,
+      lists, tables, code and math take their final shape in the same window you
+      type in, and the markdown underneath stays plain text you can open anywhere.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Realtime inline preview, so the document always looks the way it will read</li>
+      <li>Notes that sync across your devices</li>
+      <li>An MCP server, so a language model can read and write your notes with your permission</li>
+      <li>Paste images straight from the clipboard</li>
+      <li>Publish a file as a page on the web, with a custom domain if you have one</li>
+      <li>Export to PDF and HTML</li>
+    </ul>
+    <p>
+      Orden is free software under the GNU Affero General Public License. The
+      same editor also runs in a browser at orden.so.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">so.orden.Orden.desktop</launchable>
+
+  <!-- What a catalogue paints behind the icon. Both are the app's own purple,
+       one well above it and one well below, so the mark stays legible on either. -->
+  <branding>
+    <color type="primary" scheme_preference="light">#ded9fc</color>
+    <color type="primary" scheme_preference="dark">#2e2560</color>
+  </branding>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/lxorb/orden/c07562c111935094bb5391ebc5433b6bbaf66bfa/docs/media/screenshot.png</image>
+      <caption>A document being edited, formatted as it is typed</caption>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://orden.so</url>
+  <url type="bugtracker">https://github.com/lxorb/orden/issues</url>
+  <url type="vcs-browser">https://github.com/lxorb/orden</url>
+
+  <categories>
+    <category>Office</category>
+    <category>Utility</category>
+  </categories>
+
+  <keywords>
+    <keyword>markdown</keyword>
+    <keyword>editor</keyword>
+    <keyword>notes</keyword>
+    <keyword>writing</keyword>
+    <keyword>wysiwyg</keyword>
+    <keyword>nibeditor</keyword>
+  </keywords>
+
+  <provides>
+    <binary>nib</binary>
+  </provides>
+
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+
+  <recommends>
+    <display_length compare="ge">768</display_length>
+  </recommends>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.15.0" date="2026-10-14">
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.15.0</url>
+    </release>
+    <release version="0.8.0" date="2026-09-13">
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.8.0</url>
+      <description>
+        <p>Web pages as notes, sites that publish with search and forms, meetings that transcribe themselves, and the app in thirty-nine languages.</p>
+      </description>
+    </release>
+    <release version="0.7.0" date="2026-09-12">
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.7.0</url>
+      <description>
+        <p>Search with operators, query fences that answer where they stand, a graph of the whole space, and notes that hold notes.</p>
+      </description>
+    </release>
+    <release version="0.6.0" date="2026-09-09">
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.6.0</url>
+      <description>
+        <p>A drawing canvas with pens, shapes and connectors, layouts for phone and tablet, and an icon for every note.</p>
+      </description>
+    </release>
+    <release version="0.5.0" date="2026-09-08">
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.5.0</url>
+      <description>
+        <p>Notes presented as slide decks, a browser extension for clipping pages, and a theme store.</p>
+      </description>
+    </release>
+    <release version="0.4.0" date="2026-09-04">
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.4.0</url>
+      <description>
+        <p>Sync across devices, publishing, and an MCP server for language model access.</p>
+      </description>
+    </release>
+  </releases>
+</component>

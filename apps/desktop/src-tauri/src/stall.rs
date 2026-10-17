@@ -387,7 +387,7 @@ fn pumps(thread: u32, within: Duration) -> Answer {
 /// which from outside looks exactly like nib freezing: `WebView2`'s `ProcessFailed`,
 /// whose "unresponsive" kind is raised after the page has not answered input for a few
 /// seconds. The kind is all that is said.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a webview's processes are WebView2's own event, reached through its COM interfaces"
@@ -438,7 +438,7 @@ pub fn watch_page(app: &AppHandle, webview: &tauri::Webview, whose: &'static str
 }
 
 /// Every other engine: nothing to listen to.
-#[cfg(not(all(windows, not(feature = "cef"))))]
+#[cfg(not(windows))]
 pub fn watch_page(_app: &AppHandle, _webview: &tauri::Webview, _whose: &'static str) {}
 
 #[cfg(test)]

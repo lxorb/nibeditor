@@ -21,6 +21,11 @@ export const vi: Dictionary = {
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
+  // Settings: note types
+  'Page note': 'Ghi chú nhiều trang',
+  'Web note': 'Ghi chú web',
+  'Private tab': 'Thẻ riêng tư',
+  'Note types': 'Loại ghi chú',
   // Tasks: Upcoming's weeks
   'Previous week': 'Tuần trước',
   // Tasks: projects placed in the panel, and their folder
@@ -977,6 +982,7 @@ export const vi: Dictionary = {
   Comment: 'Bình luận',
   'Always on top': 'Luôn ở trên',
   'What is new': 'Có gì mới',
+  'Download the app': 'Tải ứng dụng',
   'Report an issue': 'Báo lỗi',
   'Move the line up': 'Chuyển dòng lên',
   'Move the line down': 'Chuyển dòng xuống',
@@ -1152,6 +1158,12 @@ export const vi: Dictionary = {
   'Export as PNG': 'Xuất thành PNG',
   'Export as SVG': 'Xuất thành SVG',
   'Export as PDF': 'Xuất thành PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Nhập PDF',
+  'Choose how to add the pages to the canvas.': 'Chọn cách thêm các trang vào canvas.',
+  'Single page': 'Một trang',
+  'All pages': 'Tất cả các trang',
+  'Choose a page': 'Chọn một trang',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Xoá phần đã chọn',
   'Nudge left': 'Nhích sang trái',
@@ -1212,8 +1224,8 @@ export const vi: Dictionary = {
   'Release channel': 'Kênh phát hành',
   Stable: 'Ổn định',
   Unstable: 'Không ổn định',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Ổn định theo các bản phát hành chính thức, Không ổn định theo mọi lần push vào main và có thể lỗi.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Ổn định theo các bản đã phát hành, Không ổn định theo các bản dựng edge và có thể lỗi.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Nhập',
@@ -1789,16 +1801,6 @@ export const vi: Dictionary = {
   'Paste {count} lines?': 'Dán {count} dòng?',
   // Orden as the default browser
   'Default browser': 'Trình duyệt mặc định',
-  // The engine web tabs run on
-  Engine: 'Công cụ',
-  Relaunch: 'Khởi chạy lại',
-  'Chromium did not start': 'Chromium không khởi động được',
-  'No connection': 'Không có kết nối',
-  'Not in this release': 'Không có trong bản phát hành này',
-  'Needs an update': 'Cần cập nhật',
-  'Signature did not match': 'Chữ ký không khớp',
-  'Disk full': 'Ổ đĩa đầy',
-  'Could not be installed': 'Không thể cài đặt',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Hoàn tác các chỉnh sửa của {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

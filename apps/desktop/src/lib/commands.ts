@@ -49,6 +49,7 @@ import { deckOf, slideAt } from '@nib/markdown/slides'
 import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
+import { turnedOff } from './kind-choice'
 import { composerCommands } from './composer-commands'
 import { key, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
@@ -78,7 +79,7 @@ import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
-import { settings } from './settings.svelte'
+import { type KindName, settings } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -1071,7 +1072,7 @@ export function appCommands(view?: EditorView): Command[] {
 
   const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null
 
-  return [
+  return without([
     // Only for a tab with no file, which is the one thing Save still means: where it
     // goes and under what name. A web tab kept as a web note is the same row. See
     // save-place/ask.ts.
@@ -1743,5 +1744,28 @@ export function appCommands(view?: EditorView): Command[] {
     },
 
     ...composerCommands(view),
-  ]
+  ])
+}
+
+/** The rows that make a kind of tab, by the kind; see kind-choice.ts. */
+const MAKES: Record<string, KindName> = {
+  new: 'note',
+  'new-unique': 'note',
+  'new-from-template': 'note',
+  'new-canvas': 'canvas',
+  'new-pages': 'pages',
+  'new-web-note': 'web',
+  'new-website': 'web',
+  'new-terminal': 'terminal',
+  'new-remote': 'remote',
+  'new-online-terminal': 'online',
+  'new-private': 'private',
+}
+
+/** Without the rows of a kind Settings turned off. */
+function without(rows: Command[]): Command[] {
+  return rows.filter((row) => {
+    const kind = MAKES[row.id]
+    return !kind || !turnedOff(kind)
+  })
 }

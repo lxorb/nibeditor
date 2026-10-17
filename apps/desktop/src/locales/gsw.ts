@@ -21,6 +21,11 @@ export const gsw: Dictionary = {
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
+  // Settings: note types
+  'Page note': 'Siitenotiz',
+  'Web note': 'Webnotiz',
+  'Private tab': 'Private Tab',
+  'Note types': 'Notiztype',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherigi Wuche',
   // Tasks: projects placed in the panel, and their folder
@@ -986,6 +991,7 @@ export const gsw: Dictionary = {
   Comment: 'Kommentar',
   'Always on top': 'Immer vorne',
   'What is new': 'Was isch neu',
+  'Download the app': 'App abelade',
   'Report an issue': 'Problem mälde',
   'Move the line up': 'D Zile ufe schiebe',
   'Move the line down': 'D Zile abe schiebe',
@@ -1162,6 +1168,12 @@ export const gsw: Dictionary = {
   'Export as PNG': 'Als PNG exportiere',
   'Export as SVG': 'Als SVG exportiere',
   'Export as PDF': 'Als PDF exportiere',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF importiere',
+  'Choose how to add the pages to the canvas.': 'Wähl, wie d Siite uf d Liinwand chöme.',
+  'Single page': 'Einzelni Siite',
+  'All pages': 'Alli Siite',
+  'Choose a page': 'Siite uswähle',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Uswahl lösche',
   'Nudge left': 'Nach links schiebe',
@@ -1222,8 +1234,8 @@ export const gsw: Dictionary = {
   'Release channel': 'Update-Kanal',
   Stable: 'Stabil',
   Unstable: 'Instabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil folgt de offizielle Releases, Instabil jedem Push uf main und cha kaputt gaa.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil folgt de veröffentlichte Versione, Instabil de Edge-Builds und cha kaputt gaa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importiere',
@@ -1812,16 +1824,6 @@ export const gsw: Dictionary = {
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
   // Orden as the default browser
   'Default browser': 'Standardbrowser',
-  // The engine web tabs run on
-  Engine: 'Engine',
-  Relaunch: 'Neu starte',
-  'Chromium did not start': 'Chromium isch nöd gstartet',
-  'No connection': 'Kei Verbindig',
-  'Not in this release': 'Nöd i dere Version',
-  'Needs an update': 'Bruucht es Update',
-  'Signature did not match': 'Signatur stimmt nöd',
-  'Disk full': 'Festplatte voll',
-  'Could not be installed': 'Het nöd chöne installiert wärde',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
   // The archive: a row put away and taken back, and what refuses to delete it

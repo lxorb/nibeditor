@@ -58,7 +58,7 @@ test('writes the page the reading got to, and keeps where the note points', asyn
   let text = FILE
   keepPage({
     path: PATH,
-    text,
+    text: () => text,
     url: 'https://svelte.dev/docs/svelte/what-are-runes',
     icon: 'https://svelte.dev/favicon.png',
     wrote: (next) => (text = next),
@@ -86,7 +86,7 @@ test('writes the page the reading got to, and keeps where the note points', asyn
 test('a page that moves twice in a moment is one write', async () => {
   keepPage({
     path: PATH,
-    text: FILE,
+    text: () => FILE,
     url: 'https://svelte.dev/a',
     icon: null,
     wrote: () => undefined,
@@ -94,7 +94,7 @@ test('a page that moves twice in a moment is one write', async () => {
   await vi.advanceTimersByTimeAsync(200)
   keepPage({
     path: PATH,
-    text: FILE,
+    text: () => FILE,
     url: 'https://svelte.dev/b',
     icon: null,
     wrote: () => undefined,
@@ -113,7 +113,7 @@ test('the home already in the file is the home that stays', async () => {
 
   keepPage({
     path: PATH,
-    text: moved,
+    text: () => moved,
     url: 'https://svelte.dev/docs/two',
     icon: null,
     wrote: () => undefined,
@@ -127,7 +127,7 @@ test('the home already in the file is the home that stays', async () => {
 test('a page that has not moved is not written', async () => {
   keepPage({
     path: PATH,
-    text: FILE,
+    text: () => FILE,
     url: 'https://svelte.dev/docs',
     icon: null,
     wrote: () => undefined,
@@ -138,7 +138,13 @@ test('a page that has not moved is not written', async () => {
 })
 
 test('an address that is not the web is never written', async () => {
-  keepPage({ path: PATH, text: FILE, url: 'file:///C:/notes', icon: null, wrote: () => undefined })
+  keepPage({
+    path: PATH,
+    text: () => FILE,
+    url: 'file:///C:/notes',
+    icon: null,
+    wrote: () => undefined,
+  })
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(0)
@@ -151,7 +157,7 @@ test('an address that is not the web is never written', async () => {
 test('tells the index what the file now says, so the row can wear the favicon', async () => {
   keepPage({
     path: PATH,
-    text: FILE,
+    text: () => FILE,
     url: 'https://svelte.dev/docs/svelte/runes',
     icon: 'https://svelte.dev/favicon.png',
     wrote: () => undefined,
@@ -168,7 +174,7 @@ test('tells the index what the file now says, so the row can wear the favicon', 
 test('says nothing to the index when there was nothing to write', async () => {
   keepPage({
     path: PATH,
-    text: FILE,
+    text: () => FILE,
     url: 'https://svelte.dev/docs',
     icon: null,
     wrote: () => undefined,
@@ -179,6 +185,34 @@ test('says nothing to the index when there was nothing to write', async () => {
   expect(told).toHaveLength(0)
 })
 
+/** #353: *"after choosing web data > separate for a note sometimes it doesn't apply
+ *  the option."* Sometimes is the pause. A page that has just moved owes its file a
+ *  write, and the write waits for the reading to settle; Separate web data writes
+ *  `Nib-Data` into the same file inside that pause. The waiting write read the file's
+ *  other keys once, when the page moved, so it wrote back the file as it was before
+ *  the choice - no `Nib-Data` - and the note was on the shared store again a fifth of
+ *  a second after being told not to be. The file is asked again at the write. */
+test('a choice made while a write is waiting is in the file the write makes', async () => {
+  let text = FILE
+  keepPage({
+    path: PATH,
+    text: () => text,
+    url: 'https://svelte.dev/docs/svelte/runes',
+    icon: null,
+    wrote: (next) => (text = next),
+  })
+
+  // Separate web data, inside the pause: the note's own id goes in the file, and the
+  // tab's copy of the file with it. See own-data.ts.
+  text = `${FILE}Nib-Data=0123456789abcdef\r\n`
+  await vi.advanceTimersByTimeAsync(2500)
+
+  expect(written).toHaveLength(1)
+  expect(said()).toContain('Nib-Data=0123456789abcdef')
+  expect(said()).toContain('URL=https://svelte.dev/docs/svelte/runes')
+  expect(text).toBe(said())
+})
+
 /** Two devices draw one favicon into two different pictures, and each wrote its own
  *  over the other's on every open: a web note syncing back and forth on a change
  *  nobody could see, and the copies beside it that two writers between two passes
@@ -187,7 +221,7 @@ test('a mark already held as a picture is not written over on its own', async ()
   const held = `${FILE}Nib-Icon=data:image/png;base64,AAAA\r\n`
   keepPage({
     path: PATH,
-    text: held,
+    text: () => held,
     url: 'https://svelte.dev/docs',
     icon: 'data:image/png;base64,BBBB',
     wrote: () => undefined,
@@ -197,7 +231,7 @@ test('a mark already held as a picture is not written over on its own', async ()
 
   keepPage({
     path: PATH,
-    text: held,
+    text: () => held,
     url: 'https://svelte.dev/docs/svelte/runes',
     icon: 'data:image/png;base64,BBBB',
     wrote: () => undefined,
@@ -212,7 +246,7 @@ test('a reading that never settles is written at the longest wait a note has', a
   for (let step = 0; step < 12; step++) {
     keepPage({
       path: PATH,
-      text: FILE,
+      text: () => FILE,
       url: `https://svelte.dev/page-${step}`,
       icon: null,
       wrote: () => undefined,
@@ -228,7 +262,7 @@ test('a reading that never settles is written at the longest wait a note has', a
 test('the window going writes what is waiting, and waits for it', async () => {
   keepPage({
     path: PATH,
-    text: FILE,
+    text: () => FILE,
     url: 'https://svelte.dev/docs/kit',
     icon: null,
     wrote: () => undefined,
@@ -247,7 +281,7 @@ test('the window going writes what is waiting, and waits for it', async () => {
 test('leaving the tab writes what is waiting for its note', () => {
   keepPage({
     path: PATH,
-    text: FILE,
+    text: () => FILE,
     url: 'https://svelte.dev/docs/cli',
     icon: null,
     wrote: () => undefined,

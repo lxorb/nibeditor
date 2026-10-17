@@ -604,9 +604,8 @@ hands the keyboard back to the app and says which key it was, and the window pla
 on itself - so it goes through the same handler and the same bindings as anywhere
 else. F5 and Ctrl+R need nothing: pressed in a page they are the
 engine's own reload, as in Chrome. Everything else, a site's own Ctrl+K among them, is
-the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView`,
-`WebKitGTK` and nib's own Chromium have no such event reachable yet, and there the page
-keeps every key; Chromium's `OnPreKeyEvent` is the same hook, see docs/browser.md.
+the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView` and
+`WebKitGTK` have no such event reachable yet, and there the page keeps every key.
 
 **A terminal**
 
@@ -952,8 +951,7 @@ keyboard from the page. The window takes the record back inside the message that
 it the keyboard, so a click that brought it forward still lands where it clicked; only a
 page that is on screen, never an agent's own, and never while another program is in
 front. The element inside a page is the engine's to keep, and the app's page keeps a net
-under it for its own. nib's own Chromium had nothing hand the keyboard to any page at
-all, and now does, through each browser's host. A Mac and Linux keep a window's first
+under it for its own. A Mac and Linux keep a window's first
 responder across activation themselves; they share the record for the layers. See
 `src-tauri/src/keyboard.rs` and `lib/keyboard-home.ts`.
 

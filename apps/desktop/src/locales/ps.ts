@@ -21,6 +21,11 @@ export const ps: Dictionary = {
   'Import from Zen': 'له Zen څخه واردول',
   'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
   'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
+  // Settings: note types
+  'Page note': 'د مخونو يادښت',
+  'Web note': 'ویب يادښت',
+  'Private tab': 'شخصي ټب',
+  'Note types': 'د يادښت ډولونه',
   // Tasks: Upcoming's weeks
   'Previous week': 'تېره اونۍ',
   // Tasks: projects placed in the panel, and their folder
@@ -983,6 +988,7 @@ export const ps: Dictionary = {
   Comment: 'څرګندونه',
   'Always on top': 'هميشه پورته',
   'What is new': 'نوي څه دي',
+  'Download the app': 'اپلیکیشن ښکته کړئ',
   'Report an issue': 'ستونزه راپور کول',
   'Move the line up': 'کرښه پورته خوځول',
   'Move the line down': 'کرښه ښکته خوځول',
@@ -1158,6 +1164,12 @@ export const ps: Dictionary = {
   'Export as PNG': 'لکه PNG صادرول',
   'Export as SVG': 'لکه SVG صادرول',
   'Export as PDF': 'لکه PDF صادرول',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF واردول',
+  'Choose how to add the pages to the canvas.': 'وټاکه چې مخونه څنګه په تخته کې اضافه شي.',
+  'Single page': 'يو مخ',
+  'All pages': 'ټول مخونه',
+  'Choose a page': 'يو مخ وټاکه',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ټاکل شوی ړنګول',
   'Nudge left': 'کيڼ ته ټېل',
@@ -1218,8 +1230,8 @@ export const ps: Dictionary = {
   'Release channel': 'د خپرونې کانال',
   Stable: 'ټينګ',
   Unstable: 'نا ټينګ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ټينګ رسمي خپرونې تعقيبوي، نا ټينګ هره main ته لېږنه او ماتېدی شي.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ټينګ خپاره شوې نسخې تعقيبوي، نا ټينګ د څنډې جوړښتونه او ماتېدی شي.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'واردول',
@@ -1804,16 +1816,6 @@ export const ps: Dictionary = {
   'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },
   // Orden as the default browser
   'Default browser': 'اصلي کوټګر',
-  // The engine web tabs run on
-  Engine: 'انجن',
-  Relaunch: 'بيا پیلول',
-  'Chromium did not start': 'Chromium پیل نه شو',
-  'No connection': 'اړیکه نشته',
-  'Not in this release': 'په دې خپرونه کې نشته',
-  'Needs an update': 'تازه کول پکار دي',
-  'Signature did not match': 'لاسلیک سمون نه خوري',
-  'Disk full': 'ډیسک ډک دی',
-  'Could not be installed': 'نصب نه شو',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'د {name} سمونونه بېرته واخلئ',
   // The archive: a row put away and taken back, and what refuses to delete it

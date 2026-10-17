@@ -14,6 +14,15 @@ name: drives
 # Never on a push or a pull request. The set takes the better part of an hour, and
 # a merge waiting on it would be a merge that waits on it; what it finds is read the
 # next morning. See docs/conventions.md, "Drives".
+#
+# The night drives `unstable`, not the branch the schedule runs on. A schedule only
+# ever runs from the default branch, `main`, and `main` takes nothing but releases:
+# driving it every night drove the same commit night after night - three red nights
+# in a row on one release - and said nothing about the work, which is all on
+# `unstable` and reaches `main` weeks later. So `which` below picks `unstable`'s head,
+# and only when something was pushed to it since the night before; a quiet night
+# costs one small job instead of two runners for two hours each. A dispatch drives
+# whatever it was dispatched on (`gh workflow run drives.yml --ref unstable`), always.
 on:
   schedule:
     # Off the hour, when the runners are busiest.
@@ -36,7 +45,51 @@ permissions:
   contents: read
 
 jobs:
+  # The commit the night drives, and whether to. The newest push to `unstable` from
+  # the repository's activity, which is when it was pushed rather than when its
+  # commits were written - a fast-forward of week-old commits is new work tonight -
+  # against when the last scheduled run started. A night with nothing new ends here,
+  # green. Both drive jobs then check out the one commit picked, so a push in the
+  # middle of the night cannot hand them two different trees.
+  which:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      ref: ${{ steps.which.outputs.ref }}
+      go: ${{ steps.which.outputs.go }}
+    steps:
+      - id: which
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.run_id }}
+        run: |
+          if [ "$EVENT" != schedule ]; then
+            echo "Dispatched: driving $GITHUB_REF_NAME at $GITHUB_SHA."
+            { echo "ref=$GITHUB_SHA"; echo go=true; } >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          sha=$(gh api "repos/$REPO/commits/unstable" --jq .sha)
+          pushed=$(gh api "repos/$REPO/activity?ref=refs/heads/unstable&per_page=1" --jq '.[0].timestamp // ""') || pushed=""
+          last=$(gh api "repos/$REPO/actions/workflows/drives.yml/runs?event=schedule&per_page=5" \
+            --jq "[.workflow_runs[] | select(.id != $RUN)][0].created_at // \"\"") || last=""
+          echo "unstable is $sha, last pushed ${pushed:-at no time GitHub says}; the last night started ${last:-never}."
+          # Both are UTC in the same ISO form, so they compare as strings. Not knowing
+          # either is a reason to drive rather than to stay quiet.
+          if [ -z "$pushed" ] || [ -z "$last" ] || [[ "$pushed" > "$last" ]]; then
+            go=true
+          else
+            go=false
+            echo "::notice::Nothing pushed to unstable since the last night; no drives tonight."
+          fi
+          { echo "ref=$sha"; echo "go=$go"; } >>"$GITHUB_OUTPUT"
+
   drives:
+    needs: which
+    if: ${{ needs.which.outputs.go == 'true' }}
     runs-on: ubuntu-latest
     # Only reads: nothing here writes a release, a comment or a package.
     permissions:
@@ -44,6 +97,8 @@ jobs:
     timeout-minutes: 150
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ needs.which.outputs.ref }}
 
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
@@ -54,14 +109,16 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The runner's own Python, the way check.yml's smoke job takes it: one package
-      # and the browsers it drives. Chromium for every drive, and WebKit for the one
+      # The runner's own Python, the way check.yml's smoke job takes it: Playwright
+      # and the browsers it drives, and Pillow, which the drives that read a shot's
+      # pixels import (glass-pages, theme-options, wallpaper) and which
+      # was missing here - they failed on the import every night. Chromium for every drive, and WebKit for the one
       # that holds the app's policy up in both engines the app runs in (frames.py).
       # `--with-deps` because a bare browser on a runner is missing half the shared
       # libraries it needs to start.
       - name: The browsers the drives hold
         run: |
-          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m pip install --quiet --break-system-packages playwright pillow
           python3 -m playwright install --with-deps chromium webkit
 
       # Two at a time on the runner's four cores. The drives against the Worker need
@@ -89,6 +146,58 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: drives
+          path: apps/desktop/test/e2e/shots
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # The same set again in WebKit, which is what a Mac, an iPhone and Linux run the app
+  # in, every key pressed the way a Mac presses it; see `NIB_ENGINE` in harness.py. A
+  # drive that needs Chromium's DevTools, a fake microphone or a finger made in the page
+  # is listed as skipped here, with the reason.
+  drives-webkit:
+    needs: which
+    if: ${{ needs.which.outputs.go == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ needs.which.outputs.ref }}
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright pillow
+          python3 -m playwright install --with-deps webkit
+
+      - name: Drives, as a Mac
+        env:
+          ONLY: ${{ inputs.only }}
+          NIB_ENGINE: webkit
+        run: |
+          python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 ${ONLY:+--only "$ONLY"}
+
+      - name: The table
+        if: always()
+        run: |
+          table=apps/desktop/test/e2e/shots/results.md
+          if [ -f "$table" ]; then { echo '## In WebKit'; cat "$table"; } >>"$GITHUB_STEP_SUMMARY"; fi
+
+      - name: The shots and the logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: drives-webkit
           path: apps/desktop/test/e2e/shots
           retention-days: 14
           if-no-files-found: ignore

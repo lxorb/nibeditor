@@ -7,8 +7,8 @@
  *
  *  The addresses are the ones Chrome's own prepopulated list sends a search to
  *  (components/search_engines/prepopulated_engines.json), with `{searchTerms}` written
- *  as the `%s` Chrome's own custom engines use. Pure, so the list and what a choice
- *  makes of a few words are tested apart from any setting. */
+ *  as the `%s` Chrome's own custom engines use. Pure, so the list, what a choice makes
+ *  of a few words and where a new web note lands are tested apart from any setting. */
 
 import { isWebAddress } from './address'
 import { SEARCH, WORDS } from './typed'
@@ -61,6 +61,31 @@ const ALL: readonly Engine[] = [...EVERYWHERE, ...Object.values(REGIONAL).flat()
 /** The engine with this id, or null. */
 export function engineById(id: string): Engine | null {
   return ALL.find((one) => one.id === id) ?? null
+}
+
+/** An engine's own page, from the address its search goes to: where a new web note
+ *  lands, as a browser's new tab lands on the engine the reader chose (#354).
+ *
+ *  The search's root and nothing else. Every engine on the list and every custom one
+ *  serves its front door there - `google.com`, `duckduckgo.com`, `kagi.com` - and an
+ *  engine's search page with no words in it is a results page for nothing, which is not
+ *  what somebody who asked for a web note is after. Google's for an address that cannot
+ *  be read at all, which is the engine of a reader who has chosen none. */
+export function engineHome(search: string): string {
+  return rootOf(search) ?? rootOf(SEARCH) ?? SEARCH
+}
+
+/** The root of an engine's search address, or null for one that is no address. */
+function rootOf(search: string): string | null {
+  let parsed: URL
+  try {
+    parsed = new URL(search.trim())
+  } catch {
+    return null
+  }
+
+  const root = `${parsed.origin}/`
+  return isWebAddress(root) ? root : null
 }
 
 /** Whether a custom engine's address can take a search: a web address once the words

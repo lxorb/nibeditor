@@ -20,6 +20,7 @@
   } from '@nib/editor'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture } from './canvas/render'
+  import CanvasPdf from './CanvasPdf.svelte'
   import { isLineShape, shapeLine, shapePath } from './canvas/geometry'
   import { shownColour } from './canvas/palette'
   import { cardWriting } from './canvas/writing'
@@ -316,6 +317,8 @@
           onerror={() => (broken = true)}
         />
       {/if}
+    {:else if /\.pdf$/i.test(node.file)}
+      <CanvasPdf file={node.file} note={canvasPath} {root} />
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
       <div class="card page embed nib-rendered" use:embeds>{@html html}</div>

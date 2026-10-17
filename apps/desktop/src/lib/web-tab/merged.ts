@@ -10,9 +10,7 @@
  *  the old stores stay on disk as they were.
  *
  *  Marked done only once every store has been merged, so a launch that could not - the
- *  window closed half way - tries again at the next. On nib's own Chromium, which keeps
- *  each store as a profile the merge cannot reach, it is marked done at once: there a
- *  space's logins stay in its profile, as docs/web-tabs.md says. */
+ *  window closed half way - tries again at the next. */
 
 import { forget, isRecord, keep, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
@@ -119,9 +117,6 @@ export function folded(into: readonly Visit[], from: readonly Visit[]): readonly
   return bounded([...rows.values()])
 }
 
-/** What the crate says on an engine the merge cannot reach. */
-const NOT_HERE = 'cannot be carried on this engine'
-
 /** Merges every store the spaces kept, once; see the top of this file. */
 export async function mergeOld(): Promise<void> {
   if (!isDesktop || storedText(MERGED) !== null) return
@@ -145,7 +140,7 @@ export async function mergeOld(): Promise<void> {
     try {
       await invoke('web_merge', { from: one.from, origins: one.origins })
     } catch (error) {
-      if (!String(error).includes(NOT_HERE)) whole = false
+      whole = false
       console.warn(`nib: ${one.from} could not be merged into the shared web data`, error)
     }
   }

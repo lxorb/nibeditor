@@ -21,6 +21,11 @@ export const mr: Dictionary = {
   'Import from Zen': 'Zen मधून इंपोर्ट करा',
   'Containers stay in Zen': 'कंटेनर Zen मध्येच राहतात',
   'Zen’s tabs could not be read.': 'Zen चे टॅब वाचता आले नाहीत.',
+  // Settings: note types
+  'Page note': 'पानांची नोंद',
+  'Web note': 'वेब नोंद',
+  'Private tab': 'खाजगी टॅब',
+  'Note types': 'नोंदीचे प्रकार',
   // Tasks: Upcoming's weeks
   'Previous week': 'मागील आठवडा',
   // Tasks: projects placed in the panel, and their folder
@@ -983,6 +988,7 @@ export const mr: Dictionary = {
   Comment: 'टिप्पणी',
   'Always on top': 'नेहमी वर',
   'What is new': 'नवीन काय',
+  'Download the app': 'ॲप डाउनलोड करा',
   'Report an issue': 'अडचण सांगा',
   'Move the line up': 'ओळ वर हलवा',
   'Move the line down': 'ओळ खाली हलवा',
@@ -1157,6 +1163,12 @@ export const mr: Dictionary = {
   'Export as PNG': 'PNG म्हणून एक्सपोर्ट करा',
   'Export as SVG': 'SVG म्हणून एक्सपोर्ट करा',
   'Export as PDF': 'PDF म्हणून एक्सपोर्ट करा',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF इंपोर्ट करा',
+  'Choose how to add the pages to the canvas.': 'पानं कॅनव्हासवर कशी जोडायची ते निवडा.',
+  'Single page': 'एक पान',
+  'All pages': 'सर्व पानं',
+  'Choose a page': 'पान निवडा',
   // The canvas: what its own keys are called
   'Delete what is picked': 'निवडलेले हटवा',
   'Nudge left': 'थोडे डावीकडे',
@@ -1217,8 +1229,8 @@ export const mr: Dictionary = {
   'Release channel': 'रिलीज चॅनेल',
   Stable: 'स्थिर',
   Unstable: 'अस्थिर',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'स्थिर अधिकृत रिलीज घेतो, अस्थिर main वरील प्रत्येक पुश घेतो आणि तुटू शकतो.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'स्थिर प्रकाशित आवृत्त्या घेतो, अस्थिर एज बिल्ड घेतो आणि तुटू शकतो.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'इंपोर्ट',
@@ -1803,16 +1815,6 @@ export const mr: Dictionary = {
   'Paste {count} lines?': { one: '{count} ओळ पेस्ट करायची?', other: '{count} ओळी पेस्ट करायच्या?' },
   // Orden as the default browser
   'Default browser': 'मूळ ब्राउझर',
-  // The engine web tabs run on
-  Engine: 'इंजीन',
-  Relaunch: 'पुन्हा सुरू करा',
-  'Chromium did not start': 'Chromium सुरू झाले नाही',
-  'No connection': 'कनेक्शन नाही',
-  'Not in this release': 'या रिलीझमध्ये नाही',
-  'Needs an update': 'अपडेट हवे',
-  'Signature did not match': 'स्वाक्षरी जुळली नाही',
-  'Disk full': 'डिस्क भरली',
-  'Could not be installed': 'इंस्टॉल करता आले नाही',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ची संपादने पूर्ववत करा',
   // The archive: a row put away and taken back, and what refuses to delete it

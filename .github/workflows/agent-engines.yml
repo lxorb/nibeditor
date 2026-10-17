@@ -8,6 +8,10 @@ name: agent-engines
 
 on:
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - scripts/webkit-agent-probe/**
       - .github/workflows/agent-engines.yml
@@ -22,6 +26,8 @@ permissions:
 
 jobs:
   measure:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
       matrix:

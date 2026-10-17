@@ -21,6 +21,11 @@ export const ptPT: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contentores ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler os separadores do Zen.',
+  // Settings: note types
+  'Page note': 'Nota de páginas',
+  'Web note': 'Nota da web',
+  'Private tab': 'Separador privado',
+  'Note types': 'Tipos de nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
   // Tasks: projects placed in the panel, and their folder
@@ -999,6 +1004,7 @@ export const ptPT: Dictionary = {
   Comment: 'Comentário',
   'Always on top': 'Sempre à frente',
   'What is new': 'Novidades',
+  'Download the app': 'Transferir a app',
   'Report an issue': 'Comunicar um problema',
   'Move the line up': 'Subir a linha',
   'Move the line down': 'Descer a linha',
@@ -1175,6 +1181,12 @@ export const ptPT: Dictionary = {
   'Export as PNG': 'Exportar como PNG',
   'Export as SVG': 'Exportar como SVG',
   'Export as PDF': 'Exportar como PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importar PDF',
+  'Choose how to add the pages to the canvas.': 'Escolha como adicionar as páginas à tela.',
+  'Single page': 'Uma página',
+  'All pages': 'Todas as páginas',
+  'Choose a page': 'Escolher uma página',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Eliminar o que está selecionado',
   'Nudge left': 'Deslocar para a esquerda',
@@ -1235,8 +1247,8 @@ export const ptPT: Dictionary = {
   'Release channel': 'Canal de versões',
   Stable: 'Estável',
   Unstable: 'Instável',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Estável segue as versões oficiais; Instável, cada push na main, e pode quebrar.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Estável segue as versões lançadas; Instável segue as compilações de ponta e pode quebrar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -1848,16 +1860,6 @@ export const ptPT: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Navegador predefinido',
-  // The engine web tabs run on
-  Engine: 'Motor',
-  Relaunch: 'Reiniciar',
-  'Chromium did not start': 'O Chromium não arrancou',
-  'No connection': 'Sem ligação',
-  'Not in this release': 'Não está nesta versão',
-  'Needs an update': 'Precisa de atualização',
-  'Signature did not match': 'A assinatura não corresponde',
-  'Disk full': 'Disco cheio',
-  'Could not be installed': 'Não foi possível instalar',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Anular as edições de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -147,6 +147,8 @@
   // place, so there is nothing for a proxy to watch and a great deal for it to
   // wrap. See the note on the canvas in store.svelte.ts.
   let machine = $state.raw<Machine>(start())
+  let touchUpAt = 0
+  let touchMultiTapAt = 0
   /** What the six presets are in this theme, for the ink layer, which paints on
    *  a 2d context and cannot read a custom property. */
   let palette = $state.raw<Record<string, string>>({})
@@ -1252,6 +1254,7 @@
 
   function onPointerUp(event: PointerEvent) {
     note('up', event)
+    if (event.pointerType === 'touch') touchUpAt = performance.now()
     stopHolding()
     rubAt = null
     stopDoubting(event.pointerId)
@@ -1365,10 +1368,39 @@
    *  are two dots, and Chromium sends a dblclick for a pen tapped twice in one
    *  place: that is how a press with the pen used to put a card on the plane. */
   function onDoubleClick(event: MouseEvent) {
+    // A touch double tap is the canvas's undo gesture, not the mouse's open-card
+    // gesture. `click` arrives first and marks the touch sequence.
+    if (touchMultiTapAt > 0 && performance.now() - touchMultiTapAt < 300) return
     if (tools.which !== 'select') return
 
     const point = planeAt(event)
     void run.open(store, hitFor(point, false), point)
+  }
+
+  /** Two quick taps undo; a third tap redoes. Mouse double-click keeps its usual
+   *  meaning, and controls and an active text editor keep their own taps. */
+  function onTapClick(event: MouseEvent) {
+    const target = event.target
+    if (
+      target instanceof Element &&
+      target.closest('.cluster, button, input, textarea, [contenteditable="true"]')
+    ) {
+      return
+    }
+
+    const pointerType = 'pointerType' in event ? (event as PointerEvent).pointerType : ''
+    const touch = pointerType === 'touch' || performance.now() - touchUpAt < 350
+    if (!touch || store.editing !== null) return
+
+    if (event.detail === 2) {
+      touchMultiTapAt = performance.now()
+      event.preventDefault()
+      store.undo()
+    } else if (event.detail === 3) {
+      touchMultiTapAt = performance.now()
+      event.preventDefault()
+      store.redo()
+    }
   }
 
   function showMenu(point: Point) {
@@ -1512,15 +1544,19 @@
   function onPaste(event: ClipboardEvent) {
     if (store.editing !== null) return
 
-    const picture = [...(event.clipboardData?.items ?? [])].find((one) =>
-      one.type.startsWith('image/'),
+    const picture = [...(event.clipboardData?.items ?? [])].find(
+      (one) => one.type.startsWith('image/') || one.type === 'application/pdf',
     )
 
     if (picture) {
       const file = picture.getAsFile()
       if (file) {
         event.preventDefault()
-        void run.dropImage(store, file, at, tab.path)
+        if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+          void run.dropPdf(store, file, at, tab.path)
+        } else {
+          void run.dropImage(store, file, at, tab.path)
+        }
         return
       }
     }
@@ -1549,15 +1585,31 @@
       return
     }
 
-    const files = [...(event.dataTransfer?.files ?? [])].filter((one) =>
-      one.type.startsWith('image/'),
+    const transfer = event.dataTransfer
+    const dropped = [...(transfer?.files ?? [])]
+    if (!dropped.length && transfer) {
+      dropped.push(
+        ...[...transfer.items]
+          .filter((item) => item.kind === 'file')
+          .map((item) => item.getAsFile())
+          .filter((file): file is File => file !== null),
+      )
+    }
+    const files = dropped.filter(
+      (one) => one.type.startsWith('image/') || isPicture(one.name) || isPdfFile(one),
     )
     if (!files.length) return
 
     event.preventDefault()
     for (const [index, file] of files.entries()) {
-      void run.dropImage(store, file, { x: point.x, y: point.y + index * GRID * 10 }, tab.path)
+      const at = { x: point.x, y: point.y + index * GRID * 10 }
+      if (isPdfFile(file)) void run.dropPdf(store, file, at, tab.path)
+      else void run.dropImage(store, file, at, tab.path)
     }
+  }
+
+  function isPdfFile(file: File): boolean {
+    return file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
   }
 
   /** The colour what is picked wears, which is the first one's: a selection of
@@ -1717,6 +1769,7 @@
   onpointerup={onPointerUp}
   onpointercancel={onPointerCancel}
   onpointerleave={() => (pointing = null)}
+  onclick={onTapClick}
   ondblclick={onDoubleClick}
   onkeydown={onKeyDown}
   onkeyup={onKeyUp}

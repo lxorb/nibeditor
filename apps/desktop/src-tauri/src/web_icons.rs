@@ -38,7 +38,7 @@ const ICON: &str = "nib://web-icon";
 
 /// The side of the box a mark is drawn in, in pixels, at the density a mark has to
 /// stay sharp at: `--icon-md` is sixteen, and a screen at twice that is common.
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 const WANT: u32 = 32;
 
 /// The largest mark worth sending, in bytes. It is written into the note's file, so it
@@ -61,7 +61,7 @@ pub fn said(app: &AppHandle, window: &str, tab: &str, icon: &str) {
 
 /// A PNG as an address the window can draw without fetching anything, or nothing for
 /// bytes that are not a PNG of a size worth sending.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn data_url(png: &[u8]) -> Option<String> {
     use base64::Engine as _;
 
@@ -78,7 +78,7 @@ pub fn data_url(png: &[u8]) -> Option<String> {
 
 /// One mark a page declares, as `ASK` reads it off a `<link>`.
 #[derive(Debug, Default, Deserialize)]
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 pub struct Declared {
     #[serde(default)]
     rel: String,
@@ -92,7 +92,7 @@ pub struct Declared {
 
 /// What a page says about its marks: where it is, and every `<link>` that names one.
 #[derive(Debug, Default, Deserialize)]
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 pub struct Declaring {
     #[serde(default)]
     page: String,
@@ -103,7 +103,7 @@ pub struct Declaring {
 /// Every `<link>` in the page with a `rel`, resolved, for `best` to choose from. The
 /// choosing is not done in here because a rule inside a page's script is a rule
 /// nothing can test.
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 pub const ASK: &str = r"(function () {
   try {
     var links = []
@@ -129,7 +129,7 @@ pub const ASK: &str = r"(function () {
 /// picture at least as large as the box, which is sharp without being a large picture
 /// shrunk. Then one that does not say its size - usually an `.ico` holding several -
 /// and last the largest of those smaller than the box.
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 fn score(declared: &Declared) -> u64 {
     let sizes = declared.sizes.to_ascii_lowercase();
     let scales = sizes.split_whitespace().any(|one| one == "any")
@@ -162,7 +162,7 @@ fn score(declared: &Declared) -> u64 {
 
 /// Whether a `rel` holds the one word asked for: `shortcut icon` names an `icon`, and
 /// `apple-touch-icon` does not.
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 fn names(rel: &str, word: &str) -> bool {
     rel.split_ascii_whitespace()
         .any(|one| one.eq_ignore_ascii_case(word))
@@ -173,7 +173,7 @@ fn names(rel: &str, word: &str) -> bool {
 /// good - a page that adds one with a script means the newer one - Apple's home screen
 /// picture where the page declares nothing else, and the site's `/favicon.ico` where
 /// it declares nothing at all.
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 pub fn best(declaring: &Declaring) -> Option<String> {
     let usable = |one: &&Declared| {
         let href = one.href.to_ascii_lowercase();
@@ -207,7 +207,7 @@ pub fn best(declaring: &Declaring) -> Option<String> {
 ///
 /// Asked once straight away as well, because a page that had its mark before this was
 /// listening would otherwise wear nothing until it changed it.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a page's favicon is WebView2's own, reached through its COM interfaces"
@@ -256,7 +256,7 @@ pub fn listen(
 }
 
 /// Who hears a page's mark, and which asking an answer belongs to.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[derive(Clone)]
 struct Telling {
     app: AppHandle,
@@ -270,7 +270,7 @@ struct Telling {
     turn: u64,
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 impl Telling {
     /// The next asking, which every earlier one gives way to.
     fn again(&self) -> Self {
@@ -303,7 +303,7 @@ impl Telling {
 /// `FETCH`. Where the page will not hand them over - a mark on another origin that does
 /// not allow reading it, or a page whose policy forbids the request - the engine's own
 /// sixteen pixels are the answer, and those always arrive.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a page's favicon is WebView2's own, reached through its COM interfaces"
@@ -352,7 +352,7 @@ fn fetch(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_15,
 /// The engine's own picture of the page's mark, sixteen pixels square, and the window
 /// told when it arrives. A page with none is told as none, so a tab that followed a
 /// link to a site without a mark stops wearing the last site's.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a page's favicon is WebView2's own, reached through its COM interfaces"
@@ -388,7 +388,7 @@ fn decoded(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_1
 /// the engine refuses for a request that carries credentials: Google's editors keep
 /// theirs on `ssl.gstatic.com`, and asked with cookies it was refused every time, in red
 /// in the page's own console.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 const FETCH: &str = r"(async () => {
   try {
     const answer = await fetch(__URI__, { cache: 'force-cache' })
@@ -408,7 +408,7 @@ const FETCH: &str = r"(async () => {
 
 /// `FETCH` for one address: what the protocol's own evaluation is asked to run, because
 /// it waits for a promise and a plain script does not.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn fetching(uri: &str) -> String {
     let address = serde_json::to_string(uri).unwrap_or_else(|_| "''".into());
     FETCH
@@ -417,7 +417,7 @@ fn fetching(uri: &str) -> String {
 }
 
 /// The picture out of the protocol's answer to `fetching`, or nothing.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn read_back(answer: &str) -> Option<String> {
     let said: serde_json::Value = serde_json::from_str(answer).ok()?;
     picture(said.pointer("/result/value")?.as_str()?)
@@ -428,7 +428,7 @@ fn read_back(answer: &str) -> Option<String> {
 /// The page wrote it, so it is taken as the page's word and no more: a picture of a
 /// kind an `<img>` draws, in base64, of a size worth keeping in a file. An SVG among
 /// them is safe to draw, because an `<img>` never runs what is in one.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn picture(address: &str) -> Option<String> {
     const KINDS: [&str; 9] = [
         "png",
@@ -458,7 +458,7 @@ fn picture(address: &str) -> Option<String> {
 }
 
 /// Every other engine is asked by the page it drew; see the top of this file.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: AppHandle,

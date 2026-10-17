@@ -21,6 +21,11 @@ export const my: Dictionary = {
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
+  // Settings: note types
+  'Page note': 'စာမျက်နှာမှတ်စု',
+  'Web note': 'ဝဘ်မှတ်စု',
+  'Private tab': 'တဘ်သီးသန့်',
+  'Note types': 'မှတ်စုအမျိုးအစားများ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ယခင် အပတ်',
   // Tasks: projects placed in the panel, and their folder
@@ -977,6 +982,7 @@ export const my: Dictionary = {
   Comment: 'မှတ်ချက်',
   'Always on top': 'အမြဲအပေါ်တွင်',
   'What is new': 'အသစ်ဘာရှိလဲ',
+  'Download the app': 'အက်ပ်ကို ဒေါင်းလုဒ်လုပ်ရန်',
   'Report an issue': 'ပြဿနာတိုင်ပါ',
   'Move the line up': 'လိုင်းကို အထက်ရွှေ့ပါ',
   'Move the line down': 'လိုင်းကို အောက်ရွှေ့ပါ',
@@ -1154,6 +1160,13 @@ export const my: Dictionary = {
   'Export as PNG': 'PNG အဖြစ်ထုတ်ပါ',
   'Export as SVG': 'SVG အဖြစ်ထုတ်ပါ',
   'Export as PDF': 'PDF အဖြစ်ထုတ်ပါ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF သွင်းပါ',
+  'Choose how to add the pages to the canvas.':
+    'စာမျက်နှာများကို ကန်ဗတ်ပေါ် မည်သို့ထည့်မည်ကို ရွေးပါ။',
+  'Single page': 'စာမျက်နှာ တစ်မျက်နှာ',
+  'All pages': 'စာမျက်နှာအားလုံး',
+  'Choose a page': 'စာမျက်နှာ ရွေးပါ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ရွေးထားသည်ကို ဖျက်ပါ',
   'Nudge left': 'ဘယ်သို့ အနည်းငယ်တွန်းပါ',
@@ -1214,8 +1227,8 @@ export const my: Dictionary = {
   'Release channel': 'ထုတ်လွှင့်လမ်းကြောင်း',
   Stable: 'တည်ငြိမ်',
   Unstable: 'မတည်ငြိမ်',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'တည်ငြိမ်သည် တရားဝင်ထုတ်လွှင့်မှုများကို လိုက်သည်၊ မတည်ငြိမ်သည် main သို့ တင်သမျှကို လိုက်၍ ပျက်နိုင်သည်။',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'တည်ငြိမ်သည် ထုတ်လွှင့်ပြီးဗားရှင်းများကို လိုက်သည်၊ မတည်ငြိမ်သည် edge build များကို လိုက်၍ ပျက်နိုင်သည်။',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'သွင်းပါ',
@@ -1792,16 +1805,6 @@ export const my: Dictionary = {
   'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',
   // Orden as the default browser
   'Default browser': 'မူရင်း ဘရောက်ဇာ',
-  // The engine web tabs run on
-  Engine: 'အင်ဂျင်',
-  Relaunch: 'ပြန်စတင်',
-  'Chromium did not start': 'Chromium မစတင်ပါ',
-  'No connection': 'ချိတ်ဆက်မှု မရှိပါ',
-  'Not in this release': 'ဤထုတ်ဝေမှုတွင် မပါပါ',
-  'Needs an update': 'အပ်ဒိတ် လိုအပ်သည်',
-  'Signature did not match': 'လက်မှတ် မကိုက်ညီပါ',
-  'Disk full': 'ဒစ်ခ် ပြည့်နေသည်',
-  'Could not be installed': 'ထည့်သွင်း၍ မရပါ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ၏ ပြင်ဆင်မှုများကို ပြန်ဖျက်ရန်',
   // The archive: a row put away and taken back, and what refuses to delete it

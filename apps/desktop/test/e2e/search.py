@@ -307,11 +307,15 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f" {page.evaluate('() => window.nibApp.search.hits.length')}"
     )
 
-    # The order the results are read in, on the tab that shows them.
+    # The order the results are read in, behind the Sort glyph at the end of the
+    # panel's row. It used to be the menu of the search's own tab, and the search has
+    # had no tab since 6de7fcf4 (a bar over the file list instead): the third tab is
+    # another panel's, and on a phone the press on it and the Escape after it put the
+    # drawer away with the field in it.
     ask("plan")
-    tab = page.locator("aside [role=tab]").nth(2)
+    tab = page.locator("aside .tools button[aria-label=Sort]")
     if tab.count():
-        tab.click(button="right", force=True)
+        tab.first.click()
         page.wait_for_timeout(400)
         shot("order")
         page.keyboard.press("Escape")
@@ -562,10 +566,12 @@ def papers(browser, out: Path) -> None:
         "(path) => window.nibApp.workspace.openPdf(path, 1)",
         f"{root}/Kestrel study.pdf",
     )
-    # The viewer is fetched the first time a paper is opened rather than carried into
-    # the first paint - it brings pdf.js with it - so the pane is empty until it lands.
-    # Waited for, and then the pages it draws. See surfaces.svelte.ts.
-    page.wait_for_selector(".pdf", timeout=20000)
+    # A paper opens the page note made beside it, whose pages wear the paper's own
+    # (`openPdf` in the workspace); the viewer of its own it used to open is gone. The
+    # page surface is fetched the first time rather than carried into the first paint,
+    # so the pane is empty until it lands. Waited for, and then the pages it draws. See
+    # surfaces.svelte.ts.
+    page.wait_for_selector(".pages", timeout=20000)
     page.wait_for_timeout(2500)
     searching(page)
     page.wait_for_timeout(400)

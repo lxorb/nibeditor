@@ -64,7 +64,12 @@ function makers(): string[] {
 
   vi.spyOn(workspace, 'openBlank').mockImplementation(() => void made.push('note'))
   vi.spyOn(workspace, 'newCanvas').mockImplementation(async () => void made.push('canvas'))
-  vi.spyOn(workspace, 'openWebsite').mockImplementation(() => void made.push('web'))
+  // A web note lands on the search engine this device chose, so its card goes through
+  // the opener a known address goes through; see the web row in new-kinds.ts (#354).
+  vi.spyOn(workspace, 'openPage').mockImplementation(() => {
+    made.push('web')
+    return null
+  })
   vi.spyOn(workspace, 'newPages').mockImplementation(async () => void made.push('pages'))
   vi.spyOn(workspace, 'focusPane').mockImplementation(() => undefined)
 
@@ -153,14 +158,16 @@ test('and the arrows walk the rest', () => {
   expect(document.activeElement).toBe(buttons()[1])
 })
 
-test('makes its own kind when one is pressed', () => {
+/** The web note's own maker is fetched with the press - the search engine it opens is
+ *  not in front of the first paint - so it arrives after the three in front of it. */
+test('makes its own kind when one is pressed', async () => {
   const made = makers()
   here()
 
   for (const one of buttons()) one.click()
   flushSync()
 
-  expect(made).toEqual(['note', 'canvas', 'pages', 'web'])
+  await vi.waitFor(() => expect(made).toEqual(['note', 'canvas', 'pages', 'web']))
 })
 
 test('makes a kind by its letter, with the keyboard on a card', () => {
@@ -173,7 +180,7 @@ test('makes a kind by its letter, with the keyboard on a card', () => {
   expect(made).toEqual(['canvas'])
 })
 
-test('and with the keyboard on nothing at all', () => {
+test('and with the keyboard on nothing at all', async () => {
   const made = makers()
   here()
 
@@ -181,7 +188,7 @@ test('and with the keyboard on nothing at all', () => {
   press('p')
   press('W', { shiftKey: true })
 
-  expect(made).toEqual(['pages', 'web'])
+  await vi.waitFor(() => expect(made).toEqual(['pages', 'web']))
 })
 
 /** *"these shortcuts should only work if you first click out of the url input"*: a

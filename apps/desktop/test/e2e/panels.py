@@ -56,14 +56,24 @@ async ([left, right]) => {
 """
 
 # What the sidebar is showing, and which note it says it is about.
+#: The side the note's panels are on. The outline and the links panel start on the
+#: right since 4a5f7ddc, and the left side keeps the file list's own tools (the order
+#: of the files) in the same row, in the page even while that side is shut, so a bare
+#: `.tools .tool` is the file list's rather than the panel's.
+SIDE = "aside.right"
+#: The hold button itself, by what it says, wherever it is drawn.
+HOLD = (
+    '.tools .tool[aria-label="Stay on this note"], .tools .tool[aria-label="Follow the open note"]'
+)
+
 PANEL = """
-() => ({
-  rows: [...document.querySelectorAll('.body .row.heading .nib-row-label')].map(
+([side, hold]) => ({
+  rows: [...document.querySelectorAll(`${side} .body .row.heading .nib-row-label`)].map(
     (one) => one.textContent,
   ),
-  holding: document.querySelector('.body .holding')?.textContent ?? null,
-  held: document.querySelector('.tools .tool')?.getAttribute('aria-pressed') ?? null,
-  tools: document.querySelectorAll('.tools .tool').length,
+  holding: document.querySelector(`${side} .body .holding`)?.textContent ?? null,
+  held: document.querySelector(hold)?.getAttribute('aria-pressed') ?? null,
+  tools: document.querySelectorAll(`${side} .tools .tool`).length,
   active: window.nibApp.workspace.active?.name ?? null,
 })
 """
@@ -111,7 +121,7 @@ def open_note(page: Page, starts: str) -> None:
 
 
 def panel(page: Page) -> dict:
-    return page.evaluate(PANEL)
+    return page.evaluate(PANEL, [SIDE, HOLD])
 
 
 def drive_holding(browser: Browser) -> None:
@@ -133,7 +143,7 @@ def drive_holding(browser: Browser) -> None:
         wrong("a panel that follows says it is holding something")
 
     # Held, and then a second note opened beside it in another pane.
-    page.locator(".tools .tool").first.click()
+    page.locator(HOLD).first.click()
     page.wait_for_timeout(400)
     page.evaluate("() => window.nibApp.workspace.split('row')")
     page.wait_for_timeout(600)
@@ -153,7 +163,7 @@ def drive_holding(browser: Browser) -> None:
         wrong(f"the panel does not say which note it is held on: {holding['holding']!r}")
 
     # A row in a held panel takes the reader to the note it is about.
-    page.locator(".body .row.heading", has_text="Second part").first.click()
+    page.locator(f"{SIDE} .body .row.heading", has_text="Second part").first.click()
     page.wait_for_timeout(600)
     landed = page.evaluate(
         """() => ({
@@ -167,7 +177,7 @@ def drive_holding(browser: Browser) -> None:
         wrong(f"pressing a row in a held panel did not go to its note: {landed['note']}")
 
     # And it follows again when the hold comes off.
-    page.locator(".tools .tool").first.click()
+    page.locator(HOLD).first.click()
     page.wait_for_timeout(300)
     page.evaluate("() => window.nibApp.workspace.panes.focusNext()")
     page.wait_for_timeout(600)
@@ -188,7 +198,7 @@ def drive_links(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.workspace.showPanel('links')")
     page.wait_for_timeout(500)
 
-    tools = page.evaluate("() => document.querySelectorAll('.tools .tool').length")
+    tools = page.evaluate("(side) => document.querySelectorAll(`${side} .tools .tool`).length", SIDE)
     say(f"[links] the tools in the row: {tools}")
     shot(page, "10-links")
     if tools != 2:
@@ -203,8 +213,8 @@ def drive_finger(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
 
-    tools = page.evaluate("() => document.querySelectorAll('.tools .tool').length")
-    say(f"[phone] the tools in the row: {tools}")
+    tools = page.evaluate("(hold) => document.querySelectorAll(hold).length", HOLD)
+    say(f"[phone] hold buttons: {tools}")
     shot(page, "20-phone")
     if tools:
         wrong("a screen that holds one document offers a panel to hold it against")

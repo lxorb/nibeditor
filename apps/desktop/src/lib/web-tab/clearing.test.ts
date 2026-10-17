@@ -52,7 +52,7 @@ describe('whose data', () => {
 })
 
 describe('the clearing', () => {
-  test("asks the engine for the range's sites, then forgets the range's history", async () => {
+  test("asks the engine to clear the range, then forgets the range's history", async () => {
     const book = 'nib:web-visits'
     visited.saw(book, 'old', 'https://old.example/page', 'Old')
     visited.saw(book, 'new', 'https://new.example/page', 'New')
@@ -76,7 +76,6 @@ describe('the clearing', () => {
     expect(call?.args).toEqual({
       stores: [null],
       clearing: { since: NOW - HOUR, site: true, cache: false },
-      sites: ['https://new.example'],
     })
     expect(again.all(book).map((one) => one.url)).toEqual(['https://old.example/page'])
     expect(places.placeOf('/Notes/New.url')).toBeNull()

@@ -17,21 +17,19 @@
 //!
 //! On `WebView2` all of it is the engine's own events on the page's own engine, set on
 //! the window's thread on a page that is still `about:blank`, so none of it can be too
-//! late. On nib's own Chromium it is the handlers of the agent's own browser, which has
-//! no window to put anything in front of anybody anyway (`engines/cef.rs`); what is kept
-//! here - the dialogs held, the downloads, where a download goes - is both engines'.
+//! late.
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 use serde_json::json;
 use tauri::AppHandle;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2, ICoreWebView2Deferral, ICoreWebView2DownloadOperation,
     ICoreWebView2NewWindowRequestedEventArgs, ICoreWebView2ScriptDialogOpeningEventArgs,
@@ -42,18 +40,18 @@ use webview2_com::Microsoft::Web::WebView2::Win32::{
     COREWEBVIEW2_SCRIPT_DIALOG_KIND, COREWEBVIEW2_SCRIPT_DIALOG_KIND_BEFOREUNLOAD,
     COREWEBVIEW2_SCRIPT_DIALOG_KIND_CONFIRM, COREWEBVIEW2_SCRIPT_DIALOG_KIND_PROMPT,
 };
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 use webview2_com::{
     BasicAuthenticationRequestedEventHandler, BytesReceivedChangedEventHandler,
     ClientCertificateRequestedEventHandler, DownloadStartingEventHandler,
     NewWindowRequestedEventHandler, PermissionRequestedEventHandler,
     ScriptDialogOpeningEventHandler, StateChangedEventHandler,
 };
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 use windows_core::{Interface as _, HSTRING, PWSTR};
 
 use super::cdp;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 use super::verbs::DialogKind;
 use super::verbs::{Dialog, Download, DownloadState};
 
@@ -88,7 +86,7 @@ static DIALOGS: Mutex<Option<HashMap<String, Held>>> = Mutex::new(None);
 static DOWNLOADS: Mutex<Vec<(String, Download)>> = Mutex::new(Vec::new());
 
 /// A dialog's engine objects, which live on the window's thread.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 struct Waiting {
     args: ICoreWebView2ScriptDialogOpeningEventArgs,
     deferral: ICoreWebView2Deferral,
@@ -96,13 +94,13 @@ struct Waiting {
 }
 
 /// A window the page asked for, waiting for its agent tab to be built.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 struct Asked {
     args: ICoreWebView2NewWindowRequestedEventArgs,
     deferral: ICoreWebView2Deferral,
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 thread_local! {
     /// The dialogs' engine objects, by label, on the window's thread.
     static WAITING: RefCell<HashMap<String, Waiting>> = RefCell::new(HashMap::new());
@@ -126,7 +124,7 @@ pub struct Owner {
 
 /// Quietens an agent's page before it loads anything: the engine's furniture off, and
 /// every event that would reach the reader answered here. On the window's thread.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "the page's settings and events are WebView2's own, reached through its COM interfaces"
@@ -183,7 +181,7 @@ pub fn quieten(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
 }
 
 /// Dialogs, held for the agent.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a dialog is one of WebView2's own events, reached through its COM interfaces"
@@ -267,7 +265,7 @@ fn dialogs(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
 }
 
 /// A string the engine hands out through an out pointer, taken and freed.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a string the engine allocated is read and freed through COM"
@@ -304,9 +302,7 @@ pub fn answer_dialog(
     if dialog_of(label).is_none() {
         return Err("the page is holding no dialog".into());
     }
-    #[cfg(feature = "cef")]
-    return super::engines::cef::answer_dialog(app, label, accept, text);
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     {
         let named = label.to_string();
         app.run_on_main_thread(move || settle(&named, None, accept, text))
@@ -317,7 +313,7 @@ pub fn answer_dialog(
 /// A dialog a page is holding, kept for the agent: what `dialog_of` answers until the
 /// dialog is answered.
 #[cfg_attr(
-    all(windows, not(feature = "cef")),
+    windows,
     allow(dead_code, reason = "WebView2 keeps its dialogs where it hears them")
 )]
 pub(super) fn hold(label: &str, dialog: Dialog) {
@@ -347,7 +343,7 @@ pub(super) fn release(label: &str) {
 
 /// Gives the engine its answer to a held dialog, on the window's thread: the one with
 /// `number` when named, whichever is held otherwise.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a dialog's answer is given through WebView2's COM interfaces"
@@ -387,7 +383,7 @@ fn settle(label: &str, number: Option<u64>, accept: bool, text: Option<String>) 
 /// Windows the page asks for: another agent tab of the same agent, built out of sight
 /// and handed to the engine as the new window, so `window.opener` is kept and a sign-in
 /// popup can post its answer back.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a new window is one of WebView2's own events, reached through its COM interfaces"
@@ -445,7 +441,7 @@ fn windows(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
 
 /// Hands the page that asked for a window the agent tab built for it; or, when none
 /// could be built, nothing, which the page reads as `window.open` answering `null`.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "the new window is handed over through WebView2's COM interfaces"
@@ -464,7 +460,7 @@ pub fn hand_over(tab: &str, made: Option<&ICoreWebView2>) {
 }
 
 /// Every permission a page asks for, refused and said.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a permission request is one of WebView2's own events, reached through its COM interfaces"
@@ -494,7 +490,7 @@ fn permissions(core: &ICoreWebView2, owner: &Owner) {
 }
 
 /// What a permission is called, from `WebView2`'s numbering of them.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 fn permission_named(kind: i32) -> &'static str {
     match kind {
         1 => "the microphone",
@@ -515,7 +511,7 @@ fn permission_named(kind: i32) -> &'static str {
 
 /// Downloads, into the agent's own folder, never past 500 MB, and never with the
 /// engine's own flyout.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a download is one of WebView2's own events, reached through its COM interfaces"
@@ -571,7 +567,7 @@ fn downloads(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
 }
 
 /// Follows one download to its end, and stops it past the ceiling.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a download's progress is WebView2's own, reached through its COM interfaces"
@@ -683,7 +679,7 @@ pub fn downloads_of(agent: &str, tab: Option<&str>) -> Vec<Download> {
 
 /// Basic authentication and client certificates, refused: a password is the reader's
 /// to type, in a takeover (9.4).
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "sign-in requests are WebView2's own events, reached through its COM interfaces"
@@ -740,15 +736,13 @@ pub(super) fn say(label: &str, level: &str, text: String) {
 /// Forgets a page's held dialog, for a page that closed.
 pub fn forget(app: &AppHandle, label: &str) {
     release(label);
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     {
         let named = label.to_string();
         let _ = app.run_on_main_thread(move || {
             WAITING.with_borrow_mut(|held| held.remove(&named));
         });
     }
-    #[cfg(feature = "cef")]
-    let _ = app;
 }
 
 #[cfg(test)]

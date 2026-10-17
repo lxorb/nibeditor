@@ -213,7 +213,7 @@ def drive(browser: Browser) -> None:
     # It used to put a layer on the overlay stack for the whole time it was on, and
     # that stack is what the pane reads to decide whether the page may be seen - so
     # F11 on a web tab hid the page it is meant to fill the screen with.
-    page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.activeTabId)")
+    page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.panes)")
     page.wait_for_timeout(500)
     shot(page, "03-fullscreen")
 
@@ -226,29 +226,23 @@ def drive(browser: Browser) -> None:
     else:
         say(f"the page fills {filling['height']:.0f}px of the screen, up from {clear['height']:.0f}")
 
-    # The way out has to stay on screen, and a way out drawn over the page is a way
-    # out drawn behind it: the one thing full screen must never be is a room with no
-    # door. See fullscreen.svelte.ts.
-    leaving = page.evaluate(BOX, ".leave")
-    if not leaving:
-        wrong("there is no way out of full screen on screen")
-    elif overlaps(leaving, filling):
-        wrong("the way out of full screen is drawn over the page, which is behind it")
+    # Over a web page nothing of the app's is drawn, not even the way out: the corner
+    # button full screen keeps over a note would be drawn behind the webview, so over
+    # a page F11 and Escape are the way out, as in Chrome (docs/keyboard.md, "Full
+    # screen"). This used to ask for the button, from before the rule.
+    if page.evaluate(BOX, ".leave"):
+        wrong("the way out of full screen is drawn over a web page, which is behind it")
     else:
-        say("the way out of full screen is clear of the page")
+        say("no button over the page in full screen")
 
-    # And clear of the bar it now shares a line with: the dots at the end of it are the
-    # web tab's own way out of full screen, among Chrome's other rows.
-    if leaving:
-        buried = [
-            one["name"] for one in page.evaluate(BAR_CONTROLS) if overlaps(leaving, one)
-        ]
-        if buried:
-            wrong(f"the way out of full screen is drawn over the bar's own {buried}")
-        else:
-            say("the bar's own controls are clear of the way out")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(400)
+    if page.evaluate("() => window.nibApp.fullscreen.on"):
+        wrong("Escape does not give the screen back from a web page")
+        page.evaluate("() => window.nibApp.fullscreen.leave()")
+    else:
+        say("Escape gives the screen back")
 
-    page.evaluate("() => window.nibApp.fullscreen.leave()")
     page.wait_for_timeout(400)
     shot(page, "04-back")
     context.close()

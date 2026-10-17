@@ -261,7 +261,12 @@ def drive(browser) -> None:
     page.screenshot(path=str(SHOTS / "commands.png"))
     say("shot commands.png")
     pressed("Escape")
-    if page.evaluate("() => !!document.querySelector('.palette input')"):
+    # Gone once its closing has played, which is the palette's 190 ms (LAYER in
+    # motion.ts) and in WebKit on a busy runner more than the 260 the press waits: so
+    # waited for, rather than looked for once and called open.
+    try:
+        page.wait_for_function("() => !document.querySelector('.palette input')", timeout=3000, polling=50)
+    except Exception:
         wrong("Escape did not close the palette")
 
     page.screenshot(path=str(SHOTS / "after.png"))

@@ -36,6 +36,17 @@ describe('the snap', () => {
     for (const [, arch, digest] of held) expect(digest, arch).toHaveLength(64)
   })
 
+  /** snapcraft takes no `on <arch>:` list for the checksum, though it does for the source
+   *  (snapcraft 8.11.1: "Input should be a valid string"); the list kept every snap from
+   *  building. One line, then, which the workflow sets per architecture and which holds
+   *  amd64's as committed. */
+  test("checks the .deb with one line snapcraft reads, amd64's as committed", () => {
+    const line = /^ *source-checksum: (.*)$/m.exec(snap)?.[1]
+    const amd64 = /on amd64: (sha256\/[0-9a-f]{64})/.exec(snap)?.[1]
+    expect(line).toBe(amd64)
+    expect(snap).not.toMatch(/source-checksum:\s*\n\s*-/)
+  })
+
   test('and names the same version in the URL as it publishes', () => {
     const version = /^version: '([^']+)'$/m.exec(snap)?.[1]
     expect(version).toMatch(/^\d+\.\d+\.\d+$/)
@@ -55,10 +66,7 @@ describe('the snap', () => {
  *  release, so the sed that keeps them together is worth holding to. */
 describe('the workflow that publishes it', () => {
   const workflow = readFileSync(
-    join(
-      fileURLToPath(new URL('../../..', import.meta.url)),
-      '.github/workflows/publish-linux.yml',
-    ),
+    join(fileURLToPath(new URL('../../..', import.meta.url)), '.github/workflows/snap.yml'),
     'utf8',
   )
 
@@ -183,7 +191,7 @@ describe('what nib claims to open', () => {
 
   const desktops = {
     'aur/nib-bin/nib.desktop': read('aur', 'nib-bin', 'nib.desktop'),
-    'flathub/ch.emilvinu.nib.desktop': read('flathub', 'ch.emilvinu.nib.desktop'),
+    'flathub/so.orden.Orden.desktop': read('flathub', 'so.orden.Orden.desktop'),
     'nix/orden.desktop': read('nix', 'orden.desktop'),
     'snap/snapcraft.yaml': read('snap', 'snapcraft.yaml'),
   }
@@ -214,6 +222,142 @@ describe('what nib claims to open', () => {
       const manifest = read('winget', version, 'lxorb.Nib.installer.yaml')
       expect(manifest, version).not.toContain('FileExtensions')
     }
-    expect(read('chocolatey', 'nib.nuspec')).not.toMatch(/file association/i)
+    expect(read('chocolatey', 'orden.nuspec')).not.toMatch(/file association/i)
+  })
+})
+
+/** The package managers' names up to 0.15.0, kept as roads to the new ones. Chocolatey
+ *  has a way to deprecate a package and Scoop a folder for it; what each asks for is
+ *  held here, because a mistake in either is found by everybody who installed the old
+ *  name, and only on their next upgrade. See packaging/windows.md. */
+describe('the old names', () => {
+  const orden = read('chocolatey', 'orden.nuspec')
+  const nib = read('chocolatey', 'nib.nuspec')
+  const versionOf = (nuspec: string) => /<version>([^<]+)<\/version>/.exec(nuspec)?.[1]
+
+  test('orden is the package Orden is in', () => {
+    expect(orden).toContain('<id>orden</id>')
+    expect(orden).toContain('<file src="tools\\**" target="tools" />')
+  })
+
+  test('nib is deprecated the way Chocolatey asks: a title, a dependency, no files, no icon', () => {
+    expect(nib).toContain('<id>nib</id>')
+    expect(nib).toMatch(/<title>\[Deprecated\] /)
+    expect(nib).toContain('<files />')
+    expect(nib).not.toContain('<iconUrl>')
+    expect(nib).toContain(`<dependency id="orden" version="${versionOf(orden)}" />`)
+  })
+
+  test('and its version is the release the two were bumped to', () => {
+    expect(versionOf(nib)).toBe(versionOf(orden))
+  })
+
+  test("Scoop's orden takes over what nib kept, once", () => {
+    const scoop = JSON.parse(read('scoop', 'orden.json')) as { installer: { script: string[] } }
+    expect(scoop.installer.script.join('\n')).toContain("Join-Path (Split-Path $persist_dir) 'nib'")
+  })
+
+  test('the publish workflow moves nib to deprecated and pushes both packages', () => {
+    const publish = repo('.github', 'workflows', 'publish.yml')
+    expect(publish).toContain('git mv bucket/nib.json bucket/deprecated/nib.json')
+    expect(publish).toContain("@{ id = 'orden'; version = $env:VERSION }, @{ id = 'nib'")
+    expect(publish).toMatch(/409 \\\(Conflict\\\)/)
+  })
+})
+
+/** The apt repository, lxorb/apt: one key, said the same everywhere it is said, and both
+ *  suites written by the one workflow. See packaging/linux.md, "apt". */
+describe('the apt repository', () => {
+  const workflow = repo('.github', 'workflows', 'apt.yml')
+  const fingerprint = /APT_KEY_FINGERPRINT: ([0-9A-F]{40})/.exec(workflow)?.[1] ?? ''
+
+  test('signs with the key whose fingerprint the page and the docs give', () => {
+    expect(fingerprint).toHaveLength(40)
+    const spaced = (fingerprint.match(/.{4}/g) ?? []).join(' ')
+    expect(read('apt', 'README.md')).toContain(spaced)
+    expect(read('apt', 'index.html')).toContain(spaced)
+    expect(read('linux.md')).toContain(fingerprint)
+    expect(read('apt', 'orden-archive-keyring.asc')).toMatch(
+      /^-----BEGIN PGP PUBLIC KEY BLOCK-----/,
+    )
+  })
+
+  /** Called, not dispatched: a dispatch finds only a workflow already on the default
+   *  branch, and apt.yml is written on `unstable` first. */
+  test('is written for stable by publish.yml and for unstable by release.yml', () => {
+    const publish = repo('.github', 'workflows', 'publish.yml')
+    const release = repo('.github', 'workflows', 'release.yml')
+    for (const [caller, suite] of [
+      [publish, 'stable'],
+      [release, 'unstable'],
+    ] as const) {
+      expect(caller).toMatch(
+        new RegExp(String.raw`uses: \./\.github/workflows/apt\.yml
+\s+with:
+\s+suite: ${suite}
+`),
+      )
+      expect(caller).not.toContain('gh workflow run apt.yml')
+    }
+    expect(repo('.github', 'workflows', 'apt.yml')).toContain('workflow_call:')
+  })
+
+  test('says its own address where the workflow writes it in', () => {
+    for (const page of ['README.md', 'index.html']) {
+      expect(read('apt', page)).toContain('@BASE@/orden-archive-keyring.asc')
+    }
+  })
+})
+
+/** The snap: built and uploaded by snap.yml, called by publish-linux.yml for a release
+ *  (`stable`) and by release.yml for edge (`edge`). Called, not dispatched: a dispatch
+ *  finds only a workflow already on the default branch. See packaging/linux.md. */
+describe('the snap workflow', () => {
+  const snapYml = repo('.github', 'workflows', 'snap.yml')
+
+  test('is called for a release and for edge', () => {
+    expect(snapYml).toContain('workflow_call:')
+    expect(repo('.github', 'workflows', 'publish-linux.yml')).toContain(
+      'uses: ./.github/workflows/snap.yml',
+    )
+    const release = repo('.github', 'workflows', 'release.yml')
+    expect(release).toMatch(
+      /uses: \.\/\.github\/workflows\/snap\.yml\n\s+with:\n\s+tag: \$\{\{ needs\.version\.outputs\.tag \}\}/,
+    )
+    expect(release).not.toContain('gh workflow run snap.yml')
+  })
+
+  test('puts edge in the edge channel at devel grade and a release in stable', () => {
+    expect(snapYml).toContain("echo 'channel=edge'")
+    expect(snapYml).toContain("echo 'grade=devel'")
+    expect(snapYml).toContain("echo 'channel=stable'")
+    expect(snapYml).toContain('release: ${{ steps.channel.outputs.channel }}')
+  })
+
+  test("sets the checksum line to its own architecture's digest", () => {
+    expect(snapYml).toContain('if [ "$ARCH" = arm64 ]; then own=$arm64; else own=$amd64; fi')
+    expect(snapYml).toContain('source-checksum: sha256/).*|\\1$own|')
+  })
+})
+
+/** The Linux managers for a stable release: called by release.yml, never dispatched and
+ *  never started by `release: published`, which a release made on the workflow's own
+ *  token does not raise. See packaging/linux.md. */
+describe('the Linux publishing workflow', () => {
+  const linux = repo('.github', 'workflows', 'publish-linux.yml')
+  const release = repo('.github', 'workflows', 'release.yml')
+
+  test('is called by release.yml with the release tag', () => {
+    expect(linux).toContain('workflow_call:')
+    expect(linux).not.toMatch(/^\s+release:\s*$/m)
+    expect(release).toMatch(
+      /uses: \.\/\.github\/workflows\/publish-linux\.yml\n\s+with:\n\s+tag: \$\{\{ needs\.version\.outputs\.tag \}\}/,
+    )
+    expect(release).not.toContain('gh workflow run publish-linux.yml')
+  })
+
+  test('publishes a stable tag and nothing else', () => {
+    const stable = "if: ${{ startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-') }}"
+    expect(linux.split(stable)).toHaveLength(3)
   })
 })

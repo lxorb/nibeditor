@@ -23,6 +23,7 @@ import { prompt } from '../prompt.svelte'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
+import { keepNow } from './keep'
 import { pages } from './pages.svelte'
 import { withOwn } from './own-file'
 import { readWebFile } from './shortcut'
@@ -55,8 +56,13 @@ export async function showWebData(path: string): Promise<void> {
   )
 }
 
-/** Keeps the note's web data where it was asked to. */
+/** Keeps the note's web data where it was asked to.
+ *
+ *  What the page owes the file is written first: a write waiting on the reading to
+ *  settle is a second writer over the same file, and the two used to land in whichever
+ *  order the pause fell in. See keep.ts and #353. */
 async function choose(path: string, where: Where): Promise<void> {
+  keepNow(path)
   const text = await textOf(path)
   if (text === null) return
   const was = readWebFile(path, text)?.own ?? null
@@ -81,15 +87,18 @@ async function choose(path: string, where: Where): Promise<void> {
 
   // Its open page moves now, before the store it leaves is cleared; see `rehouse`.
   const said = own ? t('This note keeps its own web data now') : t('Back on the shared web data')
+  // The note's tabs, and the tabs with no file that took its web data with them.
   for (const tab of workspace.tabs) {
-    if (tab.kind === 'web' && tab.path === path) await pages.rehouse(tab.id, own, said)
+    if (tab.kind !== 'web') continue
+    const copy = tab.path === null && was !== null && tab.apart === was
+    if (copy) tab.apart = own
+    if (copy || tab.path === path) await pages.rehouse(tab.id, own, said)
   }
 
   if (was !== null && own === null) {
     await invoke('web_clear', {
       stores: [ownStore(was)],
       clearing: { since: 0, site: true, cache: true },
-      sites: [],
     }).catch(() => undefined)
   }
 }

@@ -380,7 +380,7 @@ pub(crate) fn dispatch(
 /// road the command line takes, and waiting at most `patience` for the answer: the
 /// window's own `{ok, value}` or `{ok, error}`, read. See agents/verbs.rs `window`.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(dead_code, reason = "only WebView2's agent verbs ask the window")
 )]
 pub(crate) fn ask(

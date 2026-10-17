@@ -8,17 +8,11 @@ name: machine
 # runner. nibd's own tests run in check.yml's `pnpm test` like every package's.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - services/machine/**
-      - packages/online/**
-      - packages/sync-core/src/frame.ts
-      - services/sync/src/machines/**
-      - services/sync/wrangler.jsonc
-      - scripts/online-e2e.mjs
-      - .github/workflows/machine.yml
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - services/machine/**
       - packages/online/**
@@ -37,6 +31,8 @@ permissions:
 
 jobs:
   image:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -90,6 +86,8 @@ jobs:
   # it ends, Claude Code and Codex in the user's home with their makers' checksums, and
   # the hardening in place. No cloud: the tunnel's unit stays off without its token.
   server:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -59,6 +59,9 @@ export interface Draft {
   /** For a website: the address it was on, which may not be the one its file says.
    *  Absent for every other kind of tab. */
   address?: string | undefined
+  /** For a website with no file made at a web note's page: that note's own web data;
+   *  see `apart` in documents.svelte.ts. */
+  apart?: string | undefined
   /** For a tab with no file: the space it was opened in, by id; see `home` in
    *  documents.svelte.ts. */
   space?: string | undefined
@@ -238,7 +241,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, pinned, address, space, source } = value
+  const { folds, page, zoom, pinned, address, space, source, apart } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -262,6 +265,7 @@ export function readDraft(value: unknown): Draft | null {
     ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
     ...(isString(address) ? { address } : {}),
     ...(path === null && isString(space) ? { space } : {}),
+    ...(path === null && isString(apart) ? { apart } : {}),
   }
 }
 

@@ -32,12 +32,12 @@ missing_docs = "warn"
 # answers out of sight, the reader's tab's focus, and the engine's memory. And `nib mcp`
 # keeping its client's pipes out of the app it starts (src/mcp/app.rs), which the app
 # asks too before it starts Claude Code or Codex, in a job object that ends everything
-# they start (src/ai_cli/family.rs). And on nib's
-# own Chromium, the keyboard hook that hears the browser's chords in a web tab's page
-# (web_keys.rs), which the runtime offers no event for. And asking the system when it
+# they start (src/ai_cli/family.rs). And asking the system when it
 # last had input and which window is in front, on Windows and a Mac, so a web login is
 # not handed away from somebody typing in a page (src/presence.rs). And the shape a
-# web tab's page is cut to round the app's layers over it (src/web_cut.rs). None of
+# web tab's page is cut to round the app's layers over it (src/web_cut.rs). And the
+# window's top edge strip, shown only while that edge resizes the window
+# (src/top_edge.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
@@ -55,22 +55,6 @@ needless_pass_by_value = "allow"
 # array. The tests read as the sentence they are, and the answer on a failure is one
 # `dbg!` away; nearly two hundred of them turned red the day the runners' stable moved.
 assert_is_empty = "allow"
-
-[features]
-# Which engine the app's webviews run on. Off, and off in everything that ships:
-# the release builds, the installers, the phone and every check are the default
-# build, on the system's own engine, and apps/desktop/test/cef.test.ts holds them
-# to it.
-#
-# On, the app is a Chromium app: nib's own interface and every web tab are views
-# in one browser process, through `tauri-runtime-cef`. **The engine is not a
-# dependency of this crate in either build** - naming it here would put Tauri 3
-# and three hundred megabytes of Chromium in the default build's lock file for
-# nothing. `cef/` compiles this same library a second time, in a workspace of its
-# own with the engine's pins in it, and hands it an already-configured
-# `tauri::Builder`; the feature only decides what the library does with the
-# engine it is handed. See src/engine.rs, src/engine_switch.rs and docs/browser.md.
-cef = []
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -138,7 +122,7 @@ getrandom = "0.3"
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
 # An agent's picture of a page with every filled secret field painted over, so a
 # password's bullets and a card's digits never reach it; see agents/page.rs. Every
-# desktop, since nib's own Chromium drives a page on each. Already in the lock file, at
+# desktop that has agents' pages. Already in the lock file, at
 # this version, as what the menu and tray icons are read with.
 png = "0.18"
 # The engine's developer tools, for a web tab's page in the build that ships: F12,
@@ -192,17 +176,13 @@ window-vibrancy = "0.6"
 # Wezterm's own crate: it hands over a reader, a writer, a resize and the child, and
 # nothing else. See src/terminal.rs.
 portable-pty = "0.9"
-# nib's own Chromium, fetched the first time somebody picks it in Settings rather than
-# carried by every installer, and checked against the updater's own key before a byte of
-# it is unpacked: the folders the app keeps things in before Tauri has started, the
-# download, the signature and the archive. Every one of them is in the lock file
-# already, through the updater plugin, with the same features, so this adds nothing to
-# the build. See src/engine_switch.rs and src/engine_switch/fetch.rs.
+# Where other programs keep their settings, for the imports and the terminal's remote
+# hosts; and the web, for a link's preview, ChatGPT's sign-in and an extension fetched
+# from its store. Every one of them is in the lock file already, through the updater
+# plugin, with the same features, so this adds nothing to the build.
 dirs = "6"
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
-minisign-verify = "0.2"
-tar = "0.4"
 # A Firefox theme is an add-on, and an add-on is a zip: its manifest is read out of it
 # for the Appearance pane's Import row. In the lock file already, through the updater
 # plugin, and inflated by the flate2 above. See src/browser_themes.rs.
@@ -379,6 +359,7 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
 javascriptcore-rs = "=1.1.2"
+gtk = "0.18"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # What a file *is*, apart from where it is: the volume and the file id, asked of an open

@@ -11,8 +11,6 @@
 //!   sound is paused first - and one in a call, capturing the camera, the microphone or
 //!   the screen, or holding a Web Lock, as Edge's sleeping tabs do: those run on. Shown
 //!   again, the engine wakes it itself; `Resume` says so at once.
-//! - nib's own Chromium: the page lifecycle's `frozen`, over the `DevTools` protocol, and
-//!   `active` to let it run.
 //! - `WKWebView` and `WebKitGTK` have neither: the sound is paused, and the engine's own
 //!   throttling of a page out of sight is the rest.
 //!
@@ -52,7 +50,7 @@ pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool
     Ok(heard.recv().await.unwrap_or(false))
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod engine {
     use tauri::Webview;
     use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_3;
@@ -102,40 +100,7 @@ mod engine {
     }
 }
 
-#[cfg(feature = "cef")]
-mod engine {
-    use serde_json::json;
-    use tauri::Webview;
-
-    use super::{Said, PAUSE, PLAY};
-
-    /// Both halves over the page's own `DevTools` agent, which runs them in the order they
-    /// are sent; see `tell` in engine/devtools.rs. The protocol freezes whatever it is
-    /// told to, so the window never asks it about a page that has to go on.
-    #[allow(
-        clippy::unnecessary_wraps,
-        clippy::needless_pass_by_value,
-        reason = "the same answer as the other engines', whose calls can fail"
-    )]
-    pub fn lull(view: &Webview, paused: bool, said: Said) -> Result<(), String> {
-        let told = if paused {
-            vec![
-                ("Runtime.evaluate", json!({ "expression": PAUSE })),
-                ("Page.setWebLifecycleState", json!({ "state": "frozen" })),
-            ]
-        } else {
-            vec![
-                ("Page.setWebLifecycleState", json!({ "state": "active" })),
-                ("Runtime.evaluate", json!({ "expression": PLAY })),
-            ]
-        };
-        crate::engine::devtools::tell(view, None, told);
-        let _ = said.try_send(true);
-        Ok(())
-    }
-}
-
-#[cfg(all(not(windows), not(feature = "cef")))]
+#[cfg(not(windows))]
 mod engine {
     use tauri::Webview;
 

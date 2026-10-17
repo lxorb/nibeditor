@@ -150,7 +150,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             page.wait_for_timeout(350)
 
         page.wait_for_timeout(400)
-        page.locator("aside").screenshot(path=str(SHOTS / f"before-{where}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"before-{where}.png"))
         say(f"[{label}] wrote before-{where}.png")
 
         say(f"[{label}] nested: {page.evaluate(NEST)}")
@@ -159,7 +159,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         for one in page.evaluate(ROWS):
             say(f"[{label}] {one}")
 
-        page.locator("aside").screenshot(path=str(SHOTS / f"nested-{where}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"nested-{where}.png"))
         say(f"[{label}] wrote nested-{where}.png")
 
         # The note is inside its own folder under its own name, which is what
@@ -197,7 +197,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
 
         say(f"[{label}] unnested: {page.evaluate(UNNEST)}")
         page.wait_for_timeout(600)
-        page.locator("aside").screenshot(path=str(SHOTS / f"unnested-{where}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"unnested-{where}.png"))
         say(f"[{label}] wrote unnested-{where}.png")
 
         check(

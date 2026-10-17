@@ -1,25 +1,46 @@
 name: release
 
 # Two kinds of release come out of here. A tag `v*` is a release proper, with
-# its own page and its own number. Every push to main is a build as well: the
-# desktop app follows main the way orden.so does, so what is on main is
-# what people run, not only what was last tagged. Those builds land on one
-# rolling pre-release tagged `edge`, replaced each time - not `main`, since a
-# tag sharing a name with the branch makes every `git checkout main` ambiguous.
+# its own page and its own number, and those tags are cut on main: main carries
+# releases and nothing else. Every push to `unstable` is a build as well, for
+# the people who follow the edge rather than the releases. Those builds land on
+# one rolling pre-release tagged `edge`, replaced each time - not `unstable`,
+# since a tag sharing a name with the branch makes every checkout of it
+# ambiguous.
+#
+# Nix is not served from here. The stable flake in packaging/nix follows the
+# release, and anyone who wants the edge builds it from the `unstable` branch
+# themselves; there is no branch holding a flake pinned to edge's binaries.
+#
+# A push that changes nothing a build is made of builds nothing: the documents, every
+# Markdown file and the tests. GitHub reads these filters for a branch only, so a tag
+# always builds; and a push that touches anything else as well builds as before. Nothing
+# below reads a Markdown file or a test into what it ships - `vite build` and the crate
+# import neither, and the installers carry no document.
 on:
   push:
     tags: ['v*']
-    branches: [main]
+    branches: [unstable]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.test.ts'
+      - 'apps/desktop/test/**'
+      # Not every package's: `@nib/sync-core/sim` is a folder of its tests that the
+      # package exports.
+      - 'packages/editor/test/**'
+      - 'packages/glasses/test/**'
+      - 'services/*/test/**'
   workflow_dispatch:
 
-# A build of main is never cancelled by a newer push: pushes came faster than a
-# build takes, so none ever finished and edge stood still. The running one
-# finishes, and only the newest push waits behind it. A tag is a release of its
-# own and is never cancelled; a dispatch on another branch is a trial, and the
-# newer one replaces it.
+# A build of `unstable` is never cancelled by a newer push: pushes came faster
+# than a build takes, so none ever finished and edge stood still. The running
+# one finishes, and only the newest push waits behind it. A tag is a release of
+# its own and is never cancelled; a dispatch on another branch is a trial, and
+# the newer one replaces it.
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/unstable' && !startsWith(github.ref, 'refs/tags/') }}
 
 # The floor, so a job added below without a block of its own still only reads.
 # Every job states its own as well, because what a job may do is part of what the
@@ -48,8 +69,51 @@ jobs:
         shell: bash
         run: bash scripts/build-version.sh edge
 
+  # A push to `unstable` is built only once the branch has been still for a few
+  # minutes (`NIB_CI_SETTLE_S`, five by default): pushes come in bursts, and a build that
+  # a newer one replaces anyway is runner time for nothing. The newest push of a burst
+  # builds; the others end here, before anything is compiled. A tag or a dispatch: no
+  # waiting.
+  #
+  # Newest among the pushes that build, which is not the branch's head: a push that
+  # changes only what `paths-ignore` names makes no run at all, so a burst that ends
+  # with one would leave every run behind a head that never builds, and edge would
+  # stand still. So a run asks whether a later run of this workflow exists for a push
+  # to `unstable` - by run number, which only goes up - and steps aside only then. One
+  # that was cancelled by hand is not counted; one superseded while it waited is, as
+  # whatever superseded it is a later run too.
+  settle:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/unstable'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      newest: ${{ steps.wait.outputs.newest }}
+    steps:
+      - id: wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SETTLE_S: ${{ vars.NIB_CI_SETTLE_S || '300' }}
+          # The newest later run's number, or nothing: see the comment above the job.
+          LATER: >-
+            [.workflow_runs[] | select(.run_number > $mine and .conclusion != "cancelled") | .run_number]
+            | max // empty
+        run: |
+          # From the push, not from now: a run that queued behind another has waited already.
+          pushed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)
+          left=$(($(date -d "$pushed" +%s) + SETTLE_S - $(date +%s)))
+          if [ "$left" -gt 0 ]; then sleep "$left"; fi
+          later=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?branch=unstable&event=push&per_page=20" |
+            jq -r --argjson mine "$GITHUB_RUN_NUMBER" "$LATER")
+          echo "newest=$([ -z "$later" ] && echo true || echo false)" >>"$GITHUB_OUTPUT"
+          [ -z "$later" ] || echo "run $later is newer and builds instead"
+
   build:
-    needs: version
+    needs: [version, settle]
+    # Not when a newer push builds instead.
+    if: ${{ !cancelled() && needs.version.result == 'success' && needs.settle.outputs.newest != 'false' }}
     # It reads the repository and uploads an artifact, which travels on the
     # runtime's own token rather than on this one.
     permissions:
@@ -108,6 +172,10 @@ jobs:
           workspaces: |
             apps/desktop/src-tauri
           key: ${{ matrix.target }}
+          # Saved from main only: a cache is read only on the ref that saved it and the
+          # ones below it, and the repository's free 10 GB have nothing to spare for a
+          # tag's or a trial branch's.
+          save-if: ${{ github.ref == 'refs/heads/unstable' }}
 
       # xdg-utils is what the AppImage bundler copies `xdg-open` from; the x64
       # image happens to ship it, the arm image does not.
@@ -173,148 +241,26 @@ jobs:
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz.sig
 
-  # nib's own Chromium, for the Browser setting to fetch: the same app built again on
-  # the engine, packed as the engine's own files and the app built on them, and signed
-  # with the updater's key like an installer. Never inside an installer - most people
-  # never switch, and it is four hundred megabytes - and never in the way of one: a
-  # platform whose engine does not build is a release without Chromium on that
-  # platform, and the installers go out regardless. See docs/browser.md and
-  # apps/desktop/src-tauri/cef.
-  #
-  # Windows and a Mac. Not Linux, where the engine's toolkit and the app's cannot share
-  # a process (docs/browser.md section 10), so the setting has no row there.
-  chromium:
-    needs: version
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
-            platform: windows-x86_64
-          - runner: windows-11-arm
-            target: aarch64-pc-windows-msvc
-            platform: windows-aarch64
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-            platform: macos-aarch64
-          - runner: macos-latest
-            target: x86_64-apple-darwin
-            platform: macos-x86_64
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 120
-    defaults:
-      run:
-        shell: bash
-    env:
-      CEF_DIR: ${{ github.workspace }}/.cef
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
-        with:
-          toolchain: stable
-          targets: ${{ matrix.target }}
-
-      # The engine's C++ wrapper is compiled by MSVC, which cannot write an object whose
-      # path is over 260 characters ("C1083: Cannot open compiler generated file: ''").
-      # Under the checkout, a build for a named target is that long: cef.yml builds for
-      # the host and fits, this names the triple and did not. So Windows builds in a
-      # short folder beside the checkout, set before the cache below so the cache is of
-      # that folder: a cache of the checkout's own target restored a folder nothing
-      # built into, and every crate was compiled again on every run.
-      - name: A short build folder on Windows
-        if: runner.os == 'Windows'
-        run: echo "CARGO_TARGET_DIR=$(cd "$GITHUB_WORKSPACE/.." && pwd -W)/t" >>"$GITHUB_ENV"
-
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          # Relative to the folder before it: five levels up is the one holding the
-          # checkout, where the step above puts Windows' build.
-          workspaces: |
-            apps/desktop/src-tauri/cef -> ${{ runner.os == 'Windows' && '../../../../../t' || 'target' }}
-          key: chromium-${{ matrix.target }}
-
-      # The interface the engine build embeds, as the installers do, and with the number
-      # they carry: the Tauri CLI hands `--config` to the frontend build as TAURI_CONFIG,
-      # and this build has no CLI to do it (apps/desktop/vite.config.ts, `appVersion`).
-      - name: The frontend
-        env:
-          TAURI_CONFIG: '{"version":"${{ needs.version.outputs.version }}"}'
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm --filter @nib/desktop build
-
-      - name: The engine
-        run: bash apps/desktop/src-tauri/cef/engine.sh "${{ matrix.target }}"
-
-      - name: Build the app on it
-        working-directory: apps/desktop/src-tauri/cef
-        env:
-          TAURI_CONFIG: '{"version":"${{ needs.version.outputs.version }}"}'
-        run: cargo build --release --locked --target ${{ matrix.target }}
-
-      - name: Pack
-        run: |
-          suffix=''
-          [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
-          python apps/desktop/src-tauri/cef/pack.py \
-            --binary "${CARGO_TARGET_DIR:-apps/desktop/src-tauri/cef/target}/${{ matrix.target }}/release/nib-chromium$suffix" \
-            --engine "$CEF_PATH" \
-            --version "${{ needs.version.outputs.version }}" \
-            --platform "${{ matrix.platform }}" \
-            --out chromium-out
-
-      # With the updater's own key, which is what the app checks every archive against
-      # before it unpacks a byte. Without the key there is nothing the app would accept,
-      # so nothing is uploaded either.
-      - name: Sign
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-        run: |
-          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "no signing key: this platform's Chromium is not published"; exit 1; }
-          for archive in chromium-out/*.tar.gz; do
-            pnpm --filter @nib/desktop exec tauri signer sign -p '' "$PWD/$archive"
-          done
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: chromium-${{ matrix.platform }}
-          if-no-files-found: error
-          path: |
-            chromium-out/*.tar.gz
-            chromium-out/*.sig
-            chromium-out/*.json
-
   # One manifest for every platform, which is what the app polls.
   #
   # A release's own page is for people: the installers, under the product's name, and
   # latest.json, which every install asks for at releases/latest/download. What the app
   # downloads by itself goes on one pre-release, `updates`, beside every other version's:
-  # the bundles the updater installs, and nib's own Chromium (fetch.rs, `release`). The
-  # bundles there keep the name `Nib-`, because every build before 0.14 takes an update
-  # only from a file called that (`names()` in src-tauri/src/updates.rs), and the one
-  # manifest serves them all. A build of main keeps everything on `edge`, as it always has.
+  # the bundles the updater installs. They keep the name `Nib-`, because every build
+  # before 0.14 takes an update only from a file called that (`names()` in
+  # src-tauri/src/updates.rs), and the one manifest serves them all. A build of main
+  # keeps everything on `edge`, as it always has.
   publish:
-    needs: [version, build, chromium]
-    # The installers are the release; Chromium goes with them where it built, and a
-    # platform whose engine failed is a release without it rather than no release.
-    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    needs: [version, build]
+    # Only `unstable` and tags: a dispatch on any other branch is a trial and
+    # publishes nothing (it would otherwise replace edge).
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
     # The one job that writes: the release and its files are the point of it.
     permissions:
       contents: write
-      # To dispatch publish.yml, publish-linux.yml and packaging-bump.yml, or
-      # nix-edge.yml for a build of main, at the end of this job.
+      # To dispatch publish.yml, publish-linux.yml and packaging-bump.yml at the
+      # end of this job.
       actions: write
     env:
       TAG: ${{ needs.version.outputs.tag }}
@@ -335,15 +281,34 @@ jobs:
       - name: Build latest.json
         run: node scripts/update-manifest.mjs "$FILES" "$VERSION" artifacts > latest.json
 
-      # The rolling release is remade rather than added to: an old build's
-      # files under a new manifest would be the worst of both.
-      - name: Replace the build of main
+      # The rolling release is updated where it stands, never taken down first. It
+      # used to be deleted and made again, and on 2026-10-17 the delete went through and
+      # the create was refused (HTTP 403, "Resource not accessible by integration"), which
+      # left no edge at all for anybody to update from. So: an edge that is there keeps
+      # its page and its tag, gets this build's name and notes, and has its tag moved
+      # here; one that is not there is made. A tag the token may not move is said and
+      # left where it was - the files below are what matter, and they go up either way.
+      # The last build's files come off only after this one's are up; see the step after
+      # the upload.
+      - name: Point edge at this build
         if: needs.version.outputs.rolling == 'true'
         run: |
-          gh release delete "$TAG" --cleanup-tag --yes || true
-          gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
-            --title "main · $VERSION" \
-            --notes ""
+          notes="Built from $GITHUB_SHA."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --prerelease --title "main · $VERSION" --notes "$notes"
+            if ! moved=$(gh api -i -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" \
+              -f sha="$GITHUB_SHA" -F force=true 2>&1); then
+              grep -iE '^(HTTP/|x-accepted-github-permissions|x-github-request-id)|"message"' <<<"$moved" || true
+              echo "::warning::the $TAG tag could not be moved to $GITHUB_SHA; the release keeps it where it was and takes this build's files"
+            fi
+          elif ! made=$(gh api -i -X POST "repos/$GITHUB_REPOSITORY/releases" \
+            -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" -f name="main · $VERSION" \
+            -f body="$notes" -F prerelease=true 2>&1); then
+            # What GitHub says it wanted, which is the question when this is refused.
+            grep -iE '^(HTTP/|x-accepted-github-permissions|x-github-request-id)|"message"' <<<"$made" || true
+            echo "::error::$TAG is not there and could not be made"
+            exit 1
+          fi
 
       - name: Publish the release
         if: needs.version.outputs.rolling != 'true'
@@ -357,53 +322,10 @@ jobs:
           gh release view "$FILES" >/dev/null 2>&1 ||
             gh release create "$FILES" --prerelease --target "$GITHUB_SHA" --title "$FILES" --notes ""
 
-      # A runtime is the same engine whichever version packed it, and `updates` keeps the
-      # first one: replacing it would leave every earlier version's manifest naming a
-      # signature its file no longer has. One that is there with its signature beside it,
-      # which goes up after it, is used instead of this build's.
-      - name: The runtimes updates has already
-        if: needs.version.outputs.rolling != 'true'
-        run: |
-          there=$(gh release view "$FILES" --json assets --jq '.assets[] | "\(.name) \(.size)"')
-          find artifacts -type f -name 'chromium-runtime-*.tar.gz' | while read -r archive; do
-            name=$(basename "$archive")
-            size=$(awk -v name="$name" '$1 == name { print $2 }' <<<"$there")
-            if [ -z "$size" ] || ! grep -qF "$name.sig " <<<"$there"; then
-              continue
-            fi
-            gh release download "$FILES" --pattern "$name.sig" --output "$archive.sig" --clobber
-            node scripts/runtime-size.mjs artifacts "$name" "$size"
-            rm "$archive"
-            echo "$name: the one on $FILES"
-          done
-
-      # What the Browser setting reads first; see scripts/chromium-manifest.mjs. None at
-      # all where no platform's engine built and signed.
-      - name: Build chromium.json
-        run: node scripts/chromium-manifest.mjs "$VERSION" artifacts > chromium.json || rm -f chromium.json
-
       - name: Upload the files
         run: |
-          # Every file before the manifest that names it: a fetch never reads a
-          # chromium.json whose archives are not there yet, and the updater is never
-          # offered a version whose installer or Chromium is still on its way.
-          if [ -f chromium.json ]; then
-            find artifacts -type f -name 'nib-chromium-*.tar.gz' -exec gh release upload "$FILES" {} --clobber \;
-            # A runtime's signature after the runtime, so a signature on `updates` says
-            # the file beside it is whole.
-            find artifacts -type f -name 'chromium-runtime-*.tar.gz' | while read -r runtime; do
-              gh release upload "$FILES" "$runtime" --clobber
-              if [ "$ROLLING" != true ]; then gh release upload "$FILES" "$runtime.sig" --clobber; fi
-            done
-            # `updates` holds every version's, so each is named for its version.
-            manifest=chromium.json
-            if [ "$ROLLING" != true ]; then
-              manifest="chromium-$VERSION.json"
-              cp chromium.json "$manifest"
-            fi
-            gh release upload "$FILES" "$manifest" --clobber
-          fi
-
+          # Every file before the manifest that names it: the updater is never offered
+          # a version whose installer is still on its way.
           if [ "$ROLLING" = true ]; then
             # The .app.tar.gz is what the updater downloads on a Mac, so it has to
             # be a release asset even though nobody clicks it.
@@ -425,22 +347,66 @@ jobs:
           fi
           gh release upload "$TAG" latest.json --clobber
 
+      # And off edge, everything this build did not put there: the last build's files,
+      # whose names carry its version. After the manifest, so the updater is never pointed
+      # at a file that has gone.
+      - name: Take the last build's files off edge
+        if: needs.version.outputs.rolling == 'true'
+        run: |
+          kept=$(find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) -printf '%f\n'; echo latest.json)
+          gh release view "$TAG" --json assets --jq '.assets[].name' | while read -r name; do
+            grep -qxF "$name" <<<"$kept" || gh release delete-asset "$TAG" "$name" --yes
+          done
+
       # GitHub creates no workflow run for an event raised by GITHUB_TOKEN, so
-      # the release published above never reaches publish.yml's `on: release`, nor
-      # publish-linux.yml's. workflow_dispatch is the documented exception to that
-      # rule, so the release hands itself over explicitly. Only a real tag: `edge` is
-      # remade on every push to main and is not something to publish anywhere. And to
-      # packaging-bump.yml, which moves the manifests in packaging/ onto it, the flake
-      # people install from this repository first of all.
+      # the release published above reaches no other workflow by itself.
+      # workflow_dispatch is the documented exception to that rule, so the release
+      # hands itself over explicitly: to publish.yml, and to packaging-bump.yml, which
+      # moves the manifests in packaging/ onto it, the flake people install from this
+      # repository first of all. Both are on the default branch, which a dispatch needs.
+      # The Linux managers are a call instead; see the `linux` job below. Only a real
+      # tag: `edge` is remade on every push and is not something to publish anywhere.
       - name: Hand the release to the package managers
         if: needs.version.outputs.rolling != 'true'
         run: |
           gh workflow run publish.yml -f tag="$TAG"
-          gh workflow run publish-linux.yml -f tag="$TAG"
           gh workflow run packaging-bump.yml -f tag="$TAG"
 
-      # The flake on the nix-edge branch follows edge; see nix-edge.yml. Only a
-      # build of main, which is what edge is meant to be.
-      - name: Hand the build of main to Nix
-        if: needs.version.outputs.rolling == 'true' && github.ref == 'refs/heads/main'
-        run: gh workflow run nix-edge.yml
+  # Edge into the apt repository's `unstable` suite, once edge's files are up; a stable
+  # release reaches its `stable` one through publish.yml. A call rather than a dispatch:
+  # a dispatch only finds a workflow on the default branch, and apt.yml is written on
+  # `unstable` first. See apt.yml.
+  apt:
+    needs: [version, publish]
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/apt.yml
+    with:
+      suite: unstable
+      tag: ${{ needs.version.outputs.tag }}
+    secrets: inherit
+
+  # And edge to the Snap Store's `edge` channel, the same way; a stable release reaches
+  # `stable` through publish-linux.yml. See snap.yml.
+  snap:
+    needs: [version, publish]
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/snap.yml
+    with:
+      tag: ${{ needs.version.outputs.tag }}
+    secrets: inherit
+
+  # A stable release to the AUR and the Snap Store's `stable`; see publish-linux.yml. A
+  # call, like apt and the snap: a dispatch only finds a workflow on the default branch.
+  linux:
+    needs: [version, publish]
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling != 'true' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/publish-linux.yml
+    with:
+      tag: ${{ needs.version.outputs.tag }}
+    secrets: inherit

@@ -89,6 +89,26 @@ describe('turning it on and off', () => {
     expect(fullscreen.on).toBe(true)
     expect(asked).toEqual([])
   })
+
+  /** A browser that granted full screen keeps Escape for itself and only says the
+   *  document left it; the app comes back with it rather than staying out of the way
+   *  in a window that is not full screen any more. */
+  test('a browser giving its full screen back gives the app back', async () => {
+    const page = Object.assign(new EventTarget(), { fullscreenElement: null as object | null })
+    vi.stubGlobal('document', page)
+    try {
+      page.fullscreenElement = {}
+      await fullscreen.enter(panes)
+      expect(fullscreen.on).toBe(true)
+
+      page.fullscreenElement = null
+      page.dispatchEvent(new Event('fullscreenchange'))
+      await vi.waitFor(() => expect(fullscreen.on).toBe(false))
+      expect(panes.fills).toBe(null)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
 })
 
 describe('the way out', () => {

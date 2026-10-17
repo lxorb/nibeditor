@@ -272,7 +272,7 @@ protected by DPAPI on Windows (app-bound since Chrome 127) and by the Keychain o
 ([app-bound][appbound], [DPAPI][dpapi]).
 
 **What an engine will hand out.** The DevTools Protocol, which WebView2 exposes through
-`CallDevToolsProtocolMethod` and CEF through `ExecuteDevToolsMethod`, can read and write
+`CallDevToolsProtocolMethod`, can read and write
 cookies with their partition key (`Storage.getCookies`, `Storage.setCookies`) and
 localStorage (`DOMStorage.setDOMStorageItem`), but can only **read** IndexedDB and Cache
 Storage (`IndexedDB.requestData`, `CacheStorage.requestEntries`; there is no put)
@@ -803,8 +803,8 @@ Every device keeps one socket to its account's hub (section 6.2). After any writ
 a space's cursor (a push, a settle, a tree op, a blob list), the Worker tells the hub of every
 account that can reach the space (the owner, members, guests: one query) and the hubs poke
 their devices: `{space, seq}`. A poked device runs a pass for that space at once. Polling
-stays as the fallback at a fixed 5 minutes, and a device whose hub socket is down polls at
-today's cadence.
+stays as the fallback every 30 seconds while the window is visible (every 5 minutes while
+hidden), and a device whose hub socket is down polls at today's cadence.
 
 ### 5.13 In the autosave-only world
 
@@ -947,8 +947,8 @@ continues where it left off. Each row, and whether it travels:
 | the HTTP cache | yes | no | a cache |
 | Origin Private File System | yes | no, for now | rare; the same page-script route can add it |
 | WebSQL | removed from Chromium | no | |
-| passwords and autofill | Chrome syncs these | no | Chromium's own under CEF, a separate decision |
-| extensions' own storage | no (Chrome syncs it through Google) | no | `browser.md` already says so |
+| passwords and autofill | Chrome syncs these | no | a separate decision |
+| extensions' own storage | no (Chrome syncs it through Google) | no | |
 
 ### 6.4 How, per engine
 
@@ -957,14 +957,14 @@ user (DPAPI or app-bound on Windows, the Keychain on a Mac), and origin storage 
 engine- and version-specific. So everything moves through APIs into a neutral bundle, which
 also makes it portable between a Windows WebView2 and a Mac WebKit.
 
-| | WebView2 (Windows today) | WKWebView (macOS) | WebKitGTK (Linux) | CEF (the planned engine) |
-| --- | --- | --- | --- | --- |
-| cookies out | `Storage.getCookies` over `CallDevToolsProtocolMethod` (has `partitionKey`), filtered to the site | `WKHTTPCookieStore.getAllCookies` | `webkit_cookie_manager_get_all_cookies` (2.42+) | `Storage.getCookies` over `ExecuteDevToolsMethod`, or `CefCookieManager::VisitAllCookies` |
-| cookies in | `Storage.setCookies` after `Storage.clearCookies` for the site's domains | `setCookie`, `deleteCookie` | `webkit_cookie_manager_replace_cookies` for the site | `Storage.setCookies` |
-| localStorage, sessionStorage, IndexedDB out | a script in an **isolated world** of a page on the origin (`Page.createIsolatedWorld` + `Runtime.evaluate`) | a script in a `WKContentWorld` | a script in an isolated world (`webkit_script_world_new`) | as WebView2 |
-| the same in | a hidden restore view in the same store, navigated to `https://<origin>/__nib_restore`, answered with an empty page by `WebResourceRequested`, then the script writes | a hidden view given `loadHTMLString("", baseURL: origin)`, which runs as that origin | `webkit_web_view_load_html("", origin)` | a `CefResourceRequestHandler` answering the restore address |
-| sessionStorage in | a document-created script on the tab's first load after a restore, guarded by origin | the same with a `WKUserScript` at document start | a user script | the same |
-| trail and scroll | nib's own (`place.ts`) | nib's own (`interactionState` is WebKit-only and opaque, so not used) | nib's own | the engine's back-forward list, restored by navigation |
+| | WebView2 (Windows today) | WKWebView (macOS) | WebKitGTK (Linux) |
+| --- | --- | --- | --- |
+| cookies out | `Storage.getCookies` over `CallDevToolsProtocolMethod` (has `partitionKey`), filtered to the site | `WKHTTPCookieStore.getAllCookies` | `webkit_cookie_manager_get_all_cookies` (2.42+) |
+| cookies in | `Storage.setCookies` after `Storage.clearCookies` for the site's domains | `setCookie`, `deleteCookie` | `webkit_cookie_manager_replace_cookies` for the site |
+| localStorage, sessionStorage, IndexedDB out | a script in an **isolated world** of a page on the origin (`Page.createIsolatedWorld` + `Runtime.evaluate`) | a script in a `WKContentWorld` | a script in an isolated world (`webkit_script_world_new`) |
+| the same in | a hidden restore view in the same store, navigated to `https://<origin>/__nib_restore`, answered with an empty page by `WebResourceRequested`, then the script writes | a hidden view given `loadHTMLString("", baseURL: origin)`, which runs as that origin | `webkit_web_view_load_html("", origin)` |
+| sessionStorage in | a document-created script on the tab's first load after a restore, guarded by origin | the same with a `WKUserScript` at document start | a user script |
+| trail and scroll | nib's own (`place.ts`) | nib's own (`interactionState` is WebKit-only and opaque, so not used) | nib's own |
 
 The dump script walks `indexedDB.databases()`, each store's schema (key path,
 auto-increment, indexes) and its records by cursor, and encodes values with a tagged
@@ -1224,8 +1224,7 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
   later, on the hub's 30 s liveness; its next upload was fenced, and it stopped its pages.
 - **Not built.** Moving everybody to a new key generation after a computer is ended: the
   device list carries no public keys, so no computer can wrap the new generation to the
-  others; `granted`'s `rotate` is read and nothing is done with it yet. And nib's own
-  Chromium (`cef`) has no capture, so there leases never start.
+  others; `granted`'s `rotate` is read and nothing is done with it yet.
 
 **As built** (lane `sync-server-docs`, `services/sync/src/sync2/` and `src/rooms/`),
 where it adds to the routes of this section:

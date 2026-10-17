@@ -2,11 +2,11 @@
 //! "Accounts").
 //!
 //! **Why a file of the crate's.** The accounts used to be a row in the page's own
-//! storage, and a page's storage belongs to one browsing profile: the system's engine
-//! and nib's own Chromium are two profiles, so switching engines started with no
-//! accounts and the reader typed every key again, though each was still in the
-//! keychain under its account's id. A file in the app's data folder is the same file
-//! for every window, both engines and every space, and survives an update.
+//! storage, and a page's storage belongs to one browsing profile: while the app could run
+//! on a second engine, switching engines started with no accounts and the reader typed
+//! every key again, though each was still in the keychain under its account's id. A file
+//! in the app's data folder is the same file for every window and every space, and
+//! survives an update.
 //!
 //! **What is in it.** Which accounts there are, which of each provider is active, and
 //! what each feature asks: the window's JSON, checked by the window on the way back in

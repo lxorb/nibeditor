@@ -2,11 +2,8 @@
  *  activity.ts meet the app - the hub, the pages, the crate's capture and restore, the
  *  account's routes, the windows beside this one and the close.
  *
- *  Started only where the account's `web_sync` switch is on, on a desktop, and on an
- *  engine that can carry a site's state: nib's own Chromium cannot yet (see
- *  src-tauri/src/web_state.rs), and a lease this computer could not hand over would be
- *  a lock with nothing behind it, so there nothing starts and every page runs as before.
- *  See lib/sync2/connect.svelte.ts for the switch. */
+ *  Started only where the account's `web_sync` switch is on, and on a desktop. See
+ *  lib/sync2/connect.svelte.ts for the switch. */
 
 import { mount, untrack, unmount } from 'svelte'
 import { account } from '../account.svelte'
@@ -28,29 +25,14 @@ import { webData } from './web-data.svelte'
 import { webKey, webState } from './web-state'
 import WebApprove from './WebApprove.svelte'
 
-/** What nib's own Chromium says to a capture; see `NOT_HERE` in web_state.rs. */
-const NOT_ON_THIS_ENGINE = 'this engine'
-
 let started: Promise<void> | null = null
 
-/** Starts web logins that travel, once. */
+/** Starts web logins that travel, once, in a turn of its own. */
 export function startWebSync(): Promise<void> {
-  return (started ??= begin())
+  return (started ??= Promise.resolve().then(begin))
 }
 
-/** Whether this engine can carry a site's state: asked of the crate with a question it
- *  refuses either way, and read off how it refuses. */
-async function carries(): Promise<boolean> {
-  const said = await invoke('web_state_wants', { store: null, site: '', manifestPath: '' }).then(
-    () => '',
-    (error: unknown) => String(error),
-  )
-  return !said.includes(NOT_ON_THIS_ENGINE)
-}
-
-async function begin(): Promise<void> {
-  if (!(await carries())) return
-
+function begin(): void {
   const approval = new Approval({
     hub,
     pub: () => webKey.device(),

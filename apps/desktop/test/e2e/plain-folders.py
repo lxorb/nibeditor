@@ -166,7 +166,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         for one in page.evaluate(ROWS):
             say(f"[{label}] {one}")
 
-        page.locator("aside").screenshot(path=str(SHOTS / f"vault-{where}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"vault-{where}.png"))
         say(f"[{label}] wrote vault-{where}.png")
 
         # ── The folder with no note of its own ─────────────────────────────
@@ -220,7 +220,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             f"[{label}] and nothing was written into the vault by looking",
         )
         relist(page, where)
-        page.locator("aside").screenshot(path=str(SHOTS / f"opened-{where}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"opened-{where}.png"))
         say(f"[{label}] wrote opened-{where}.png")
 
         # ── Writing in it is what makes the file ───────────────────────────
@@ -240,7 +240,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             "is-quiet" not in (row(page, "Projects").get_attribute("class") or ""),
             f"[{label}] and the row is no longer quiet",
         )
-        page.locator("aside").screenshot(path=str(SHOTS / f"written-{where}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"written-{where}.png"))
         say(f"[{label}] wrote written-{where}.png")
 
         # ── The Move sheet offers rows and spaces, and no folders ──────────

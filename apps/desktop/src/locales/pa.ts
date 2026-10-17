@@ -21,6 +21,11 @@ export const pa: Dictionary = {
   'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   'Zen’s tabs could not be read.': 'Zen ਦੀਆਂ ਟੈਬਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
+  // Settings: note types
+  'Page note': 'ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
+  'Web note': 'ਵੈੱਬ ਨੋਟ',
+  'Private tab': 'ਨਿੱਜੀ ਟੈਬ',
+  'Note types': 'ਨੋਟ ਦੀਆਂ ਕਿਸਮਾਂ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ਪਿਛਲਾ ਹਫ਼ਤਾ',
   // Tasks: projects placed in the panel, and their folder
@@ -988,6 +993,7 @@ export const pa: Dictionary = {
   Comment: 'ਟਿੱਪਣੀ',
   'Always on top': 'ਹਮੇਸ਼ਾ ਉੱਪਰ',
   'What is new': 'ਨਵਾਂ ਕੀ ਹੈ',
+  'Download the app': 'ਐਪ ਡਾਊਨਲੋਡ ਕਰੋ',
   'Report an issue': 'ਸਮੱਸਿਆ ਦੱਸੋ',
   'Move the line up': 'ਲਾਈਨ ਉੱਪਰ ਭੇਜੋ',
   'Move the line down': 'ਲਾਈਨ ਹੇਠਾਂ ਭੇਜੋ',
@@ -1164,6 +1170,12 @@ export const pa: Dictionary = {
   'Export as PNG': 'PNG ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
   'Export as SVG': 'SVG ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
   'Export as PDF': 'PDF ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ਅੰਦਰ ਲਿਆਓ',
+  'Choose how to add the pages to the canvas.': 'ਸਫ਼ੇ ਕੈਨਵਸ ਉੱਤੇ ਕਿਵੇਂ ਜੋੜਨੇ ਹਨ, ਚੁਣੋ।',
+  'Single page': 'ਇੱਕ ਸਫ਼ਾ',
+  'All pages': 'ਸਾਰੇ ਸਫ਼ੇ',
+  'Choose a page': 'ਸਫ਼ਾ ਚੁਣੋ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ਚੁਣਿਆ ਮਿਟਾਓ',
   'Nudge left': 'ਖੱਬੇ ਥੋੜ੍ਹਾ ਸਰਕਾਓ',
@@ -1224,8 +1236,8 @@ export const pa: Dictionary = {
   'Release channel': 'ਜਾਰੀ ਰਾਹ',
   Stable: 'ਪੱਕਾ',
   Unstable: 'ਕੱਚਾ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ਪੱਕਾ ਸਰਕਾਰੀ ਜਾਰੀਆਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ main ਵਿੱਚ ਹਰ ਧੱਕੇ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ਪੱਕਾ ਜਾਰੀ ਹੋਈਆਂ ਰੂਪਾਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ ਕਿਨਾਰੇ ਵਾਲੇ ਬਿਲਡਾਂ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ਅੰਦਰ ਲਿਆਓ',
@@ -1806,16 +1818,6 @@ export const pa: Dictionary = {
   'Paste {count} lines?': { one: '{count} ਲਾਈਨ ਪੇਸਟ ਕਰੀਏ?', other: '{count} ਲਾਈਨਾਂ ਪੇਸਟ ਕਰੀਏ?' },
   // Orden as the default browser
   'Default browser': 'ਮੂਲ ਬ੍ਰਾਊਜ਼ਰ',
-  // The engine web tabs run on
-  Engine: 'ਇੰਜਣ',
-  Relaunch: 'ਮੁੜ ਚਾਲੂ ਕਰੋ',
-  'Chromium did not start': 'Chromium ਚਾਲੂ ਨਹੀਂ ਹੋਇਆ',
-  'No connection': 'ਕਨੈਕਸ਼ਨ ਨਹੀਂ',
-  'Not in this release': 'ਇਸ ਰਿਲੀਜ਼ ਵਿੱਚ ਨਹੀਂ',
-  'Needs an update': 'ਅੱਪਡੇਟ ਚਾਹੀਦਾ ਹੈ',
-  'Signature did not match': 'ਦਸਤਖ਼ਤ ਮੇਲ ਨਹੀਂ ਖਾਂਦੇ',
-  'Disk full': 'ਡਿਸਕ ਭਰੀ ਹੋਈ',
-  'Could not be installed': 'ਇੰਸਟਾਲ ਨਹੀਂ ਹੋ ਸਕਿਆ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ਦੇ ਸੰਪਾਦਨ ਅਣਕੀਤੇ ਕਰੋ',
   // The archive: a row put away and taken back, and what refuses to delete it

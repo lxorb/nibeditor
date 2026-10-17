@@ -21,6 +21,11 @@ export const am: Dictionary = {
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
+  // Settings: note types
+  'Page note': 'የገጾች ማስታወሻ',
+  'Web note': 'የድረ ገጽ ማስታወሻ',
+  'Private tab': 'የግል ትር',
+  'Note types': 'የማስታወሻ ዓይነቶች',
   // Tasks: Upcoming's weeks
   'Previous week': 'ያለፈው ሳምንት',
   // Tasks: projects placed in the panel, and their folder
@@ -974,6 +979,7 @@ export const am: Dictionary = {
   Comment: 'አስተያየት',
   'Always on top': 'ዘወትር ከላይ',
   'What is new': 'አዲሱ ምን ነው',
+  'Download the app': 'መተግበሪያውን አውርድ',
   'Report an issue': 'ችግር አሳውቅ',
   'Move the line up': 'መስመሩን ወደ ላይ አንቀሳቅስ',
   'Move the line down': 'መስመሩን ወደ ታች አንቀሳቅስ',
@@ -1147,6 +1153,12 @@ export const am: Dictionary = {
   'Export as PNG': 'እንደ PNG ላክ',
   'Export as SVG': 'እንደ SVG ላክ',
   'Export as PDF': 'እንደ PDF ላክ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF አምጣ',
+  'Choose how to add the pages to the canvas.': 'ገጾቹ ወደ ሸራው እንዴት እንዲጨመሩ ይምረጡ።',
+  'Single page': 'ነጠላ ገጽ',
+  'All pages': 'ሁሉም ገጾች',
+  'Choose a page': 'ገጽ ይምረጡ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'የተመረጠውን አጥፋ',
   'Nudge left': 'ወደ ግራ ገፋ',
@@ -1207,8 +1219,8 @@ export const am: Dictionary = {
   'Release channel': 'የልቀት መስመር',
   Stable: 'የተረጋጋ',
   Unstable: 'ያልተረጋጋ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'የተረጋጋ ይፋዊ ልቀቶችን ይከተላል፣ ያልተረጋጋ ወደ main የሚገባውን ሁሉ ይከተላል እና ሊሰበር ይችላል።',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'የተረጋጋ የተለቀቁ ዕትሞችን ይከተላል፣ ያልተረጋጋ የዳር ግንባታዎችን ይከተላል እና ሊሰበር ይችላል።',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'አምጣ',
@@ -1778,16 +1790,6 @@ export const am: Dictionary = {
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
   // Orden as the default browser
   'Default browser': 'ነባር አሳሽ',
-  // The engine web tabs run on
-  Engine: 'ሞተር',
-  Relaunch: 'እንደገና አስጀምር',
-  'Chromium did not start': 'Chromium አልጀመረም',
-  'No connection': 'ግንኙነት የለም',
-  'Not in this release': 'በዚህ ልቀት ውስጥ የለም',
-  'Needs an update': 'ማዘመን ያስፈልጋል',
-  'Signature did not match': 'ፊርማው አልተዛመደም',
-  'Disk full': 'ዲስኩ ሞልቷል',
-  'Could not be installed': 'መጫን አልተቻለም',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
   // The archive: a row put away and taken back, and what refuses to delete it

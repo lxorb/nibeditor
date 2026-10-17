@@ -48,5 +48,5 @@ async function showPdf(handed: string) {
   const path =
     arrival.kind === 'open' ? arrival.path : await workspace.bringInPdf(handed, arrival.root)
 
-  if (path) workspace.openPdf(path)
+  if (path) await workspace.openPdf(path)
 }

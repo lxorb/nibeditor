@@ -168,7 +168,7 @@ impl Downloads {
 
     /// How far a download has got, by the path it is being written to.
     #[cfg_attr(
-        any(not(any(windows, target_os = "macos")), feature = "cef"),
+        not(any(windows, target_os = "macos")),
         allow(
             dead_code,
             reason = "only WebView2 and WKWebView say how far a download has got"
@@ -190,7 +190,7 @@ impl Downloads {
     /// and not its file - is matched to the list: in the same order `finish` matches
     /// one that names no path, so the two agree on which is which.
     #[cfg_attr(
-        not(all(target_os = "macos", not(feature = "cef"))),
+        not(target_os = "macos"),
         allow(
             dead_code,
             reason = "only WKWebView's downloads are matched by address"
@@ -206,7 +206,7 @@ impl Downloads {
 
     /// Where a download is being written, while it is still on its way.
     #[cfg_attr(
-        not(all(target_os = "macos", not(feature = "cef"))),
+        not(target_os = "macos"),
         allow(dead_code, reason = "only WKWebView's downloads are watched by id")
     )]
     fn going_to(&self, id: u64) -> Option<PathBuf> {
@@ -245,7 +245,7 @@ impl Downloads {
     /// The id of the download being written to a path, for the engine's own events,
     /// which name a download by its path.
     #[cfg_attr(
-        not(all(windows, not(feature = "cef"))),
+        not(windows),
         allow(
             dead_code,
             reason = "only WebView2 hands a download over to be cancelled"
@@ -551,7 +551,7 @@ pub fn web_download_cancel(webview: tauri::Webview, id: u64) {
 /// The operations still going are kept on the window's thread, the only one they may
 /// be touched from, so Cancel can reach them; the shape `ask` in `web_tabs.rs` uses for
 /// the requests it holds open.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod progress {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -705,7 +705,7 @@ mod progress {
 // its `NSProgress`, read on the main thread a few times a second while anything is going;
 // Cancel is its own `cancel:`, and the engine's word that it ended then finds it already
 // stopped in the list and says nothing more.
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[cfg(target_os = "macos")]
 mod progress {
     use std::cell::{Cell, RefCell};
     use std::ffi::c_void;
@@ -1025,10 +1025,9 @@ mod progress {
     }
 }
 
-// Every build but the two system engines that can be watched: Linux, whose engine says
-// nothing about a download between its start and its end through what wry hands out,
-// and nib's own Chromium, whose erased webview has no controller to reach through.
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+// Every desktop but the two whose engines can be watched: Linux, whose engine says
+// nothing about a download between its start and its end through what wry hands out.
+#[cfg(not(any(windows, target_os = "macos")))]
 mod progress {
     use tauri::webview::PlatformWebview;
     use tauri::AppHandle;

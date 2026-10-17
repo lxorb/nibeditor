@@ -116,7 +116,7 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64) -> Shape {
 }
 
 /// Whether this build cuts layers out of a page at all.
-pub const CUTS: bool = cfg!(all(windows, not(feature = "cef")));
+pub const CUTS: bool = cfg!(windows);
 
 /// The cut each page was last given, and the shape that made of it, so the same shape is
 /// not given twice - a region set again is a page drawn again - and a page resized under
@@ -162,7 +162,7 @@ pub fn uncut(label: &str) {
     given(|all| all.remove(label));
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod engine {
     use tauri::Webview;
     use windows::Win32::Foundation::{BOOL, HWND};
@@ -214,7 +214,7 @@ mod engine {
     }
 }
 
-#[cfg(not(all(windows, not(feature = "cef"))))]
+#[cfg(not(windows))]
 mod engine {
     use tauri::Webview;
 

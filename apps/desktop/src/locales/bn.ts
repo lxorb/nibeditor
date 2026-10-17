@@ -21,6 +21,11 @@ export const bn: Dictionary = {
   'Import from Zen': 'Zen থেকে ইমপোর্ট',
   'Containers stay in Zen': 'কন্টেইনারগুলো Zen-এ থেকে যায়',
   'Zen’s tabs could not be read.': 'Zen-এর ট্যাবগুলো পড়া গেল না।',
+  // Settings: note types
+  'Page note': 'পাতার নোট',
+  'Web note': 'ওয়েব নোট',
+  'Private tab': 'ব্যক্তিগত ট্যাব',
+  'Note types': 'নোটের ধরন',
   // Tasks: Upcoming's weeks
   'Previous week': 'আগের সপ্তাহ',
   // Tasks: projects placed in the panel, and their folder
@@ -983,6 +988,7 @@ export const bn: Dictionary = {
   Comment: 'মন্তব্য',
   'Always on top': 'সবসময় উপরে',
   'What is new': 'কী নতুন',
+  'Download the app': 'অ্যাপটি ডাউনলোড করুন',
   'Report an issue': 'সমস্যা জানান',
   'Move the line up': 'লাইন উপরে সরান',
   'Move the line down': 'লাইন নিচে সরান',
@@ -1158,6 +1164,12 @@ export const bn: Dictionary = {
   'Export as PNG': 'PNG হিসেবে এক্সপোর্ট',
   'Export as SVG': 'SVG হিসেবে এক্সপোর্ট',
   'Export as PDF': 'PDF হিসেবে এক্সপোর্ট',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ইমপোর্ট',
+  'Choose how to add the pages to the canvas.': 'পৃষ্ঠাগুলি ক্যানভাসে কীভাবে যোগ হবে বেছে নিন।',
+  'Single page': 'একটি পৃষ্ঠা',
+  'All pages': 'সব পৃষ্ঠা',
+  'Choose a page': 'পৃষ্ঠা বেছে নিন',
   // The canvas: what its own keys are called
   'Delete what is picked': 'নির্বাচিত অংশ মুছুন',
   'Nudge left': 'বাঁয়ে ঠেলুন',
@@ -1218,8 +1230,8 @@ export const bn: Dictionary = {
   'Release channel': 'রিলিজ চ্যানেল',
   Stable: 'স্টেবল',
   Unstable: 'আনস্টেবল',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'স্টেবল অফিসিয়াল রিলিজ অনুসরণ করে, আনস্টেবল main-এ প্রতিটি পুশ, আর ভেঙে যেতে পারে।',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'স্টেবল প্রকাশিত সংস্করণ অনুসরণ করে, আনস্টেবল এজ বিল্ড অনুসরণ করে, আর ভেঙে যেতে পারে।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ইমপোর্ট',
@@ -1800,16 +1812,6 @@ export const bn: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'ডিফল্ট ব্রাউজার',
-  // The engine web tabs run on
-  Engine: 'ইঞ্জিন',
-  Relaunch: 'আবার চালু করুন',
-  'Chromium did not start': 'Chromium চালু হয়নি',
-  'No connection': 'সংযোগ নেই',
-  'Not in this release': 'এই রিলিজে নেই',
-  'Needs an update': 'আপডেট দরকার',
-  'Signature did not match': 'স্বাক্ষর মেলেনি',
-  'Disk full': 'ডিস্ক পূর্ণ',
-  'Could not be installed': 'ইনস্টল করা যায়নি',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
   // The archive: a row put away and taken back, and what refuses to delete it

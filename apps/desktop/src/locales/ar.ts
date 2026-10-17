@@ -21,6 +21,11 @@ export const ar: Dictionary = {
   'Import from Zen': 'استيراد من Zen',
   'Containers stay in Zen': 'تبقى الحاويات في Zen',
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
+  // Settings: note types
+  'Page note': 'ملاحظة صفحات',
+  'Web note': 'ملاحظة ويب',
+  'Private tab': 'علامة تبويب خاصة',
+  'Note types': 'أنواع الملاحظات',
   // Tasks: Upcoming's weeks
   'Previous week': 'الأسبوع السابق',
   // Tasks: projects placed in the panel, and their folder
@@ -1030,6 +1035,7 @@ export const ar: Dictionary = {
   Comment: 'تعليق',
   'Always on top': 'دائمًا في المقدمة',
   'What is new': 'ما الجديد',
+  'Download the app': 'تنزيل التطبيق',
   'Report an issue': 'الإبلاغ عن مشكلة',
   'Move the line up': 'نقل السطر لأعلى',
   'Move the line down': 'نقل السطر لأسفل',
@@ -1204,6 +1210,12 @@ export const ar: Dictionary = {
   'Export as PNG': 'تصدير كـ PNG',
   'Export as SVG': 'تصدير كـ SVG',
   'Export as PDF': 'تصدير كـ PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'استيراد PDF',
+  'Choose how to add the pages to the canvas.': 'اختر كيف تُضاف الصفحات إلى اللوحة.',
+  'Single page': 'صفحة واحدة',
+  'All pages': 'كل الصفحات',
+  'Choose a page': 'اختر صفحة',
   // The canvas: what its own keys are called
   'Delete what is picked': 'حذف المحدد',
   'Nudge left': 'دفع لليسار',
@@ -1264,8 +1276,8 @@ export const ar: Dictionary = {
   'Release channel': 'قناة الإصدار',
   Stable: 'مستقر',
   Unstable: 'غير مستقر',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'المستقر يتبع الإصدارات الرسمية، وغير المستقر كل دفعة إلى main وقد يتعطل.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'المستقر يتبع الإصدارات المنشورة، وغير المستقر يتبع بُنى الحافة وقد يتعطل.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'استيراد',
@@ -1899,16 +1911,6 @@ export const ar: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'المتصفح الافتراضي',
-  // The engine web tabs run on
-  Engine: 'المحرك',
-  Relaunch: 'إعادة التشغيل',
-  'Chromium did not start': 'لم يبدأ Chromium',
-  'No connection': 'لا يوجد اتصال',
-  'Not in this release': 'غير موجود في هذا الإصدار',
-  'Needs an update': 'يلزم تحديث',
-  'Signature did not match': 'التوقيع غير مطابق',
-  'Disk full': 'القرص ممتلئ',
-  'Could not be installed': 'تعذّر التثبيت',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'تراجع عن تعديلات {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

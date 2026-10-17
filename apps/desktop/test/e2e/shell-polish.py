@@ -690,7 +690,10 @@ def panel_ends(page: Page, label: str) -> None:
         check(False, f"[{label}] the panel has a foot to measure")
         return
 
-    check(len(foot["acts"]) == 2, f"[{label}] the foot holds the theme and the settings")
+    # The web app adds a third, the app to download (SidebarFoot.svelte), which the
+    # desktop app has no use for; the two every build has are the theme and Settings.
+    kept = [one["name"] for one in foot["acts"] if one["name"] != "Download the app"]
+    check(len(kept) == 2, f"[{label}] the foot holds the theme and the settings ({kept})")
     for one in foot["acts"]:
         check(
             abs(one["markX"]) <= SLACK and abs(one["markY"]) <= SLACK,
@@ -942,7 +945,7 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
             len(marked) == 1,
             f"[{label}] one note wears the mark and no other row does ({marked})",
         )
-        page.locator("aside").screenshot(path=str(SHOTS / f"tree-{label}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-{label}.png"))
         say(f"[{label}] wrote tree-{label}.png")
         for one in shared:
             check(

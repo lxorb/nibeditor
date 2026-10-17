@@ -19,10 +19,6 @@
 //! | a page on an origin nobody has open | `WebResourceRequested` answering `<origin>/__nib_restore` (`restore_view.rs`) | `loadHTMLString` | `load_html` |
 //! | the tab's sessionStorage | a script at the next document's start (`session.rs`) | written in, then a reload | the same |
 //!
-//! nib's own Chromium (the `cef` feature) is not here: its `DevTools` handle belongs to the
-//! runtime the binary links, which this crate never names (`engine.rs`), so a capture or
-//! restore there says so. The keys work on every desktop.
-//!
 //! The pieces, one file each: the bundle's shape (`bundle.rs`), the keys' arithmetic
 //! (`crypto.rs`) and their place in the keychain (`keys.rs`), the folders bundles sit in
 //! between the disk and the account (`folders.rs`), and the capture and the restore
@@ -33,32 +29,20 @@
 //! caller besides, as the terminal's do. No command hands out a private key or the web
 //! key: only a public key, a wrap for another computer, six digits and opaque names.
 
-// nib's own Chromium keeps only the keys; the rest is the system engines' for now.
-#[cfg_attr(feature = "cef", allow(dead_code))]
 mod bundle;
-#[cfg_attr(feature = "cef", allow(dead_code))]
 mod crypto;
-#[cfg_attr(feature = "cef", allow(dead_code))]
 mod folders;
 mod keys;
 
-#[cfg(not(feature = "cef"))]
 mod answer;
-#[cfg(not(feature = "cef"))]
 mod capture;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod cdp;
-#[cfg(not(feature = "cef"))]
 pub(crate) mod cookies;
-#[cfg(not(feature = "cef"))]
 mod isolated;
-#[cfg(not(feature = "cef"))]
 mod merge;
-#[cfg(not(feature = "cef"))]
 mod restore;
-#[cfg(not(feature = "cef"))]
 mod restore_view;
-#[cfg(not(feature = "cef"))]
 mod session;
 
 use std::path::PathBuf;
@@ -72,19 +56,17 @@ use tauri::{Manager as _, Webview};
 use keys::Keychain;
 
 /// The page's half of a capture; see scripts/dump.js.
-#[cfg(not(feature = "cef"))]
 const DUMP: &str = include_str!("web_state/scripts/dump.js");
 
 /// The page's half of a restore; see scripts/restore.js.
-#[cfg(not(feature = "cef"))]
 const RESTORE: &str = include_str!("web_state/scripts/restore.js");
 
 /// Which engine a bundle says it came out of.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 const ENGINE: &str = "webview2";
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[cfg(target_os = "macos")]
 const ENGINE: &str = "wkwebview";
-#[cfg(all(target_os = "linux", not(feature = "cef")))]
+#[cfg(target_os = "linux")]
 const ENGINE: &str = "webkitgtk";
 
 /// The one answer every caller that is not a window of ours gets.
@@ -145,7 +127,6 @@ fn web_key(vault: &Keychain) -> Result<crypto::WebKey, String> {
 /// which carries the databases of this run's last full one instead of reading them (see
 /// `Asked`). Answers the folder, the manifest's and every chunk's name and size, every
 /// chunk the manifest names, what it says as a digest, and what stayed behind.
-#[cfg(not(feature = "cef"))]
 #[tauri::command]
 pub async fn web_state_capture(
     webview: Webview,
@@ -184,7 +165,6 @@ pub async fn web_state_capture(
 /// `web_state_inbox` made, with its chunks beside it), sealed for this store and site.
 /// Answers what it did, the tab's sessionStorage for `web_state_session`, and what the
 /// app carried.
-#[cfg(not(feature = "cef"))]
 #[tauri::command]
 pub async fn web_state_restore(
     webview: Webview,
@@ -202,7 +182,6 @@ pub async fn web_state_restore(
 
 /// Seeds a tab's sessionStorage for `origin` and loads its page again so the site
 /// starts from it: what a restored web note's tab gets back.
-#[cfg(not(feature = "cef"))]
 #[tauri::command]
 pub async fn web_state_session(
     webview: Webview,
@@ -222,7 +201,6 @@ pub async fn web_state_session(
 /// The chunks a downloaded manifest names that its folder does not hold yet, which the
 /// window fetches next: only this computer can read the list, since the manifest is
 /// sealed.
-#[cfg(not(feature = "cef"))]
 #[tauri::command(async)]
 pub fn web_state_wants(
     webview: Webview,
@@ -240,7 +218,6 @@ pub fn web_state_wants(
 /// Folds the store `from` - a space's own, or one of its sites' - into the store every
 /// page shares: its cookies one by one, and the storage of each of `origins` the shared
 /// store holds none of. Leaves `from` as it was. See `web_state/merge.rs`.
-#[cfg(not(feature = "cef"))]
 #[tauri::command]
 pub async fn web_merge(
     webview: Webview,
@@ -274,48 +251,6 @@ pub async fn web_merge(
         _ => true,
     };
     merge::merge(&webview, from, &origins, from_used_last).await
-}
-
-/// See the system engine's `web_merge`. nib's own Chromium keeps every store as a
-/// profile of its own, which the system engines' hidden pages cannot reach; a space's
-/// logins there stay in its profile.
-#[cfg(feature = "cef")]
-#[tauri::command(async)]
-pub fn web_merge() -> Result<(), String> {
-    Err(NOT_HERE.to_owned())
-}
-
-/// What a capture and a restore say on nib's own Chromium, which has no door to them
-/// from this crate yet; see the top of this file.
-#[cfg(feature = "cef")]
-const NOT_HERE: &str = "web state cannot be carried on this engine yet";
-
-/// See the system engine's `web_state_capture`.
-#[cfg(feature = "cef")]
-#[tauri::command(async)]
-pub fn web_state_capture() -> Result<(), String> {
-    Err(NOT_HERE.to_owned())
-}
-
-/// See the system engine's `web_state_restore`.
-#[cfg(feature = "cef")]
-#[tauri::command(async)]
-pub fn web_state_restore() -> Result<(), String> {
-    Err(NOT_HERE.to_owned())
-}
-
-/// See the system engine's `web_state_session`.
-#[cfg(feature = "cef")]
-#[tauri::command(async)]
-pub fn web_state_session() -> Result<(), String> {
-    Err(NOT_HERE.to_owned())
-}
-
-/// See the system engine's `web_state_wants`.
-#[cfg(feature = "cef")]
-#[tauri::command(async)]
-pub fn web_state_wants() -> Result<(), String> {
-    Err(NOT_HERE.to_owned())
 }
 
 /// One file of a bundle, as bytes, for the window to upload: a capture's manifest or one

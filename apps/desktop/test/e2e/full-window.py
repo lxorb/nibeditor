@@ -89,12 +89,22 @@ LOOK = """
 }
 """
 
-# The arrangement, as it is written down: what must come back exactly.
+# The arrangement, as it is written down: what must come back exactly. The list as it is
+# drawn - its words, and the row that is on - rather than the size of its markup: the
+# sidebar is taken down while the window is filled and drawn afresh after, and a fresh
+# one differs in what nobody sees, the framework's empty anchors, the order of a row's
+# attributes and which row holds the keyboard's place, so its markup's length came
+# back a few dozen characters off on every run.
 LAYOUT = """
 () => JSON.stringify({
   frame: window.nibApp.workspace.panes.frame,
   panel: window.nibApp.workspace.panel,
-  aside: document.querySelector('aside')?.outerHTML.length ?? 0,
+  aside: (() => {
+    const list = document.querySelector('aside')
+    if (!list) return null
+    const on = [...list.querySelectorAll('[data-path].is-on')].map((one) => one.dataset.path)
+    return { words: list.innerText, on }
+  })(),
   strips: [...document.querySelectorAll('.tab .label')].map((one) => one.textContent.trim()),
 })
 """

@@ -129,7 +129,7 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
 
     # Full screen, and the way back out of it.
     page.evaluate(
-        "() => window.nibApp.fullscreen.toggle(window.nibApp.workspace.activeTabId)"
+        "() => window.nibApp.fullscreen.toggle(window.nibApp.workspace.panes)"
     )
     page.wait_for_timeout(500)
     shot(page, f"{name}-full")
@@ -156,7 +156,7 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
     page.wait_for_timeout(900)
     shot(page, f"{name}-canvas")
     page.evaluate(
-        "() => window.nibApp.fullscreen.toggle(window.nibApp.workspace.activeTabId)"
+        "() => window.nibApp.fullscreen.toggle(window.nibApp.workspace.panes)"
     )
     page.wait_for_timeout(700)
     shot(page, f"{name}-canvas-full")

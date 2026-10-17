@@ -32,6 +32,7 @@ import type {
 } from '@tauri-apps/api/menu'
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
+import { hiddenKinds } from './settings.svelte'
 import { i18n, t } from './i18n.svelte'
 import type { MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
@@ -149,6 +150,7 @@ function signature(context: MenuBarContext): unknown[] {
     present.available,
     account.user,
     viewport.touch,
+    hiddenKinds.shown.join(),
   ]
 }
 
@@ -171,10 +173,10 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
 
   return {
     opening: [
-      entryRow('app.new', context),
+      ...(hiddenKinds.offers('note') ? [entryRow('app.new', context)] : []),
       entryRow('app.new-kind', context, { label: t('New tab') }),
       entryRow('app.new-window', context),
-      entryRow('app.new-private', context),
+      ...(hiddenKinds.offers('private') ? [entryRow('app.new-private', context)] : []),
     ],
     closing: [
       entryRow('app.close', context, { disabled: !open }),

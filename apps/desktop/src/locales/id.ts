@@ -21,6 +21,11 @@ export const id: Dictionary = {
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
+  // Settings: note types
+  'Page note': 'Catatan halaman',
+  'Web note': 'Catatan web',
+  'Private tab': 'Tab pribadi',
+  'Note types': 'Jenis catatan',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sebelumnya',
   // Tasks: projects placed in the panel, and their folder
@@ -982,6 +987,7 @@ export const id: Dictionary = {
   Comment: 'Komentar',
   'Always on top': 'Selalu di atas',
   'What is new': 'Apa yang baru',
+  'Download the app': 'Unduh aplikasinya',
   'Report an issue': 'Laporkan masalah',
   'Move the line up': 'Pindahkan baris ke atas',
   'Move the line down': 'Pindahkan baris ke bawah',
@@ -1158,6 +1164,12 @@ export const id: Dictionary = {
   'Export as PNG': 'Ekspor sebagai PNG',
   'Export as SVG': 'Ekspor sebagai SVG',
   'Export as PDF': 'Ekspor sebagai PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Impor PDF',
+  'Choose how to add the pages to the canvas.': 'Pilih cara menambahkan halaman ke kanvas.',
+  'Single page': 'Satu halaman',
+  'All pages': 'Semua halaman',
+  'Choose a page': 'Pilih halaman',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Hapus yang dipilih',
   'Nudge left': 'Dorong ke kiri',
@@ -1218,8 +1230,8 @@ export const id: Dictionary = {
   'Release channel': 'Saluran rilis',
   Stable: 'Stabil',
   Unstable: 'Tidak stabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil mengikuti rilis resmi, Tidak stabil mengikuti setiap dorongan ke main dan bisa rusak.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil mengikuti versi yang dirilis, Tidak stabil mengikuti build edge dan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',
@@ -1801,16 +1813,6 @@ export const id: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Orden as the default browser
   'Default browser': 'Peramban bawaan',
-  // The engine web tabs run on
-  Engine: 'Mesin',
-  Relaunch: 'Luncurkan ulang',
-  'Chromium did not start': 'Chromium tidak dapat dimulai',
-  'No connection': 'Tidak ada koneksi',
-  'Not in this release': 'Tidak ada di rilis ini',
-  'Needs an update': 'Perlu pembaruan',
-  'Signature did not match': 'Tanda tangan tidak cocok',
-  'Disk full': 'Disk penuh',
-  'Could not be installed': 'Tidak dapat dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Urungkan suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

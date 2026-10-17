@@ -21,6 +21,11 @@ export const sw: Dictionary = {
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
+  // Settings: note types
+  'Page note': 'Dokezo la kurasa',
+  'Web note': 'Dokezo la wavuti',
+  'Private tab': 'Kichupo cha faragha',
+  'Note types': 'Aina za madokezo',
   // Tasks: Upcoming's weeks
   'Previous week': 'Wiki iliyopita',
   // Tasks: projects placed in the panel, and their folder
@@ -990,6 +995,7 @@ export const sw: Dictionary = {
   Comment: 'Maoni',
   'Always on top': 'Juu kila wakati',
   'What is new': 'Mapya',
+  'Download the app': 'Pakua programu',
   'Report an issue': 'Ripoti tatizo',
   'Move the line up': 'Panda mstari juu',
   'Move the line down': 'Shusha mstari chini',
@@ -1167,6 +1173,12 @@ export const sw: Dictionary = {
   'Export as PNG': 'Toa kama PNG',
   'Export as SVG': 'Toa kama SVG',
   'Export as PDF': 'Toa kama PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Ingiza PDF',
+  'Choose how to add the pages to the canvas.': 'Chagua jinsi ya kuongeza kurasa kwenye turubai.',
+  'Single page': 'Ukurasa mmoja',
+  'All pages': 'Kurasa zote',
+  'Choose a page': 'Chagua ukurasa',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Futa kilichoteuliwa',
   'Nudge left': 'Sukuma kushoto',
@@ -1227,8 +1239,8 @@ export const sw: Dictionary = {
   'Release channel': 'Njia ya matoleo',
   Stable: 'Imara',
   Unstable: 'Isiyo imara',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Imara hufuata matoleo rasmi, Isiyo imara hufuata kila usukumo kwenye main na inaweza kuvunjika.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Imara hufuata matoleo yaliyotolewa, Isiyo imara hufuata builds za edge na inaweza kuvunjika.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Ingiza',
@@ -1829,16 +1841,6 @@ export const sw: Dictionary = {
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
   // Orden as the default browser
   'Default browser': 'Kivinjari chaguomsingi',
-  // The engine web tabs run on
-  Engine: 'Injini',
-  Relaunch: 'Zindua upya',
-  'Chromium did not start': 'Chromium haikuanza',
-  'No connection': 'Hakuna muunganisho',
-  'Not in this release': 'Haipo katika toleo hili',
-  'Needs an update': 'Inahitaji sasisho',
-  'Signature did not match': 'Sahihi hailingani',
-  'Disk full': 'Diski imejaa',
-  'Could not be installed': 'Imeshindwa kusakinishwa',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Tendua mabadiliko ya {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

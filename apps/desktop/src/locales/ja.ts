@@ -21,6 +21,11 @@ export const ja: Dictionary = {
   'Import from Zen': 'Zen から読み込む',
   'Containers stay in Zen': 'コンテナは Zen に残ります',
   'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
+  // Settings: note types
+  'Page note': 'ページノート',
+  'Web note': 'ウェブノート',
+  'Private tab': 'プライベート タブ',
+  'Note types': 'ノートの種類',
   // Tasks: Upcoming's weeks
   'Previous week': '前の週',
   // Tasks: projects placed in the panel, and their folder
@@ -981,6 +986,7 @@ export const ja: Dictionary = {
   Comment: 'コメント',
   'Always on top': '常に手前に表示',
   'What is new': '更新情報',
+  'Download the app': 'アプリをダウンロード',
   'Report an issue': '問題を報告',
   'Move the line up': '行を上へ移動',
   'Move the line down': '行を下へ移動',
@@ -1157,6 +1163,12 @@ export const ja: Dictionary = {
   'Export as PNG': 'PNG で書き出す',
   'Export as SVG': 'SVG で書き出す',
   'Export as PDF': 'PDF で書き出す',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF をインポート',
+  'Choose how to add the pages to the canvas.': 'ページをキャンバスにどう追加するか選びます。',
+  'Single page': '1 ページだけ',
+  'All pages': 'すべてのページ',
+  'Choose a page': 'ページを選ぶ',
   // The canvas: what its own keys are called
   'Delete what is picked': '選択したものを削除',
   'Nudge left': '左へ少し動かす',
@@ -1217,8 +1229,8 @@ export const ja: Dictionary = {
   'Release channel': 'リリースチャンネル',
   Stable: '安定版',
   Unstable: '不安定版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '安定版は公式リリースを、不安定版は main への毎回のプッシュを追うので壊れることがあります。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '安定版は公開されたバージョンを、不安定版はエッジビルドを追うので壊れることがあります。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'インポート',
@@ -1798,16 +1810,6 @@ export const ja: Dictionary = {
   'Paste {count} lines?': '{count} 行を貼り付けますか？',
   // Orden as the default browser
   'Default browser': '既定のブラウザ',
-  // The engine web tabs run on
-  Engine: 'エンジン',
-  Relaunch: '再起動',
-  'Chromium did not start': 'Chromium を起動できませんでした',
-  'No connection': '接続がありません',
-  'Not in this release': 'このリリースにはありません',
-  'Needs an update': 'アップデートが必要です',
-  'Signature did not match': '署名が一致しません',
-  'Disk full': 'ディスクがいっぱいです',
-  'Could not be installed': 'インストールできませんでした',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} の編集を元に戻す',
   // The archive: a row put away and taken back, and what refuses to delete it

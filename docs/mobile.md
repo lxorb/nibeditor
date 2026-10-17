@@ -25,7 +25,7 @@ shows the colour the app is about to paint rather than a white flash.
 
 ## What is built, and where it goes
 
-`.github/workflows/publish-mobile.yml`, on every push to main and on every tag
+`.github/workflows/publish-mobile.yml`, on every push to unstable and on every tag
 `v*`, the way `release.yml` builds the desktop.
 
 - **Android**, on `ubuntu-latest`: `tauri android build --apk` for
@@ -37,7 +37,7 @@ shows the colour the app is about to paint rather than a white flash.
   the part that could break is still built.
 
 A tag puts all of them on that version's own release, beside the desktop
-installers. A build of main goes on a rolling pre-release called `mobile-edge`,
+installers. A build of unstable goes on a rolling pre-release called `mobile-edge`,
 not the desktop's `edge`, because `release.yml` deletes and remakes that one on
 every push and would take an APK uploaded beside it with it.
 
@@ -52,7 +52,7 @@ every push and would take an APK uploaded beside it with it.
    under Settings, Apps.
 3. Play Protect will say it does not recognise the app. Install anyway.
 
-Every build of main is signed with a key the workflow generates for that run, so
+Every build of unstable is signed with a key the workflow generates for that run, so
 Android sees each one as a different app and refuses to install it over the last.
 Uninstall the old one first, or add the release keystore below, after which every
 build replaces the one before it. The version code comes from the version number

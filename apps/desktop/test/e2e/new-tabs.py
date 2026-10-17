@@ -319,15 +319,22 @@ def chooser(page) -> None:
     else:
         say("the plus               -> a new tab, no menu")
 
-    # A press on a card is the same as its letter: a web note makes a fresh new tab in
-    # this one's place, the address field taking the keyboard again.
+    # A press on a card is the same as its letter: a web note lands on the search
+    # engine this device chose, in this new tab's place, as a browser's new tab does.
+    # Emil, #354; see the web row in new-kinds.ts. It used to make a fresh new tab, the
+    # same card again, which was a press that answered nothing.
     page.locator('[data-new-here] .kind:has-text("New web note")').first.click()
-    page.wait_for_timeout(400)
+    settles(page, f"() => window.nibApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab")
     state = page.evaluate(STATE)
-    if len(state["tabs"]) != before + 1 or not page.evaluate(NEW_TAB)["typing"]:
-        wrong(f"a web note chosen on a new tab was not a new tab in its place: {state['tabs']}")
+    address = page.evaluate("() => window.nibApp.workspace.active?.address ?? ''")
+    if (
+        len(state["tabs"]) != before + 1
+        or page.evaluate(NEW_TAB)["newTab"]
+        or not address.startswith(("https://", "http://"))
+    ):
+        wrong(f"a web note chosen on a new tab did not open the search engine in its place: {address!r} {state['tabs']}")
     else:
-        say("New web note pressed   -> a new tab in its place")
+        say(f"New web note pressed   -> {address}, in its place")
     page.keyboard.press("Control+KeyW")
     page.wait_for_timeout(300)
 

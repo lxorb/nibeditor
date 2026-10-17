@@ -7,6 +7,10 @@ name: mac-update
 on:
   workflow_dispatch:
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - scripts/mac-update-check.sh
       - .github/workflows/mac-update.yml
@@ -28,6 +32,8 @@ jobs:
   # updates and offers the same version on every launch (measured here 2026-10-13,
   # 0.12.0 against 0.13.0). The move below is the answer to that one.
   update:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
       matrix:
@@ -61,6 +67,8 @@ jobs:
   # is stuck, moves itself into Applications, and comes back from there. Its own
   # identifier, and the updater pointed nowhere; see scripts/mac-move-check.sh.
   move:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: macos-latest
     timeout-minutes: 60
     steps:

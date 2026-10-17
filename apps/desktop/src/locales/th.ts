@@ -21,6 +21,11 @@ export const th: Dictionary = {
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
+  // Settings: note types
+  'Page note': 'โน้ตแบบหน้า',
+  'Web note': 'โน้ตเว็บ',
+  'Private tab': 'แท็บส่วนตัว',
+  'Note types': 'ประเภทโน้ต',
   // Tasks: Upcoming's weeks
   'Previous week': 'สัปดาห์ก่อนหน้า',
   // Tasks: projects placed in the panel, and their folder
@@ -974,6 +979,7 @@ export const th: Dictionary = {
   Comment: 'ความคิดเห็น',
   'Always on top': 'อยู่บนสุดเสมอ',
   'What is new': 'มีอะไรใหม่',
+  'Download the app': 'ดาวน์โหลดแอป',
   'Report an issue': 'แจ้งปัญหา',
   'Move the line up': 'ย้ายบรรทัดขึ้น',
   'Move the line down': 'ย้ายบรรทัดลง',
@@ -1146,6 +1152,12 @@ export const th: Dictionary = {
   'Export as PNG': 'ส่งออกเป็น PNG',
   'Export as SVG': 'ส่งออกเป็น SVG',
   'Export as PDF': 'ส่งออกเป็น PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'นำเข้า PDF',
+  'Choose how to add the pages to the canvas.': 'เลือกวิธีเพิ่มหน้าลงบนแคนวาส',
+  'Single page': 'หน้าเดียว',
+  'All pages': 'ทุกหน้า',
+  'Choose a page': 'เลือกหน้า',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ลบสิ่งที่เลือก',
   'Nudge left': 'ขยับซ้าย',
@@ -1206,8 +1218,8 @@ export const th: Dictionary = {
   'Release channel': 'ช่องทางอัปเดต',
   Stable: 'เสถียร',
   Unstable: 'ไม่เสถียร',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'เสถียรตามรุ่นที่ปล่อยจริง ไม่เสถียรตามทุกการพุชเข้า main และอาจเสีย',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'เสถียรตามรุ่นที่ปล่อยแล้ว ไม่เสถียรตามบิลด์ edge และอาจเสีย',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'นำเข้า',
@@ -1771,16 +1783,6 @@ export const th: Dictionary = {
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
   // Orden as the default browser
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
-  // The engine web tabs run on
-  Engine: 'เอนจิน',
-  Relaunch: 'เปิดใหม่',
-  'Chromium did not start': 'Chromium ไม่เริ่มทำงาน',
-  'No connection': 'ไม่มีการเชื่อมต่อ',
-  'Not in this release': 'ไม่มีในรุ่นนี้',
-  'Needs an update': 'ต้องอัปเดต',
-  'Signature did not match': 'ลายเซ็นไม่ตรงกัน',
-  'Disk full': 'ดิสก์เต็ม',
-  'Could not be installed': 'ติดตั้งไม่ได้',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'เลิกทำการแก้ไขของ {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

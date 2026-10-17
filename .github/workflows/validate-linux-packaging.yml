@@ -1,8 +1,9 @@
 name: validate-linux-packaging
 
 # Everything under packaging/ that targets Linux, built the way the package
-# managers themselves build it: makepkg in an Arch container, flatpak-builder
-# and flatpak-builder-lint against the Flathub runtime, and snapcraft in LXD.
+# managers themselves build it: makepkg in an Arch container and snapcraft in LXD.
+# Not Flathub, which Orden is not published on; its manifest under
+# packaging/flathub is kept for reference and built by nothing here.
 # Run by hand, because it only matters when a release moves. Nix has a workflow
 # of its own, nix.yml, which runs on every change to the flake.
 on:
@@ -94,7 +95,7 @@ jobs:
           file x/usr/bin/nib
           objdump -p x/usr/bin/nib | grep NEEDED
 
-      - name: What the AppImage bundles, in case Flathub cannot use the .deb
+      - name: What the AppImage bundles
         run: |
           for name in Orden Nib; do
             curl -fsSL -o Nib.AppImage \
@@ -111,7 +112,7 @@ jobs:
         run: |
           desktop-file-validate packaging/aur/nib-bin/nib.desktop
           desktop-file-validate packaging/nix/orden.desktop
-          desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
+          desktop-file-validate packaging/flathub/so.orden.Orden.desktop
 
   aur:
     runs-on: ubuntu-latest
@@ -185,130 +186,6 @@ jobs:
           path: out/SRCINFO
           if-no-files-found: warn
 
-  # The only package here built from source rather than from the release .deb,
-  # because Flathub requires it. The whole Cargo and npm trees are vendored, so
-  # this row compiles the app inside the sandbox with no network at all.
-  flatpak:
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-
-      # A from-source build wants the runtime, the SDK, the vendored crates and
-      # a release target directory all at once. Not /opt/hostedtoolcache: it is
-      # millions of small files and deleting it costs more than it frees.
-      - name: Room on the disk
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-            /usr/local/share/boost || true
-          df -h /
-
-      - name: flatpak, appstream and the Flathub builder
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak appstream desktop-file-utils dbus xvfb
-          # Ubuntu 24.04 blocks unprivileged user namespaces, which bubblewrap
-          # needs; the Flathub builder cannot run a build without it.
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y --noninteractive flathub org.flatpak.Builder
-
-      - name: AppStream and desktop entry on their own
-        run: |
-          appstreamcli validate --explain packaging/flathub/ch.emilvinu.nib.metainfo.xml
-          desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
-
-      - name: flatpak-builder-lint on the manifest and the metainfo
-        run: |
-          flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest \
-            packaging/flathub/ch.emilvinu.nib.yml
-          flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream \
-            packaging/flathub/ch.emilvinu.nib.metainfo.xml
-
-      # A copy on the host as well as the one the builder installs for
-      # itself, so the next step can look inside the runtime's own files.
-      - name: The runtime the manifest asks for
-        run: flatpak install --user -y --noninteractive flathub org.gnome.Platform//50 org.gnome.Sdk//50
-
-      # The builder runs in a sandbox with a flatpak installation of its
-      # own, invisible to the host, so it has to install the runtime again
-      # for itself - which it cannot do without a session bus to ask.
-      # `--sandbox` is what makes this the real test: no network and no host
-      # filesystem while the crates and the npm packages are compiled.
-      - name: Build, the way Flathub builds it
-        working-directory: packaging/flathub
-        run: >-
-          dbus-run-session -- flatpak run org.flatpak.Builder --force-clean --sandbox --user
-          --install-deps-from=flathub
-          --mirror-screenshots-url=https://dl.flathub.org/media/
-          --repo=repo builddir ch.emilvinu.nib.yml
-
-      - name: Install it out of the repo it just wrote
-        run: |
-          flatpak remote-add --user --no-gpg-verify nib-local packaging/flathub/repo
-          flatpak install --user -y --noninteractive nib-local ch.emilvinu.nib
-
-      - name: Does the runtime carry webkit2gtk-4.1 at all
-        run: |
-          echo "::group::org.gnome.Platform libraries matching webkit/javascriptcore/soup"
-          find ~/.local/share/flatpak/runtime/org.gnome.Platform -maxdepth 8 \
-            \( -name '*webkit*' -o -name '*javascriptcore*' -o -name 'libsoup*' \) -printf '%p\n' | sort
-          echo "::endgroup::"
-          # The real gate: every library the binary asks for has to resolve
-          # inside the sandbox.
-          flatpak run --devel --command=ldd ch.emilvinu.nib /app/bin/nib | tee ldd.txt
-          if grep -q 'not found' ldd.txt; then
-            echo "::error::unresolved libraries in the sandbox"
-            grep 'not found' ldd.txt
-            exit 1
-          fi
-          echo 'every library resolves'
-
-      # Orden has no --version to ask, so this is a launch: what matters is that
-      # the app the sandbox built comes up and stays up.
-      - name: It starts and stays up
-        run: |
-          xvfb-run -a flatpak run ch.emilvinu.nib > nib.log 2>&1 &
-          running=$!
-          sleep 30
-          if kill -0 "$running" 2>/dev/null; then
-            echo 'still running after 30s'
-            kill "$running" || true
-          else
-            echo "::error::the app exited on its own"
-            cat nib.log
-            exit 1
-          fi
-          cat nib.log
-          ! grep -qiE "could not start|error while loading shared libraries" nib.log
-
-      - name: What the build made of the screenshot
-        working-directory: packaging/flathub
-        run: |
-          find builddir/files/share/app-info -type f | sort
-          du -sh builddir/files/share/app-info
-          for f in builddir/files/share/app-info/xmls/*; do
-            echo "::group::$f"
-            zcat "$f" 2>/dev/null || cat "$f"
-            echo "::endgroup::"
-          done
-
-      - name: flatpak-builder-lint on the built repo
-        working-directory: packaging/flathub
-        run: |
-          flatpak run --command=flatpak-builder-lint org.flatpak.Builder repo repo > lint.json || true
-          cat lint.json
-          # Everything the catalogue needs is in it - the screenshot is
-          # fetched and scaled, the icons are cached and remote - but the
-          # paths stay relative to media_baseurl until Flathub's own build
-          # service rewrites them absolute. The linter skips both mirror
-          # checks inside that pipeline; outside it they are the only two
-          # errors allowed to fire.
-          jq -r '.errors[]?' lint.json
-          jq -e '(.errors // []) - ["appstream-external-screenshot-url", "appstream-remote-icon-not-mirrored"] | length == 0' lint.json
-
   snap:
     permissions:
       contents: read
@@ -331,6 +208,17 @@ jobs:
           unsquashfs -l gnome-platform.snap | grep -E "libwebkit2gtk-4[.]1|libjavascriptcoregtk-4[.]1|libsoup-3" | tee webkit.txt
           grep -q "libwebkit2gtk-4[.]1[.]so[.]0$" webkit.txt
           echo "webkit2gtk-4.1 comes from the platform snap"
+
+      # snapcraft reads one checksum line, amd64's as committed; the arm64 row takes
+      # the arm64 digest the file keeps beside it. See packaging/linux.md.
+      - name: This architecture's checksum
+        if: matrix.arch == 'arm64'
+        working-directory: packaging/snap
+        run: |
+          own=$(sed -nE 's/^ *# *on arm64: (sha256\/[0-9a-f]{64})$/\1/p' snapcraft.yaml)
+          [ -n "$own" ] || { echo "::error::snapcraft.yaml keeps no arm64 digest"; exit 1; }
+          sed -i -E "s|^( *source-checksum: ).*|\1$own|" snapcraft.yaml
+          grep -n 'source-checksum' snapcraft.yaml
 
       - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1.3.0
         id: build

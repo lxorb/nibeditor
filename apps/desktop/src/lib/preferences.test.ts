@@ -107,6 +107,33 @@ describe('the Markdown pane', () => {
   })
 })
 
+describe('the Note types pane', () => {
+  /** One switch per kind this device has, under the line the new tab draws it in, each
+   *  wearing its mark; and the last one on cannot be turned off. */
+  test('switches each kind, in its line', () => {
+    const kinds = preferences().find((one) => one.id === 'kinds')
+    expect(kinds?.groups.map((group) => group.title)).toEqual(['Notes', 'Terminal', 'Web'])
+    expect(kinds?.groups.flatMap((group) => group.fields.map((one) => one.label))).toEqual([
+      'Note',
+      'Canvas',
+      'Page note',
+      'Online terminal',
+      'Web note',
+    ])
+    expect(kinds && resettable(kinds)).toBe(true)
+
+    const fields = kinds?.groups.flatMap((group) => group.fields) ?? []
+    for (const one of fields) expect(one.icon).toBeDefined()
+    const [last, ...rest] = [...fields].reverse()
+    for (const one of rest) if (one.kind === 'switch') one.set(false)
+
+    expect(last?.kind === 'switch' && last.get()).toBe(true)
+    expect(last?.kind === 'switch' && last.locked?.()).toBe(true)
+    for (const one of rest) if (one.kind === 'switch') one.set(true)
+    expect(last?.kind === 'switch' && last.locked?.()).toBe(false)
+  })
+})
+
 describe('the Appearance pane', () => {
   test('chooses the theme with a dropdown, the built-in first', () => {
     const one = field('appearance', 'Style')
@@ -270,8 +297,14 @@ describe('the release channel', () => {
     const hint = row().hint ?? ''
 
     readsAsOneSentence(hint, 'Release channel')
-    // The sentence is the whole warning: it names what unstable follows.
-    expect(hint).toContain('main')
+    // The sentence is the whole warning, so it has to do three things: name both
+    // streams, since the two words in the control are all a reader has, and say
+    // which of them can break. What Unstable follows is the edge build, not a
+    // branch: it is built from unstable, and this used to pin the word `main`
+    // back when that was where it came from.
+    expect(hint).toContain('Stable')
+    expect(hint).toContain('Unstable')
+    expect(hint).toContain('break')
   })
 
   test('is a group of its own under General, where the app itself is set up', () => {

@@ -237,8 +237,8 @@ def tab(name: str) -> str:
 
 def tooltips(page: Page) -> None:
     say("the tooltips")
-    keyed(page, "header .toggle", "Hide sidebar", "Ctrl+Shift+L")
-    keyed(page, ".tabs .new", "New", "Ctrl+T")
+    keyed(page, "header .toggle", "Hide left sidebar", "Ctrl+Shift+L")
+    keyed(page, ".tabs .new", "New tab", "Ctrl+T")
     keyed(page, ".tab.active .shut", "Close", "Ctrl+W")
     keyed(page, '[data-region="panels"] [role="tab"]', "Files", "Ctrl+Shift+E")
     keyed(page, '.foot button[aria-label="Settings"]', "Settings", "Ctrl+,")
@@ -247,10 +247,10 @@ def tooltips(page: Page) -> None:
     # the brackets with it.
     page.evaluate("() => window.nibApp.shortcuts.set('app.sidebar', 'Mod-Alt-j')")
     page.wait_for_timeout(60)
-    keyed(page, "header .toggle", "Hide sidebar", "Ctrl+Alt+J")
+    keyed(page, "header .toggle", "Hide left sidebar", "Ctrl+Alt+J")
     page.evaluate("() => window.nibApp.shortcuts.set('app.sidebar', null)")
     page.wait_for_timeout(60)
-    if title(page, "header .toggle") != "Hide sidebar":
+    if title(page, "header .toggle") != "Hide left sidebar":
         wrong("a key taken away still shows in the sidebar toggle's tooltip")
     page.evaluate("() => window.nibApp.shortcuts.reset('app.sidebar')")
 

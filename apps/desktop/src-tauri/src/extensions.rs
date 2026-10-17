@@ -1,25 +1,22 @@
-//! Chrome and Edge extensions in web tabs, on both engines.
+//! Chrome and Edge extensions in web tabs, on `WebView2`.
 //!
-//! Emil, 2026-10-03: extensions on `WebView2` and on nib's own Chromium, installed from a
-//! Chrome Web Store or Edge Add-ons link or from the store's own page in a tab, kept in
-//! the app's own folder, updated through the stores' own update service, with a button in
-//! the web bar, the popup in a bubble, the options page as a tab and a list in Settings.
+//! Emil, 2026-10-03: extensions installed from a Chrome Web Store or Edge Add-ons link or
+//! from the store's own page in a tab, kept in the app's own folder, updated through the
+//! stores' own update service, with a button in the web bar, the popup in a bubble, the
+//! options page as a tab and a list in Settings.
 //!
-//! **Who installs depends on the engine, and nothing else does.** `WebView2` installs
-//! nothing from a store - its API takes an unpacked folder - so on it nib installs: the
-//! file fetched from the store's update service (fetch.rs), checked the way Chromium
-//! checks it (crx.rs), unpacked into `<config>/extensions` (library.rs), handed to every
-//! store's profile (webview2.rs), and updated the same way. nib's own Chromium installs
-//! from the store for itself and refuses a host the one door to install a folder, so there
-//! the store's own button installs and the list is the engine's (chromium.rs). Everything
-//! the reader sees is the same on both: the button and its icons in the web bar
-//! (lib/web-tab/ExtensionButtons.svelte), the popup in a bubble (popup.rs), the options
-//! page as a tab, the rows in Settings.
+//! **nib installs.** `WebView2` installs nothing from a store - its API takes an unpacked
+//! folder - so nib does: the file fetched from the store's update service (fetch.rs),
+//! checked the way Chromium checks it (crx.rs), unpacked into `<config>/extensions`
+//! (library.rs), handed to every store's profile (webview2.rs), and updated the same way.
+//! The reader sees the button and its icons in the web bar
+//! (lib/web-tab/ExtensionButtons.svelte), the popup in a bubble (popup.rs), the options page
+//! as a tab, the rows in Settings.
 //!
 //! **Where they run.** Every store a reader's tab can be in: the shared one, a space's, a
-//! site's. Never nib's own interface, which is a separate data folder on `WebView2` and a
-//! separate profile on Chromium (engine.rs). And never an agent's own store, which is
-//! built with extensions off at the engine; see `in_store`.
+//! site's. Never nib's own interface, which is a separate data folder (engine.rs). And
+//! never an agent's own store, which is built with extensions off at the engine; see
+//! `in_store`.
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -28,21 +25,15 @@ use std::sync::{LazyLock, Mutex, PoisonError, RwLock};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter as _, Url};
 
-// What nib installs itself, which on nib's own Chromium the store does; see chromium.rs.
-#[cfg(not(feature = "cef"))]
 mod crx;
-#[cfg(not(feature = "cef"))]
 mod fetch;
 pub mod library;
 pub mod link;
 mod manifest;
 pub mod popup;
-#[cfg(not(feature = "cef"))]
 mod unzip;
 
-#[cfg(feature = "cef")]
-mod chromium;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub mod webview2;
 
 use library::Kept;
@@ -64,7 +55,7 @@ static PROBLEMS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
 /// Writes down why an extension did not load.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(dead_code, reason = "only what nib hands WebView2 can fail to load")
 )]
 fn went_wrong(id: &str, why: &str) {
@@ -75,7 +66,7 @@ fn went_wrong(id: &str, why: &str) {
 
 /// An extension that loaded has nothing wrong with it any more.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(dead_code, reason = "only what nib hands WebView2 can fail to load")
 )]
 fn went_right(id: &str) {
@@ -85,9 +76,9 @@ fn went_right(id: &str) {
         .retain(|(one, _)| one != id);
 }
 
-/// Whether this build's engine runs extensions at all: `WebView2` and nib's Chromium.
-/// A Mac's and Linux's own engines have no extension API.
-pub const SUPPORTED: bool = cfg!(any(feature = "cef", windows));
+/// Whether this build's engine runs extensions at all: `WebView2`. A Mac's and Linux's
+/// own engines have no extension API.
+pub const SUPPORTED: bool = cfg!(windows);
 
 /// The folder extensions live in, made if it is not there.
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
@@ -98,11 +89,8 @@ pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
 
 /// Whether a store's pages run extensions: every store but an agent's own.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(
-        dead_code,
-        reason = "an environment option of WebView2's; nib's own Chromium keeps agents' stores apart by profile"
-    )
+    not(windows),
+    allow(dead_code, reason = "an environment option of WebView2's")
 )]
 pub fn in_store(store: Option<&str>) -> bool {
     SUPPORTED && !store.is_some_and(|name| name.starts_with("agent_"))
@@ -119,8 +107,7 @@ pub fn ours(url: &Url) -> bool {
         })
 }
 
-/// The list as written down: on `WebView2`, what nib installed; on nib's own Chromium,
-/// the pins the reader set, the list itself being the engine's (`listed`).
+/// The list as written down: what nib installed.
 pub fn kept(app: &AppHandle) -> Vec<Kept> {
     root(app)
         .map(|root| library::read(&root))
@@ -128,23 +115,8 @@ pub fn kept(app: &AppHandle) -> Vec<Kept> {
 }
 
 /// What is installed, each with the folder it is unpacked in, and the ids remembered for
-/// `ours`. From a thread that is not the window's: on Chromium the engine is asked.
+/// `ours`. From a thread that is not the window's.
 fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
-    #[cfg(feature = "cef")]
-    let list: Vec<(Kept, PathBuf)> = {
-        let pins = kept(app);
-        chromium::installed(app)
-            .into_iter()
-            .map(|(mut one, folder)| {
-                one.pinned = pins
-                    .iter()
-                    .find(|pin| pin.id == one.id)
-                    .is_none_or(|pin| pin.pinned);
-                (one, folder)
-            })
-            .collect()
-    };
-    #[cfg(not(feature = "cef"))]
     let list: Vec<(Kept, PathBuf)> = match root(app) {
         Ok(root) => library::read(&root)
             .into_iter()
@@ -217,7 +189,7 @@ fn picture(folder: &Path, path: &str) -> Option<String> {
 /// Tells the window the list changed, and every `WebView2` store what it now holds.
 fn changed(app: &AppHandle) {
     let _ = app.emit(CHANGED, ());
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     webview2::apply(app);
 }
 
@@ -237,24 +209,11 @@ pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
     .map_err(|error| error.to_string())
 }
 
-/// What an install came to: the extension, installed - or, on nib's own Chromium, the
-/// store's own page, where the store's own button installs it.
+/// What an install came to: the extension, installed.
 #[derive(Serialize)]
 #[serde(untagged)]
 pub enum Done {
-    #[cfg_attr(
-        feature = "cef",
-        allow(dead_code, reason = "nib's own Chromium installs through the store")
-    )]
     Installed(Box<Shown>),
-    #[cfg_attr(
-        not(feature = "cef"),
-        allow(
-            dead_code,
-            reason = "only nib's own Chromium sends the reader to the store"
-        )
-    )]
-    Store { store: String },
 }
 
 /// Installs the extension a store link or an id names, or updates it if it is there.
@@ -264,24 +223,13 @@ pub async fn extensions_install(app: AppHandle, link: String) -> Result<Done, St
         return Err("this engine runs no extensions".into());
     }
     let (store, id) = link::named(&link).ok_or("that is not a link to an extension")?;
-    #[cfg(feature = "cef")]
-    {
-        let _ = app;
-        Ok(Done::Store {
-            store: link::page_of(store, &id),
-        })
-    }
-    #[cfg(not(feature = "cef"))]
-    {
-        let bytes = fetch::crx(store, &id).await?;
-        installed(app, store, id, bytes)
-            .await
-            .map(|one| Done::Installed(Box::new(one)))
-    }
+    let bytes = fetch::crx(store, &id).await?;
+    installed(app, store, id, bytes)
+        .await
+        .map(|one| Done::Installed(Box::new(one)))
 }
 
 /// Unpacks a fetched file, puts it on the list and hands it to the engines.
-#[cfg(not(feature = "cef"))]
 async fn installed(
     app: AppHandle,
     store: Store,
@@ -332,11 +280,6 @@ pub async fn extensions_set(
 ) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
-        // nib's own Chromium keeps whether one is on itself, and loses nothing it stored.
-        #[cfg(feature = "cef")]
-        if let Some(on) = enabled {
-            chromium::enable(&app, &id, on)?;
-        }
         {
             let _writing = WRITING.lock().unwrap_or_else(PoisonError::into_inner);
             let mut list = kept(&app);
@@ -370,8 +313,6 @@ pub async fn extensions_set(
 pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
-        #[cfg(feature = "cef")]
-        chromium::remove(&app, &id)?;
         {
             let _writing = WRITING.lock().unwrap_or_else(PoisonError::into_inner);
             let mut list = kept(&app);
@@ -387,37 +328,28 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
 }
 
 /// Looks for a newer version of every extension, and installs what it finds. Answers how
-/// many moved. The window asks every few hours, never at the launch. nib's own Chromium
-/// updates what its store installed itself.
+/// many moved. The window asks every few hours, never at the launch.
 #[tauri::command]
 pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
-    #[cfg(feature = "cef")]
-    {
-        let _ = app;
-        Ok(0)
+    if !SUPPORTED {
+        return Ok(0);
     }
-    #[cfg(not(feature = "cef"))]
-    {
-        if !SUPPORTED {
-            return Ok(0);
+    let mut moved = 0;
+    for one in kept(&app) {
+        let Ok(Some((_, file))) = fetch::newer(one.store, &one.id, &one.version).await else {
+            continue;
+        };
+        let Ok(bytes) = fetch::download(&file).await else {
+            continue;
+        };
+        if installed(app.clone(), one.store, one.id.clone(), bytes)
+            .await
+            .is_ok()
+        {
+            moved += 1;
         }
-        let mut moved = 0;
-        for one in kept(&app) {
-            let Ok(Some((_, file))) = fetch::newer(one.store, &one.id, &one.version).await else {
-                continue;
-            };
-            let Ok(bytes) = fetch::download(&file).await else {
-                continue;
-            };
-            if installed(app.clone(), one.store, one.id.clone(), bytes)
-                .await
-                .is_ok()
-            {
-                moved += 1;
-            }
-        }
-        Ok(moved)
     }
+    Ok(moved)
 }
 
 /// The address of an extension's popup or options page, for the window to open.
@@ -441,11 +373,10 @@ fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
 }
 
 /// The store's own page a tab is on, if it is an extension's: `(store, id)`, so the bar
-/// can offer Add there. Never on nib's own Chromium, where the store's own button
-/// installs.
+/// can offer Add there.
 #[tauri::command]
 pub fn extensions_named(link: String) -> Option<(Store, String)> {
-    if !SUPPORTED || cfg!(feature = "cef") {
+    if !SUPPORTED {
         return None;
     }
     link::named(&link).filter(|_| link.contains("://"))
@@ -454,7 +385,7 @@ pub fn extensions_named(link: String) -> Option<(Store, String)> {
 /// Folders nothing on the list names any more, and versions an update left behind. Once
 /// a run, after the first store has been handed its extensions, so no engine still has a
 /// folder it is being taken away from.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub fn tidy(app: &AppHandle) {
     let Ok(root) = root(app) else {
         return;

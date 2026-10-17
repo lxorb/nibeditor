@@ -50,8 +50,11 @@ import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { folderOf, insideSpace, relativeTo } from '../space-paths'
+import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
+import { pdfjs } from '../pdf/document'
+import { PDF_TO_CSS } from '../pdf/pages'
 
 /** How far a nudge moves a card: one pixel with a bare arrow key, one grid step
  *  with Shift, which is the pair every drawing program has. */
@@ -278,13 +281,118 @@ export const run = {
     if (!stored) return
 
     const root = workspace.activeSpace?.root
-    const relative = root && !stored.startsWith('http') ? relativeTo(root, stored) : stored
+    const relative =
+      root && notePath && !stored.startsWith('http')
+        ? spaceRelative(root, notePath, stored)
+        : stored
+    if (!relative) return
     const size = ownSize('picture')
     // A box says exactly where and how big; a point is a paste or a drop, which is
     // centred on it at the size a picture starts at.
     const box = 'width' in where ? where : placedAt(where, size.width, size.height)
 
     putFile(store, relative, box)
+  },
+
+  /** A PDF dropped on the plane: choose one page or lay every page out in order.
+   *  Each imported sheet becomes a picture, so it can be moved and resized like
+   *  any other image on the canvas. */
+  async dropPdf(store: CanvasStore, file: File, at: Point, notePath: string | null) {
+    if (!notePath) return
+    const mode = await prompt.choose({
+      title: t('Import PDF'),
+      detail: t('Choose how to add the pages to the canvas.'),
+      options: [
+        { id: 'single', label: t('Single page'), primary: true },
+        { id: 'all', label: t('All pages') },
+      ],
+    })
+    if (!mode) return
+
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const library = await pdfjs()
+    const task = library.getDocument({ data: bytes })
+    const doc = await task.promise
+    let pages: number[]
+    if (mode === 'single') {
+      const selected =
+        doc.numPages === 1
+          ? '1'
+          : await prompt.find({
+              title: t('Choose a page'),
+              placeholder: t('Search'),
+              options: Array.from({ length: doc.numPages }, (_, index) => ({
+                id: String(index + 1),
+                label: `${t('Page')} ${index + 1}`,
+              })),
+            })
+      if (!selected) {
+        await task.destroy().catch(() => undefined)
+        return
+      }
+      pages = [Number(selected)]
+    } else {
+      pages = Array.from({ length: doc.numPages }, (_, index) => index + 1)
+    }
+
+    const root = workspace.activeSpace?.root
+    if (!root) {
+      await task.destroy().catch(() => undefined)
+      return
+    }
+
+    try {
+      let next = store.canvas
+      const ids: string[] = []
+      let y = at.y
+      for (const number of pages) {
+        const page = await doc.getPage(number)
+        const natural = page.getViewport({ scale: PDF_TO_CSS })
+        const area = natural.width * natural.height * 4
+        const scale = area > 16 * 1024 * 1024 ? 2 * Math.sqrt((16 * 1024 * 1024) / area) : 2
+        const viewport = page.getViewport({ scale: PDF_TO_CSS * scale })
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(viewport.width))
+        canvas.height = Math.max(1, Math.round(viewport.height))
+        const context = canvas.getContext('2d')
+        if (!context) {
+          page.cleanup()
+          continue
+        }
+        await page.render({ canvas, canvasContext: context, viewport }).promise
+        page.cleanup()
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, 'image/png'),
+        )
+        if (!blob) continue
+
+        const image = new File([blob], `${file.name.replace(/\.pdf$/i, '')}-page-${number}.png`, {
+          type: 'image/png',
+        })
+        const stored = await storeImage(image, notePath)
+        if (!stored) continue
+        const relative = stored.startsWith('http') ? stored : spaceRelative(root, notePath, stored)
+        if (!relative) continue
+
+        const width = Math.round(natural.width)
+        const height = Math.round(natural.height)
+        const box =
+          mode === 'single'
+            ? placedAt(at, width, height)
+            : placedAt({ x: at.x, y: y + height / 2 }, width, height)
+        const id = freshId()
+        next = withNode(next, { ...box, id, type: 'file', file: relative })
+        ids.push(id)
+        y += height + GRID
+      }
+
+      if (ids.length) {
+        store.edit(next)
+        store.pickAll(ids)
+      }
+    } finally {
+      await task.destroy().catch(() => undefined)
+    }
   },
 
   /** What a double click means, wherever it landed. */

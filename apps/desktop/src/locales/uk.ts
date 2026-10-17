@@ -21,6 +21,11 @@ export const uk: Dictionary = {
   'Import from Zen': 'Імпорт з Zen',
   'Containers stay in Zen': 'Контейнери залишаються в Zen',
   'Zen’s tabs could not be read.': 'Не вдалося прочитати вкладки Zen.',
+  // Settings: note types
+  'Page note': 'Нотатка зі сторінками',
+  'Web note': 'Вебнотатка',
+  'Private tab': 'Приватна вкладка',
+  'Note types': 'Типи нотаток',
   // Tasks: Upcoming's weeks
   'Previous week': 'Попередній тиждень',
   // Tasks: projects placed in the panel, and their folder
@@ -1019,6 +1024,7 @@ export const uk: Dictionary = {
   Comment: 'Коментар',
   'Always on top': 'Поверх усіх вікон',
   'What is new': 'Що нового',
+  'Download the app': 'Завантажити застосунок',
   'Report an issue': 'Повідомити про проблему',
   'Move the line up': 'Перемістити рядок вище',
   'Move the line down': 'Перемістити рядок нижче',
@@ -1195,6 +1201,12 @@ export const uk: Dictionary = {
   'Export as PNG': 'Експорт у PNG',
   'Export as SVG': 'Експорт у SVG',
   'Export as PDF': 'Експорт у PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Імпорт PDF',
+  'Choose how to add the pages to the canvas.': 'Виберіть, як додати сторінки на полотно.',
+  'Single page': 'Одна сторінка',
+  'All pages': 'Усі сторінки',
+  'Choose a page': 'Вибрати сторінку',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Видалити вибране',
   'Nudge left': 'Зсунути ліворуч',
@@ -1255,8 +1267,8 @@ export const uk: Dictionary = {
   'Release channel': 'Канал випусків',
   Stable: 'Стабільний',
   Unstable: 'Нестабільний',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Стабільний слідує офіційним випускам, нестабільний - кожному пушу в main і може ламатися.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Стабільний слідує випущеним версіям, нестабільний - збіркам edge і може ламатися.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Імпорт',
@@ -1872,16 +1884,6 @@ export const uk: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Браузер за умовчанням',
-  // The engine web tabs run on
-  Engine: 'Рушій',
-  Relaunch: 'Перезапустити',
-  'Chromium did not start': 'Chromium не запустився',
-  'No connection': 'Немає з’єднання',
-  'Not in this release': 'Немає в цьому випуску',
-  'Needs an update': 'Потрібне оновлення',
-  'Signature did not match': 'Підпис не збігається',
-  'Disk full': 'Диск заповнений',
-  'Could not be installed': 'Не вдалося встановити',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Скасувати правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

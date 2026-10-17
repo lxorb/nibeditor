@@ -1,5 +1,6 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@nib/editor'
 import { account } from './account.svelte'
+import { hiddenKinds } from './settings.svelte'
 import { arriving } from './arriving.svelte'
 import {
   blockIds,
@@ -107,7 +108,7 @@ import { log } from './log'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
-import { readWebFile } from './web-tab/shortcut'
+import { apartOf, readWebFile } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 
@@ -272,6 +273,9 @@ function worthReopening(tab: Tab): boolean {
 }
 
 class Workspace {
+  /** PDF tabs from older sessions are converted to page notes on restore. Keep
+   *  concurrent opens of the same paper from creating the sidecar twice. */
+  private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
   /** The space's listing. Raw, because it is only ever replaced whole - every edit
@@ -300,6 +304,8 @@ class Workspace {
   /** A tab over a web note made a web tab with no file at `keeper`'s page. */
   asUnsaved(tab: Tab, keeper: Tab) {
     const url = pages.addressOf(keeper.id) ?? keeper.address ?? this.webAddressOf(keeper)
+    // On the note's web data still, or the page it was on would be signed out of.
+    tab.apart = apartOf(keeper)
     tab.note = this.document({
       kind: 'web',
       path: null,
@@ -867,7 +873,22 @@ class Workspace {
 
       for (const written of drafts) {
         // Spelled as the listing spells it, whatever the sitting wrote down.
-        const draft = written.path ? { ...written, path: this.spelled(written.path) } : written
+        let draft = written.path ? { ...written, path: this.spelled(written.path) } : written
+
+        // Older sessions kept PDFs in their own viewer tabs. Their paper now has
+        // the same page note a fresh open creates, so restore that note in place.
+        if (draft.kind === 'pdf' && draft.path) {
+          if (!(await this.opens(draft.path))) {
+            made.push(null)
+            continue
+          }
+          const path = await this.pageNoteForPdf(draft.path)
+          if (!path) {
+            made.push(null)
+            continue
+          }
+          draft = { ...draft, kind: 'pages', path, name: nameOf(path), dirty: false, doc: '' }
+        }
 
         // Never a tab: an older nib's goes, its unwritten words written first.
         if (isScratchpad(draft.path)) {
@@ -964,6 +985,7 @@ class Workspace {
     tab.page = draft.page
     tab.zoom = draft.zoom
     tab.address = draft.address
+    tab.apart = draft.apart ?? null
     return tab
   }
 
@@ -1152,6 +1174,7 @@ class Workspace {
       ...(tab.page === undefined ? {} : { page: tab.page }),
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
       ...(tab.address === undefined ? {} : { address: tab.address }),
+      ...(tab.path === null && tab.apart !== null ? { apart: tab.apart } : {}),
       ...(tab.path === null && tab.note.home !== null ? { space: tab.note.home } : {}),
     }
   }
@@ -1510,11 +1533,12 @@ class Workspace {
    *  #213: *"it should show the same view as when pressed Ctrl + D with the only
    *  difference being that the navbar at the top where you can enter a url is still
    *  there"*. Where there is no web tab to make - a phone, the glasses' plugin - it is
-   *  Ctrl+D's view itself. See WebTab.svelte and NewHere.svelte. */
+   *  Ctrl+D's view itself, as where Settings turned web notes off. See WebTab.svelte and
+   *  NewHere.svelte. */
   newTab(paneId: string = this.panes.focusedId) {
     this.focusPane(paneId)
-    if (__EVEN_PLUGIN__ || viewport.device === 'phone') this.deselect(paneId)
-    else this.openWebsite()
+    if (hiddenKinds.offers('web')) this.openWebsite()
+    else this.deselect(paneId)
   }
 
   /** A kind was chosen on a new tab's page: the tab it makes next takes that tab's
@@ -1645,40 +1669,67 @@ class Workspace {
     this.persist()
   }
 
-  /** A PDF in the space, in a tab of its own. One tab per PDF per pane, the way
-   *  the graph is one: asking for a paper that is already open brings it forward
-   *  and, when a link named a page, turns to it.
-   *
-   *  `page` counts from one, and null means wherever the tab was left. */
-  openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
-    // Not in the glasses' plugin, which has no viewer to draw one: a link or a search
-    // hit asks here directly rather than through `openerFor`. See `pdfSurface`.
+  /** A PDF opens as its page note: the paper supplies the pages, and the page
+   *  note is the only surface used to read or write on them. `page` counts from
+   *  one, and null means wherever the page note was left. */
+  async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
+    // The glasses' plugin has no page surface. Links and search hits use this too,
+    // rather than going through `openerFor`.
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
-    const paneId = this.panes.focusedId
-    const existing = this.tabs.find((tab) => tab.kind === 'pdf' && samePath(tab.path, path))
+    const pageNote = await this.pageNoteForPdf(path)
+    if (!pageNote) return
+    await this.openPages(pageNote, page, how)
+  }
 
-    if (existing) {
-      if (how.activate !== false) this.activeTabId = existing.id
-      if (!how.preview) this.keep(existing.id)
-      if (page !== null) this.gotoPage = { path, page }
-    } else {
-      const file = this.document({
-        kind: 'pdf',
-        path,
-        name: nameOf(path),
-        text: '',
-        dirty: false,
-      })
-      const tab = new Tab(file, paneId)
-      if (page !== null) tab.page = page
-      this.arrive(tab, how)
-    }
+  /** The companion page note for a PDF, created on first open. Every page keeps
+   *  the original paper as its background; no raster copy or second viewer is
+   *  involved. */
+  private pageNoteForPdf(asked: string): Promise<string | null> {
+    const path = this.spelled(asked)
+    const pagePath = path.replace(/\.pdf$/i, '.pages')
+    const existing = this.pdfPageNotes.get(pagePath)
+    if (existing) return existing
 
-    if (how.activate !== false) this.showNote()
-    this.remember(path)
-    this.persist()
+    const making = (async () => {
+      // A sidecar already on disk is the page note the reader last worked on.
+      if (this.files.some((one) => samePath(one.path, pagePath))) return pagePath
+      const there = await invoke<string>('read_note', { path: pagePath }).catch(() => null)
+      if (there !== null) return pagePath
+
+      try {
+        const [{ openDocument }, { PDF_TO_CSS }, { pagesFromPdf }, { writeCanvas }] =
+          await Promise.all([
+            import('./pdf/document'),
+            import('./pdf/pages'),
+            import('@nib/markdown/pages'),
+            import('@nib/markdown/canvas'),
+          ])
+        const paper = await openDocument(path)
+        const sizes: { width: number; height: number }[] = []
+        try {
+          for (let number = 1; number <= paper.doc.numPages; number += 1) {
+            const page = await paper.doc.getPage(number)
+            const view = page.getViewport({ scale: PDF_TO_CSS })
+            sizes.push({ width: Math.round(view.width), height: Math.round(view.height) })
+            page.cleanup()
+          }
+        } finally {
+          await paper.close().catch(() => undefined)
+        }
+
+        await writeFile(pagePath, writeCanvas(pagesFromPdf(nameOf(path), sizes)))
+        void this.loadTree()
+        return pagePath
+      } catch (error) {
+        log('error', `open PDF as page note: ${path} - ${String(error)}`)
+        return null
+      }
+    })()
+    this.pdfPageNotes.set(pagePath, making)
+    void making.finally(() => this.pdfPageNotes.delete(pagePath))
+    return making
   }
 
   /** A canvas in the space, in a tab of its own. One tab per canvas, the way the
@@ -1871,6 +1922,12 @@ class Workspace {
   private async openSite(opening: string, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path: opening }).catch(() => null)
     const said = readWebFile(opening, text)
+    // Gone, or a `.webloc` that would not read or says no address - a binary plist,
+    // say. This app never writes one, so it is not an empty shortcut waiting for its
+    // address: it says so the way a canvas that will not read does, and opens nothing.
+    if (said === null && /\.webloc$/i.test(opening.trim())) {
+      return unread(opening).then(() => null)
+    }
 
     // A shortcut with no address yet opens in a tab, for its bar; a phone has none.
     if (!isDesktop && (said || viewport.device === 'phone')) {
@@ -1988,6 +2045,8 @@ class Workspace {
     // A link out of a private tab opens privately, as one out of a private window does.
     tab.inPrivate = from?.inPrivate === true
     page.inPrivate = tab.inPrivate
+    // And in its web data, as a link out of a Firefox container stays in the container.
+    tab.apart = from ? apartOf(from) : null
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {
@@ -2254,7 +2313,7 @@ class Workspace {
       case null:
         return
       case 'pdf':
-        this.openPdf(path, null, options)
+        await this.openPdf(path, null, options)
         return
       case 'web':
         await this.openWeb(path, options)
@@ -4032,7 +4091,7 @@ class Workspace {
     // A PDF, a canvas and a page note are files: a link to one the space does not
     // hold is a link to nothing, never a reason to make a note under that name.
     if (isPdfTarget(jump.target)) {
-      if (jump.path) this.openPdf(insideSpace(root, jump.path), jump.page, how)
+      if (jump.path) await this.openPdf(insideSpace(root, jump.path), jump.page, how)
       return
     }
 

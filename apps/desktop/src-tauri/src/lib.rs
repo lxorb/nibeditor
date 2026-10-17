@@ -90,8 +90,6 @@ mod endpoint;
 #[cfg(desktop)]
 mod engine;
 #[cfg(desktop)]
-mod engine_switch;
-#[cfg(desktop)]
 mod extensions;
 #[cfg(desktop)]
 mod foreground;
@@ -123,6 +121,8 @@ mod lifecycle;
 #[cfg(target_os = "macos")]
 mod lights;
 mod links;
+#[cfg(target_os = "linux")]
+mod linux;
 mod logs;
 mod matcher;
 // `nib mcp`, the server an agent's client runs; main.rs hands it the process before
@@ -161,6 +161,8 @@ mod regex;
 // reminders.rs and docs/tasks.md 5.10. A phone's are the activity's.
 #[cfg(desktop)]
 mod reminders;
+#[cfg(desktop)]
+mod retired_engine;
 mod search;
 #[cfg(any(desktop, target_os = "ios"))]
 mod secrets;
@@ -177,6 +179,9 @@ mod tasks;
 #[cfg(desktop)]
 mod terminal;
 mod themes;
+// The window's top edge, offering a resize only where the window can be resized; see top_edge.rs.
+#[cfg(desktop)]
+mod top_edge;
 #[cfg(desktop)]
 mod touchpad;
 mod trace;
@@ -193,7 +198,7 @@ mod web_answers;
 // on a Mac.
 #[cfg(desktop)]
 mod web_clear;
-#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+#[cfg(any(windows, target_os = "macos"))]
 mod web_cookies;
 #[cfg(desktop)]
 mod web_cut;
@@ -211,6 +216,8 @@ mod web_icons;
 mod web_keys;
 #[cfg(desktop)]
 mod web_opens;
+#[cfg(target_os = "linux")]
+mod web_overlay;
 #[cfg(desktop)]
 mod web_page;
 #[cfg(desktop)]
@@ -229,7 +236,7 @@ mod web_tabs;
 mod web_tint;
 // Only where a page's input window is a window of another process: the system's own
 // engine on Windows.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
@@ -408,11 +415,6 @@ macro_rules! desktop_commands {
             ahead::remember_launch,
             default_browser::default_browser,
             default_browser::make_default_browser,
-            engine_switch::engine_state,
-            engine_switch::engine_choose,
-            engine_switch::engine_relaunch,
-            engine_switch::fetch::engine_fetch,
-            engine_switch::fetch::engine_cancel,
             lifecycle::keep_running,
             lifecycle::quit_confirmed,
             lifecycle::quit_others,
@@ -538,73 +540,31 @@ mod entry {
     }
 }
 
-/// Which runtime every type in this crate is written against.
-///
-/// On the app that ships it is Tauri's own `Wry`, compiled in, and a bare
-/// `AppHandle` or `Webview` means that - which is why nothing else in the crate
-/// names a runtime at all. On nib's own Chromium the engine is chosen by the binary
-/// rather than compiled in, so the type is Tauri's type-erased one and a bare
-/// `AppHandle` means that instead. Every other signature in the crate is unchanged
-/// either way, which is what makes one seam enough; see src/engine.rs.
-#[cfg(not(feature = "cef"))]
+/// Which runtime every type in this crate is written against: Tauri's own `Wry`, on the
+/// system's engine, and a bare `AppHandle` or `Webview` means that - which is why
+/// nothing else in the crate names a runtime at all. See src/engine.rs.
 pub type Engine = tauri::Wry;
 
-/// Which runtime every type in this crate is written against: the type-erased one,
-/// because the engine arrives from the binary. See above.
-#[cfg(feature = "cef")]
-pub type Engine = tauri::DynRuntime;
-
-/// Starts the app on the engine this build ships with: the system's own, which is
-/// what `tauri::Builder::default` gives - `WebView2` on Windows, `WKWebView` on a
+/// Starts the app on the system's own engine, which is what `tauri::Builder::default`
+/// gives - `WebView2` on Windows, `WKWebView` on a
 /// Mac, `WebKitGTK` on Linux. Returns when the last window has closed.
 pub fn run() {
     run_on(tauri::Builder::default());
 }
 
-/// What a process nib's own Chromium starts beside the app - its GPU process, a
-/// utility - does first: hold every window it makes off the screen, where the run is a
-/// probe's. See foreground.rs.
-#[cfg(desktop)]
-pub fn hold_helper() {
-    foreground::hold_helper();
-}
-
-/// Whether nib's own Chromium should start able to make agents' pages, which have no
-/// window (off-screen rendering): only where an agent is paired, since the switch is the
-/// whole process's. `config` is the app's own settings folder. See
-/// agents/engines/cef.rs.
-#[cfg(feature = "cef")]
-#[must_use]
-pub fn agent_pages_wanted(config: &std::path::Path) -> bool {
-    agents::engines::cef::windowless_wanted(config)
-}
-
-/// Chromium's own swipe between pages, which nib's own Chromium starts without so that
-/// only nib's runs: the feature to disable, and the switch to append with its value. See
-/// `src/engine.rs` and `web_swipe.rs`.
-#[cfg(feature = "cef")]
-pub const ENGINE_SWIPE: (&str, &str, &str) = engine::ENGINE_SWIPE;
-
-/// Starts the app on an engine the binary chose, and exits with a message if the app
-/// could not be built at all.
-///
-/// One seam, for one reason: `apps/desktop/src-tauri/cef` is a binary that links
-/// Chromium through `tauri-runtime-cef` and hands the engine in here already
-/// configured, so nib's own interface and every web tab are views in one browser
-/// process. The engine is never named in this crate, which is what keeps three
-/// hundred megabytes of Chromium out of the default build's dependency graph
-/// entirely. See src/engine.rs and docs/browser.md.
+/// Starts the app on `builder`, and exits with a message if the app could not be built
+/// at all.
 pub fn run_on(builder: tauri::Builder<Engine>) {
+    // WebKitGTK's accelerated compositing can flash between the app's rendered frame and
+    // an empty surface on Wayland. Choose its software compositing path before any
+    // WebKitGTK view is created; an explicit environment setting still takes precedence.
+    #[cfg(target_os = "linux")]
+    linux::prepare_rendering();
+
     // Before everything, because a copy under the old folder's name renames it and
     // starts again from there rather than going on; see bundle_name.rs.
     #[cfg(target_os = "macos")]
     bundle_name::carry_over();
-
-    // Before the trace, because the gate's clock is the process's and a measurement
-    // that starts late is a measurement that flatters. Nothing at all in the default
-    // build: the module is behind the `cef` feature.
-    #[cfg(feature = "cef")]
-    engine::gate::begin();
 
     // First, so that the one step nothing inside the process can time - the
     // machine loading the binary before any of this ran - is on the trace as well;
@@ -628,28 +588,13 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             reason = "a phone has no window in the config to take out of it"
         )
     )]
-    #[cfg(not(feature = "cef"))]
     let mut context = tauri::generate_context!();
-    // The engine build compiles this file from a package of its own one folder down,
-    // and the config it is built from is the app's; see cef/Cargo.toml.
-    #[cfg(feature = "cef")]
-    let mut context = tauri::generate_context!("../tauri.conf.json");
 
     // A second launch is handed to the nib already running, or - where that one has
     // stopped answering - asks whether to end it, rather than waiting on it for ever; see
-    // handover.rs. Before the engine is chosen, because ending a frozen nib frees the
-    // lock the choice is made under.
-    //
-    // Then which engine this launch belongs to, before anything of either engine starts:
-    // the other build takes the launch over where it is the one chosen. See
-    // engine_switch.rs.
+    // handover.rs.
     #[cfg(desktop)]
-    if handover::handed_over(&context.config().identifier)
-        || engine_switch::handed_over(
-            &context.config().identifier,
-            &context.package_info().version.to_string(),
-        )
-    {
+    if handover::handed_over(&context.config().identifier) {
         return;
     }
     #[cfg(desktop)]
@@ -671,39 +616,14 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // lifecycle.rs.
     #[cfg(desktop)]
     let builder = lifecycle::managed(builder);
-    // What fetching nib's own Chromium keeps while it runs; see engine_switch.rs.
-    #[cfg(desktop)]
-    let builder = engine_switch::managed(builder);
     #[cfg(desktop)]
     trace::mark("plugins: updater, dialog, process, one instance");
 
-    // The opener is how a link leaves the app anywhere, and the os plugin is how
-    // the window knows which build it is running as.
-    //
-    // Without the script the opener puts in every webview by default, a web tab's
-    // included. That script takes a Ctrl+click, a Shift+click and a `target="_blank"`
-    // link away from the page and asks the opener to hand the link to the system
-    // browser, which a site is never granted: so in a web tab those presses did
-    // nothing at all, the commonest link on the web among them. Emil, 2026-09-30:
-    // *"Ctrl + click to open a new web page doesn't work."* A page's links open the
-    // way a browser opens them, and the engine asks this app for the window; see
-    // web_opens.rs. The app's own links are pressed through its own code, and each
-    // one says where it goes; see open-link.ts.
-    //
     // Deep links come after single instance above, which is the order that plugin
     // asks for: on Windows and Linux a `nib://` link reaching an app that is
     // already open arrives as a second launch, and single instance is what hands
     // it over to be read as a link. See uris.rs.
-    let builder = builder
-        .plugin(
-            tauri_plugin_opener::Builder::new()
-                .open_js_links_on_click(false)
-                .build(),
-        )
-        .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_deep_link::init())
-        .manage(Picked::default())
-        .manage(uris::Pending::default());
+    let builder = links_out_and_in(builder);
     trace::mark("plugins: opener, os, deep link");
 
     // Sync's store and the watch on the space folders: two empty slots, filled when the
@@ -757,24 +677,16 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     trace::mark("commands registered");
 
     // The window is taken out of the config on every desktop, and built by `ready`
-    // instead. Two reasons, one per engine, and the config still says what the window
-    // looks like either way; see engine.rs.
-    //
-    // On nib's own Chromium, because the interface needs a profile of its own and a
-    // profile is asked for when a webview is built. On the system's, because a window
-    // the runtime builds is built around its webview - so there is nothing on screen
-    // until the webview runtime has started, which on Windows is between a third and
-    // half of a launch with the screen empty for all of it. Built here, the window is up
-    // in about twenty milliseconds and the webview starts behind it. See ground.rs.
+    // instead, and the config still says what the window looks like; see engine.rs. A
+    // window the runtime builds is built around its webview - so there is nothing on
+    // screen until the webview runtime has started, which on Windows is between a third
+    // and half of a launch with the screen empty for all of it. Built here, the window is
+    // up in about twenty milliseconds and the webview starts behind it. See ground.rs.
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
     #[cfg(desktop)]
-    let builder = builder.setup(move |app| {
-        #[cfg(feature = "cef")]
-        engine::gate::say("\"event\":\"cef-initialised\"");
-        ready(app, ui.as_ref())
-    });
+    let builder = builder.setup(move |app| ready(app, ui.as_ref()));
     #[cfg(not(desktop))]
     let builder = builder.setup(|app| ready(app, None));
 
@@ -785,6 +697,33 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             std::process::exit(1);
         })
         .run(on_event);
+}
+
+/// The plugins every build has, the phone's too: the opener, which is how a link leaves
+/// the app anywhere, the os plugin, which is how the window knows which build it is
+/// running as, and deep links; with the paths the reader picked in a dialog of the
+/// system's (`Picked`) and the links the app was launched by (`uris::Pending`).
+///
+/// Without the script the opener puts in every webview by default, a web tab's
+/// included. That script takes a Ctrl+click, a Shift+click and a `target="_blank"`
+/// link away from the page and asks the opener to hand the link to the system
+/// browser, which a site is never granted: so in a web tab those presses did
+/// nothing at all, the commonest link on the web among them. Emil, 2026-09-30:
+/// *"Ctrl + click to open a new web page doesn't work."* A page's links open the
+/// way a browser opens them, and the engine asks this app for the window; see
+/// `web_opens.rs`. The app's own links are pressed through its own code, and each
+/// one says where it goes; see open-link.ts.
+fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    builder
+        .plugin(
+            tauri_plugin_opener::Builder::new()
+                .open_js_links_on_click(false)
+                .build(),
+        )
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_deep_link::init())
+        .manage(Picked::default())
+        .manage(uris::Pending::default())
 }
 
 /// The window's commands, each saying by name while it runs on the window's thread what
@@ -819,10 +758,6 @@ fn hearing(handle: &tauri::AppHandle) {
     // What the window's own page may be given: the microphone the moment somebody
     // presses Record, and nothing else; see `hearing` in web_tabs.rs.
     web_tabs::hearing(handle);
-    // The browser's own chords in a web tab's page, which nib's own Chromium keeps from the
-    // page and the app alike; see web_keys.rs.
-    #[cfg(all(windows, feature = "cef"))]
-    web_keys::chromium::start(handle);
     // The fingers on a precision touchpad, which a swipe waits for; see touchpad.rs.
     #[cfg(windows)]
     touchpad::start(handle);
@@ -950,6 +885,7 @@ fn ready(
             // Started by nothing but a reminder's Done: answered without a window on
             // screen, from the tray; see reminders.rs.
             let window = building.visible(false).build()?;
+            top_edge::mind(&window.as_ref().window());
             stall::watch_page(handle, window.as_ref(), "the window's");
         } else {
             let colour = ground::remembered(handle);
@@ -959,6 +895,7 @@ fn ready(
                 None => building,
             };
             let window = building.visible(at_once).build()?;
+            top_edge::mind(&window.as_ref().window());
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
@@ -995,10 +932,9 @@ fn ready(
     if web_first {
         web_tabs::warm(handle);
     }
-    // nib's own Chromium got as far as its window, so the next launch hands over to it
-    // again; see engine_switch.rs.
+    // What nib's own Chromium left behind, once the window is up; see retired_engine.rs.
     #[cfg(desktop)]
-    engine_switch::window_shown(handle);
+    retired_engine::clear_leftovers(handle);
     // Written here as well as when the window reports in, so a launch that never
     // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);
@@ -1007,15 +943,6 @@ fn ready(
     // its own after the window; see `kept_listed`.
     #[cfg(desktop)]
     kept_listed(handle);
-
-    // And, on a build that is being measured rather than used, the gate: it opens a
-    // web tab and the engine's own pages, says what each cost and quits. Off unless
-    // NIB_CEF_GATE says otherwise, and not in the default build at all.
-    #[cfg(feature = "cef")]
-    {
-        engine::gate::say("\"event\":\"window-shown\"");
-        engine::gate::start(handle);
-    }
 
     Ok(())
 }
@@ -1049,17 +976,9 @@ fn watched(handle: &tauri::AppHandle) {
 }
 
 /// The app's own folder, `src-tauri`, for a test that reads a file beside the crate.
-///
-/// Not always the manifest's folder: the engine build compiles this library from a
-/// package one folder down (cef/Cargo.toml), and its tests read the same files.
 #[cfg(test)]
 pub(crate) fn app_dir() -> std::path::PathBuf {
-    let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    if cfg!(feature = "cef") {
-        manifest.join("..")
-    } else {
-        manifest.to_path_buf()
-    }
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
 }
 
 #[cfg(test)]

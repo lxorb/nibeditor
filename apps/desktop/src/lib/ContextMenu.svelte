@@ -234,8 +234,11 @@
   }
 </script>
 
+<!-- A press past the menu shuts it, and the press that opened it does not: a menu whose
+     rows had to be asked for opens while that press is still on its way here, so the
+     press is read against the moment the menu opened. See `shutBy` in menu.svelte.ts. -->
 <svelte:window
-  onclick={() => menu.hide()}
+  onclick={(event: MouseEvent) => menu.shutBy(event)}
   onblur={() => menu.hide()}
   onresize={() => menu.hide()}
 />

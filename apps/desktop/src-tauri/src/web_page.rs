@@ -37,11 +37,11 @@ use serde::Serialize;
 use tauri::AppHandle;
 
 /// The event the window hears on.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 const SAID: &str = "nib://web-page";
 
 /// What the engine said about one page.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(tag = "said", rename_all = "lowercase")]
 pub enum Said {
@@ -63,7 +63,7 @@ pub enum Said {
 /// on the connection, so plain http is worth trying for an address the bar gave
 /// `https:` (web-tab/upgrade.ts); the certificate was wrong, which is shown and never
 /// stepped round; or anything else.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Failure {
@@ -73,7 +73,7 @@ pub enum Failure {
 }
 
 /// One of those, with the tab it is about.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Serialize)]
 struct Heard {
     tab: String,
@@ -83,21 +83,21 @@ struct Heard {
 
 /// Whether a key gives the screen back from a page holding it: Escape or F11, pressed
 /// rather than let go of, and nothing held with it.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn leaves(vk: u32, down: bool) -> bool {
     down && matches!(vk, 0x1B | 0x7A)
 }
 
 /// What a page is told when its sound is turned off or on, on an engine that cannot
 /// mute a page itself: every media element in it, as it is now.
-#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 const QUIET: &str =
     "document.querySelectorAll('audio, video').forEach(function (one) { one.muted = __MUTED__ })";
 
 /// Draws a tab's page at a hundred per cent, for Ctrl+0 pressed inside it that nothing
 /// in the page took, and tells the window, which forgets the site's size: a zoom the app
 /// sets is one the engine says nothing about. See the top of this file.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
     use tauri::Emitter;
 
@@ -128,10 +128,10 @@ pub fn web_unfill(app: AppHandle, tab: String) -> Result<(), String> {
         .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub use heard::{holds_screen, listen, mute};
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod heard {
     use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Emitter, Webview};
@@ -396,14 +396,14 @@ mod heard {
 }
 
 /// Tells a page's media elements to be quiet, or not.
-#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 fn quieted(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     view.eval(QUIET.replace("__MUTED__", if muted { "true" } else { "false" }))
         .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
 /// Every other engine says nothing about a page; see the top of this file.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: AppHandle,
@@ -413,23 +413,9 @@ pub fn listen(
 }
 
 /// Every other engine mutes what the page is playing now.
-#[cfg(all(not(windows), not(feature = "cef")))]
+#[cfg(not(windows))]
 pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     quieted(view, muted)
-}
-
-/// nib's own Chromium mutes the page the way Chrome's tab strip does: the browser's own
-/// sound off, whatever the page plays next, and nothing said to the page.
-#[cfg(feature = "cef")]
-pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
-    use cef::{ImplBrowser as _, ImplBrowserHost as _};
-    use tauri_runtime_cef::WebviewCefExt as _;
-    view.with_cef_webview(move |page| {
-        if let Some(host) = page.browser().host() {
-            host.set_audio_muted(i32::from(muted));
-        }
-    })
-    .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
 #[cfg(test)]
@@ -482,7 +468,7 @@ mod tests {
     }
 }
 
-#[cfg(all(test, windows, not(feature = "cef")))]
+#[cfg(all(test, windows))]
 mod arrivals {
     use super::heard::failure_of;
     use super::Failure;

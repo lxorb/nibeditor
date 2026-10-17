@@ -2,10 +2,12 @@
 
 What it proves, in order:
 
-- the scratchpad: its glyph is in the sidebar's foot; Ctrl+Shift+X opens it as a tab,
-  lit on the glyph, and what is typed into it is written down and there again after a
-  reload; the key again goes back to the tab before it; the Search panel finds its
-  words from the space; its glyph has no menu (issue #231), so no Move to space;
+- the scratchpad: its glyph is at the end of the bar; Ctrl+Shift+X shows its card, lit
+  on the glyph, and what is typed into it is written down and there again after a
+  reload; the key takes the keyboard into it and then puts it away; the Search panel
+  finds its words from the space; its glyph has no menu (issue #231), so no Move to
+  space. A card rather than a tab since 18255b29; scratchpad.py holds the card itself,
+  in both schemes;
 - the quick question: with no provider, Ctrl twice says the one line and links to
   Settings > AI; with the fake provider, Ctrl twice over a selection opens the field
   with the selection as its chip, Enter streams the answer in place and the request
@@ -64,6 +66,9 @@ async () => {
 }
 """
 FOCUS_NOTE = "() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()"
+#: The scratchpad's switch at the end of the bar, and the card it shows.
+GLYPH = "header button.pad"
+CARD = "[data-scratchpad] .cm-content"
 
 
 class Model(http.server.BaseHTTPRequestHandler):
@@ -129,26 +134,20 @@ def last_messages() -> str:
 
 
 def scratchpad(page: Page) -> None:
-    # A fresh window in a browser opens with the file list away; the foot is its.
-    if not page.locator("[data-region=foot]").count():
-        page.evaluate("() => window.nibApp.workspace.toggleSidebar()")
-        wait_for(page, "document.querySelector('[data-region=foot]')", "the sidebar's foot")
-    glyph = page.locator('.foot button[aria-label="Scratchpad"]')
+    glyph = page.locator(GLYPH)
     if glyph.count() != 1:
-        wrong("the scratchpad's glyph is not in the sidebar's foot")
+        wrong("the scratchpad's glyph is not in the bar")
 
     DRIVE.open_note(page, "Plan")
     page.evaluate(FOCUS_NOTE)
     page.keyboard.press("Control+Shift+X")
-    if not wait_for(page, "/Scratchpad\\.md$/.test(window.nibApp.workspace.active?.path ?? '')", "the scratchpad"):
-        return
-    wait_for(page, "document.querySelector('.cm-content')", "its editor")
+    wait_for(page, f"document.querySelector('{CARD}')", "the scratchpad's card")
     if glyph.get_attribute("aria-pressed") != "true":
-        wrong("the glyph is not lit while the scratchpad is in front")
+        wrong("the glyph is not lit while the scratchpad is up")
 
-    page.evaluate(FOCUS_NOTE)
+    # The key leaves the keyboard in the card.
     page.keyboard.type("call Anna about the heron count")
-    wait_for(page, "window.nibApp.workspace.active && !window.nibApp.workspace.active.dirty", "it written down")
+    wait_for(page, f"async () => (await ({PAD_TEXT})()).includes('heron count')", "it written down")
     shot(page, "01-scratchpad")
 
     page.reload(wait_until="domcontentloaded")
@@ -158,11 +157,15 @@ def scratchpad(page: Page) -> None:
     if "heron count" not in after:
         wrong(f"the scratchpad lost its words over a reload: {after!r}")
 
-    wait_for(page, "/Scratchpad\\.md$/.test(window.nibApp.workspace.active?.path ?? '')", "its tab put back")
-    page.evaluate(FOCUS_NOTE)
+    # The reload put the card back up with the keyboard elsewhere, and the key then
+    # takes the keyboard in first, as VS Code's terminal key does (`toggleScratchpad`);
+    # with the keyboard in the card it puts the card away.
+    wait_for(page, f"document.querySelector('{CARD}')", "its card put back")
     page.keyboard.press("Control+Shift+X")
-    wait_for(page, "!/Scratchpad\\.md$/.test(window.nibApp.workspace.active?.path ?? '')", "the tab before it")
-    say(f"the key again went back to {page.evaluate(ACTIVE)}")
+    wait_for(page, "!!document.activeElement?.closest('[data-scratchpad]')", "the keyboard in the card")
+    page.keyboard.press("Control+Shift+X")
+    wait_for(page, f"!document.querySelector('{CARD}')", "the card put away")
+    say(f"the key again put the card away over {page.evaluate(ACTIVE)}")
 
     page.keyboard.press("Control+Shift+F")
     wait_for(page, "document.querySelector('.find input')", "the search field")
@@ -179,7 +182,7 @@ def scratchpad(page: Page) -> None:
     page.keyboard.press("Escape")
 
     # No menu of its own: it is in no space, so nothing to move to one (issue #231).
-    page.locator("header button.pad").click(button="right")
+    page.locator(GLYPH).click(button="right")
     if page.locator(".menu").count():
         wrong("the scratchpad's glyph has a menu")
         page.keyboard.press("Escape")

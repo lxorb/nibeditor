@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { SEARCH } from './typed'
-import { engineById, enginesFor, isEngineAddress } from './engines'
+import { engineById, engineHome, enginesFor, isEngineAddress } from './engines'
 
 describe("Chrome's list", () => {
   test('starts with Google, the default', () => {
@@ -32,6 +32,36 @@ describe("Chrome's list", () => {
   })
 })
 
+/** Where a new web note lands (#354): the engine's own page, which is the root of the
+ *  address its search goes to. */
+describe("the engine's own page", () => {
+  test('is the front door of the engine, not a search for nothing', () => {
+    expect(engineHome(SEARCH)).toBe('https://www.google.com/')
+    expect(engineHome('https://duckduckgo.com/?q=%s')).toBe('https://duckduckgo.com/')
+    expect(engineHome('https://search.brave.com/search?q=%s')).toBe('https://search.brave.com/')
+  })
+
+  test('every engine on the list has one, and it is an address a tab may open', () => {
+    for (const language of ['en-US', 'zh', 'ja', 'ko', 'ru']) {
+      for (const one of enginesFor(language)) {
+        const home = engineHome(one.url)
+        expect(home, one.id).toMatch(/^https:\/\//)
+        expect(home, one.id).not.toContain('%s')
+      }
+    }
+  })
+
+  test('a custom engine has one too', () => {
+    expect(engineHome('https://kagi.com/search?q=%s')).toBe('https://kagi.com/')
+  })
+
+  /** Nothing can reach this - a custom engine is an address before it is kept - but a
+   *  new tab with nowhere to go is worse than a new tab on Google. */
+  test('falls back to the default engine for an address that cannot be read', () => {
+    expect(engineHome('not an address')).toBe('https://www.google.com/')
+  })
+})
+
 describe('a custom engine', () => {
   test('needs %s and the web', () => {
     expect(isEngineAddress('https://kagi.com/search?q=%s')).toBe(true)
@@ -56,6 +86,13 @@ describe('the choice', () => {
   test('is Google until somebody chooses', async () => {
     const { searchEngine } = await import('./search-engine.svelte')
     expect(searchEngine.url).toBe(SEARCH)
+  })
+
+  test("carries the engine's own page, which is where a new web note lands", async () => {
+    const { searchEngine } = await import('./search-engine.svelte')
+    expect(searchEngine.home).toBe('https://www.google.com/')
+    searchEngine.choose('qwant')
+    expect(searchEngine.home).toBe('https://www.qwant.com/')
   })
 
   test('is kept, and read back', async () => {

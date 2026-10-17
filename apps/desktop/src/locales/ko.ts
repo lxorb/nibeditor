@@ -21,6 +21,11 @@ export const ko: Dictionary = {
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
+  // Settings: note types
+  'Page note': '페이지 노트',
+  'Web note': '웹 노트',
+  'Private tab': '비공개 탭',
+  'Note types': '노트 유형',
   // Tasks: Upcoming's weeks
   'Previous week': '이전 주',
   // Tasks: projects placed in the panel, and their folder
@@ -977,6 +982,7 @@ export const ko: Dictionary = {
   Comment: '주석',
   'Always on top': '항상 위에',
   'What is new': '새로운 점',
+  'Download the app': '앱 다운로드',
   'Report an issue': '문제 신고',
   'Move the line up': '줄을 위로 이동',
   'Move the line down': '줄을 아래로 이동',
@@ -1151,6 +1157,12 @@ export const ko: Dictionary = {
   'Export as PNG': 'PNG로 내보내기',
   'Export as SVG': 'SVG로 내보내기',
   'Export as PDF': 'PDF로 내보내기',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF 가져오기',
+  'Choose how to add the pages to the canvas.': '페이지를 캔버스에 어떻게 추가할지 고르세요.',
+  'Single page': '한 페이지',
+  'All pages': '모든 페이지',
+  'Choose a page': '페이지 고르기',
   // The canvas: what its own keys are called
   'Delete what is picked': '선택한 것 삭제',
   'Nudge left': '왼쪽으로 조금',
@@ -1211,8 +1223,8 @@ export const ko: Dictionary = {
   'Release channel': '릴리스 채널',
   Stable: '안정',
   Unstable: '불안정',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '안정은 공식 릴리스를 따르고, 불안정은 main에 올라간 모든 것을 따르며 깨질 수 있습니다.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '안정은 출시된 버전을 따르고, 불안정은 엣지 빌드를 따르며 깨질 수 있습니다.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '가져오기',
@@ -1781,16 +1793,6 @@ export const ko: Dictionary = {
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
   // Orden as the default browser
   'Default browser': '기본 브라우저',
-  // The engine web tabs run on
-  Engine: '엔진',
-  Relaunch: '다시 시작',
-  'Chromium did not start': 'Chromium이 시작되지 않았습니다',
-  'No connection': '연결 없음',
-  'Not in this release': '이 릴리스에 없음',
-  'Needs an update': '업데이트 필요',
-  'Signature did not match': '서명이 일치하지 않음',
-  'Disk full': '디스크 가득 참',
-  'Could not be installed': '설치할 수 없음',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}의 편집 실행 취소',
   // The archive: a row put away and taken back, and what refuses to delete it

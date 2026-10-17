@@ -15,13 +15,8 @@ of the probe's own in a web tab, and reads back, per extension:
 What a page does is read over the engine's debugging port (scripts/devtools.py), which
 presses nothing.
 
-nib's own Chromium installs from the store's own page, with the store's own button and
-Chromium's own prompt, which a probe cannot press without putting a dialog in front of
-somebody. So `--chromium --load FOLDER` starts it with the extension unpacked in FOLDER
-already loaded (`--load-extension`, a probe's switch through `NIB_CEF_ARGS`) - a folder a
-`WebView2` run leaves in `<config>/extensions` - and reads everything else the
-same way: the list nib draws, the content scripts, the popups, the options pages. Nothing is pressed on the machine either: every step is the app's own
-command, through the automation endpoint.
+Nothing is pressed on the machine: every step is the app's own command, through the
+automation endpoint.
 
     pnpm --dir apps/desktop tauri build --no-bundle \\
       --config '{"identifier":"ch.emilvinu.nib.probe.extensions","version":"99.0.0",
@@ -234,26 +229,14 @@ def windows_of(pid: int) -> list[int]:
     return found
 
 
-#: The debugging port nib's own Chromium is asked to open (`NIB_CEF_DEBUG_PORT`), when the
-#: probe runs it; `WebView2` picks its own and writes it into the store's folder.
-CHROMIUM_PORT = 0
-
-#: How long a terminated app is given to be gone. nib's own Chromium takes its browser,
-#: renderers and GPU process down with it, and on a machine busy building that has taken
-#: over thirty seconds (2026-10-03), the process still listed with no program behind it.
+#: How long a terminated app is given to be gone. The engine takes its browser, renderers
+#: and GPU process down with it, and on a machine busy building that has taken over thirty
+#: seconds (2026-10-03), the process still listed with no program behind it.
 GONE = 120
-
-#: The unpacked folders nib's own Chromium is started with, for `--load`.
-PRELOADED: list[str] = []
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
-    env = debugged()
-    if CHROMIUM_PORT:
-        env["NIB_CEF_DEBUG_PORT"] = str(CHROMIUM_PORT)
-    if PRELOADED:
-        env["NIB_CEF_ARGS"] = "load-extension=" + PRELOADED[0]
-    running = run_probe(exe, env=env, quiet=True)
+    running = run_probe(exe, env=debugged(), quiet=True)
     at, secret = endpoint(identifier, 90, unlike)
     hwnd = 0
     until = time.perf_counter() + 90
@@ -287,7 +270,7 @@ def shoot(target: dict | None, to: pathlib.Path) -> None:
 def interface(identifier: str) -> dict | None:
     """nib's own page, on the debugging port of the interface's browser process."""
 
-    at = CHROMIUM_PORT or port(local_dir(identifier))
+    at = port(local_dir(identifier))
     if not at:
         return None
     for one in targets(at):
@@ -337,16 +320,7 @@ def main() -> int:
     parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.extensions")
     parsed.add_argument("--shots", type=pathlib.Path, default=None)
     parsed.add_argument("--only", default="")
-    parsed.add_argument("--chromium", action="store_true", help="the exe is nib's own Chromium build")
-    parsed.add_argument("--load", type=pathlib.Path, default=None, help="an unpacked extension to start Chromium with (one: the switch list is comma-separated)")
     args = parsed.parse_args()
-    if args.load:
-        PRELOADED.append(str(args.load))
-    if args.chromium:
-        global CHROMIUM_PORT
-        with socket.socket() as sock:
-            sock.bind(("127.0.0.1", 0))
-            CHROMIUM_PORT = sock.getsockname()[1]
 
     wipe(args.identifier)
     at = serve()
@@ -381,16 +355,6 @@ def main() -> int:
         time.sleep(4)
 
         for name, link in chosen.items():
-            if PRELOADED:
-                ident = link.rstrip("/").rsplit("/", 1)[-1]
-                listed = app.invoke("extensions_list")
-                rows = listed.get("said") if isinstance(listed, dict) else None
-                row = next((one for one in rows or [] if one.get("id") == ident), None)
-                report[name]["installed"] = row is not None
-                if row:
-                    report[name].update({"id": ident, "name": row.get("name"), "version": row.get("version"), "popup page": row.get("popup"), "options page": row.get("options")})
-                print(name, json.dumps(report[name]), flush=True)
-                continue
             started = time.perf_counter()
             said = app.invoke("extensions_install", {"link": link})
             ok = isinstance(said, dict) and said.get("ok") is True
@@ -414,7 +378,7 @@ def main() -> int:
         time.sleep(8)
 
         web = config_dir(args.identifier) / "web"
-        web_port = CHROMIUM_PORT or port(web)
+        web_port = port(web)
         listed = app.invoke("extensions_list")
         report["(list)"] = {"said": listed}
         if not web_port:

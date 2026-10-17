@@ -233,9 +233,9 @@ the backup and snapshot are skipped (the dev host keeps none). workerd has no ju
 so with `MACHINE_DEV_NIBD` set the `Machine` objects are asked outside the EU one (ask.ts).
 
 `scripts/online-e2e.mjs` is all of this in one command, against a machine booted from the
-image: CI's machine workflow runs it on every change to the image, nibd or the Worker's
-machines (a session made as sync v1 makes one, typing, a reconnect with `since`, a late
-joiner's screen).
+image: CI's machine workflow runs it on every pull request into `main` that changes the
+image, nibd or the Worker's machines (a session made as sync v1 makes one, typing, a
+reconnect with `since`, a late joiner's screen).
 
 ## Kill switches, for reference
 

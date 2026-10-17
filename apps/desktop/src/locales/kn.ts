@@ -21,6 +21,11 @@ export const kn: Dictionary = {
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
+  // Settings: note types
+  'Page note': 'ಪುಟ ಟಿಪ್ಪಣಿ',
+  'Web note': 'ಜಾಲ ಟಿಪ್ಪಣಿ',
+  'Private tab': 'ಖಾಸಗಿ ಟ್ಯಾಬ್',
+  'Note types': 'ಟಿಪ್ಪಣಿ ಪ್ರಕಾರಗಳು',
   // Tasks: Upcoming's weeks
   'Previous week': 'ಹಿಂದಿನ ವಾರ',
   // Tasks: projects placed in the panel, and their folder
@@ -989,6 +994,7 @@ export const kn: Dictionary = {
   Comment: 'ಕಾಮೆಂಟ್',
   'Always on top': 'ಯಾವಾಗಲೂ ಮೇಲೆ',
   'What is new': 'ಹೊಸದೇನು',
+  'Download the app': 'ಆ್ಯಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ',
   'Report an issue': 'ಸಮಸ್ಯೆ ತಿಳಿಸಿ',
   'Move the line up': 'ಸಾಲನ್ನು ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
   'Move the line down': 'ಸಾಲನ್ನು ಕೆಳಕ್ಕೆ ಸರಿಸಿ',
@@ -1165,6 +1171,13 @@ export const kn: Dictionary = {
   'Export as PNG': 'PNG ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
   'Export as SVG': 'SVG ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
   'Export as PDF': 'PDF ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
+  'Choose how to add the pages to the canvas.':
+    'ಪುಟಗಳನ್ನು ಕ್ಯಾನ್ವಾಸ್‌ಗೆ ಹೇಗೆ ಸೇರಿಸಬೇಕು ಎಂದು ಆಯ್ಕೆಮಾಡಿ.',
+  'Single page': 'ಒಂದು ಪುಟ',
+  'All pages': 'ಎಲ್ಲಾ ಪುಟಗಳು',
+  'Choose a page': 'ಪುಟವನ್ನು ಆಯ್ಕೆಮಾಡಿ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ಆಯ್ದದನ್ನು ಅಳಿಸಿ',
   'Nudge left': 'ಎಡಕ್ಕೆ ಕೊಂಚ ಸರಿಸಿ',
@@ -1225,8 +1238,8 @@ export const kn: Dictionary = {
   'Release channel': 'ಬಿಡುಗಡೆ ಚಾನೆಲ್',
   Stable: 'ಸ್ಥಿರ',
   Unstable: 'ಅಸ್ಥಿರ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ಸ್ಥಿರ ಅಧಿಕೃತ ಬಿಡುಗಡೆಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ mainಗೆ ಪ್ರತಿ ಪುಶ್ ಅನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ಸ್ಥಿರ ಬಿಡುಗಡೆಯಾದ ಆವೃತ್ತಿಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ ಎಡ್ಜ್ ಬಿಲ್ಡ್‌ಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ಇಂಪೋರ್ಟ್',
@@ -1817,16 +1830,6 @@ export const kn: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'ಡಿಫಾಲ್ಟ್ ಬ್ರೌಸರ್',
-  // The engine web tabs run on
-  Engine: 'ಇಂಜಿನ್',
-  Relaunch: 'ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ',
-  'Chromium did not start': 'Chromium ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ',
-  'No connection': 'ಸಂಪರ್ಕವಿಲ್ಲ',
-  'Not in this release': 'ಈ ಬಿಡುಗಡೆಯಲ್ಲಿ ಇಲ್ಲ',
-  'Needs an update': 'ಅಪ್‌ಡೇಟ್ ಬೇಕು',
-  'Signature did not match': 'ಸಹಿ ಹೊಂದಿಕೆಯಾಗಲಿಲ್ಲ',
-  'Disk full': 'ಡಿಸ್ಕ್ ತುಂಬಿದೆ',
-  'Could not be installed': 'ಸ್ಥಾಪಿಸಲಾಗಲಿಲ್ಲ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ಅವರ ಸಂಪಾದನೆಗಳನ್ನು ರದ್ದುಮಾಡಿ',
   // The archive: a row put away and taken back, and what refuses to delete it

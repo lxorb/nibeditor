@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
+import harness
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -59,8 +60,11 @@ def toggling(page: Page, scheme: str) -> None:
         "() => [...document.querySelectorAll('.palette .nib-row')].find((one) => one.textContent.includes('Deselect all tabs'))?.querySelector('kbd')?.textContent ?? null"
     )
     say(f"[{scheme}] the Deselect all tabs row wears {hint!r}")
-    if hint != "Ctrl+Shift+D":
-        wrong(f"[{scheme}] the Deselect all tabs row wears {hint!r}, not its key")
+    # In WebKit the drive is a Mac (`NIB_ENGINE` in harness.py), and a Mac's palette
+    # writes the same key the way a Mac does.
+    key = "⇧⌘D" if harness.WEBKIT else "Ctrl+Shift+D"
+    if hint != key:
+        wrong(f"[{scheme}] the Deselect all tabs row wears {hint!r}, not its key {key!r}")
     DRIVE.shot(page, f"{scheme}-01-open")
 
     shift_twice(page)

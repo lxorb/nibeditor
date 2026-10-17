@@ -108,8 +108,8 @@ own colour at 46 ms warm; round 2 was queued for a quiet machine and never ran.
 ## 4. browser-parity - Chrome's own features
 
 What `nib-browser-vision.md` (2026-09-13) keeps inside the browser and nib still lacks.
-Everything here waits for the injection rework, the scroll fix, the engine switch and the
-default-browser work, which all rewrite the same files.
+Everything here waits for the injection rework, the scroll fix and the default-browser
+work, which all rewrite the same files.
 
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
@@ -236,8 +236,9 @@ The unmerged branches, all 482 commits behind `main`: `worktree-agent-archive` i
 reference, `worktree-agent-right-sidebar` #47's, `worktree-agent-adf3a62186e99c1e5` (CEF
 batch 2) #46's, and `worktree-agent-crash-recovery` is dropped below.
 
-Blocked on #46's verdict rather than a lane now: Chrome extensions, `chrome://` pages as
-tabs, Translate, the extension list on the account, PDF export under CEF.
+Gone with nib's own Chromium (#305, #313), which #46's verdict was about: `chrome://`
+pages as tabs, Translate, the extension list on the account, PDF export under CEF. Chrome
+extensions came on `WebView2` instead.
 
 ## Waiting on Emil, not code
 

@@ -21,6 +21,11 @@ export const ms: Dictionary = {
   'Import from Zen': 'Import daripada Zen',
   'Containers stay in Zen': 'Bekas kekal dalam Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
+  // Settings: note types
+  'Page note': 'Nota halaman',
+  'Web note': 'Nota web',
+  'Private tab': 'Tab peribadi',
+  'Note types': 'Jenis nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sebelumnya',
   // Tasks: projects placed in the panel, and their folder
@@ -982,6 +987,7 @@ export const ms: Dictionary = {
   Comment: 'Komen',
   'Always on top': 'Sentiasa di atas',
   'What is new': 'Apa yang baharu',
+  'Download the app': 'Muat turun aplikasi',
   'Report an issue': 'Laporkan isu',
   'Move the line up': 'Alihkan baris ke atas',
   'Move the line down': 'Alihkan baris ke bawah',
@@ -1158,6 +1164,12 @@ export const ms: Dictionary = {
   'Export as PNG': 'Eksport sebagai PNG',
   'Export as SVG': 'Eksport sebagai SVG',
   'Export as PDF': 'Eksport sebagai PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Import PDF',
+  'Choose how to add the pages to the canvas.': 'Pilih cara menambah halaman ke kanvas.',
+  'Single page': 'Satu halaman',
+  'All pages': 'Semua halaman',
+  'Choose a page': 'Pilih halaman',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Hapuskan yang dipilih',
   'Nudge left': 'Sesar ke kiri',
@@ -1218,8 +1230,8 @@ export const ms: Dictionary = {
   'Release channel': 'Saluran keluaran',
   Stable: 'Stabil',
   Unstable: 'Tidak stabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil mengikut keluaran rasmi, Tidak stabil mengikut setiap tolakan ke main dan boleh rosak.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil mengikut versi yang dikeluarkan, Tidak stabil mengikut binaan edge dan boleh rosak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Import',
@@ -1802,16 +1814,6 @@ export const ms: Dictionary = {
   'Paste {count} lines?': 'Tampal {count} baris?',
   // Orden as the default browser
   'Default browser': 'Pelayar lalai',
-  // The engine web tabs run on
-  Engine: 'Enjin',
-  Relaunch: 'Lancarkan semula',
-  'Chromium did not start': 'Chromium tidak bermula',
-  'No connection': 'Tiada sambungan',
-  'Not in this release': 'Tiada dalam keluaran ini',
-  'Needs an update': 'Perlu kemas kini',
-  'Signature did not match': 'Tandatangan tidak sepadan',
-  'Disk full': 'Cakera penuh',
-  'Could not be installed': 'Tidak dapat dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Buat asal suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

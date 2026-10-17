@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  The package's name up to 0.15.0, kept as the road to `orden`, the way Chocolatey
+  deprecates a package: "[Deprecated]" in front of the title, a dependency on the one that
+  replaces it, no files at all and no icon. Upgrading it installs `orden`, which upgrades
+  Orden in place. Its version is the release's with the release's date after it
+  (publish.yml), because a deprecation has to be a version of `nib` newer than every one
+  pushed before it, 0.15.0 among them.
+-->
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>nib</id>
@@ -6,45 +14,28 @@
     <packageSourceUrl>https://github.com/lxorb/orden/tree/main/packaging/chocolatey</packageSourceUrl>
     <owners>lxorb</owners>
 
-    <title>Orden</title>
+    <title>[Deprecated] Orden</title>
     <authors>lxorb</authors>
     <projectUrl>https://orden.so</projectUrl>
-    <iconUrl>https://cdn.jsdelivr.net/gh/lxorb/orden@v0.15.0/apps/desktop/src-tauri/icons/icon.png</iconUrl>
     <copyright>Copyright (c) 2026 lxorb</copyright>
     <licenseUrl>https://github.com/lxorb/orden/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <projectSourceUrl>https://github.com/lxorb/orden</projectSourceUrl>
     <docsUrl>https://github.com/lxorb/orden#readme</docsUrl>
     <bugTrackerUrl>https://github.com/lxorb/orden/issues</bugTrackerUrl>
-    <tags>orden nibeditor nib markdown markdown-editor editor wysiwyg notes note-taking writing typora-alternative obsidian-alternative tauri foss cross-platform</tags>
-    <summary>A simple, lightweight markdown editor offering all the features you could ever need.</summary>
+    <tags>orden nib deprecated</tags>
+    <summary>Renamed: Orden is the orden package now.</summary>
     <description><![CDATA[
-Orden, formerly nibeditor, is a markdown editor that shows the formatting instead of the syntax. Headings,
-bold, lists, tables, code and math are styled in place as you type, so there is no split
-pane and no preview pane to keep in sync.
+This package is deprecated. Orden, formerly nibeditor, is published as
+[orden](https://community.chocolatey.org/packages/orden) since 0.15.0.
 
-Notes are plain `.md` files on disk, opened and saved where you put them, with no library or
-vault to import into. Themes are single CSS files dropped into the config folder, every edit
-is snapshotted so a bad change can be undone later, and the same editor runs in the browser
-at [orden.so](https://orden.so).
-
-### Features
-
-* Inline preview - the document is the preview, not a second pane
-* Plain Markdown files, no proprietary store
-* CSS themes, dropped straight into the config folder
-* Automatic snapshots of every note before it is overwritten
-* Runs on Windows, macOS, Linux, and in the browser
-
-### Notes on this package
-
-This package installs the machine-wide MSI build, so Orden lands in `Program Files`
-and is available to every user on the machine. x64 and ARM64 are both supported; 32-bit
-Windows is not. The MSI is not code-signed.
+Installing or upgrading `nib` installs `orden`, which upgrades Orden in place, with
+its settings and notes where they were. `choco uninstall nib` afterwards removes this
+empty package alone and leaves Orden installed.
 ]]></description>
-    <releaseNotes>https://github.com/lxorb/orden/releases/tag/v0.15.0</releaseNotes>
+    <dependencies>
+      <dependency id="orden" version="0.15.0" />
+    </dependencies>
   </metadata>
-  <files>
-    <file src="tools\**" target="tools" />
-  </files>
+  <files />
 </package>

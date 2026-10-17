@@ -21,6 +21,11 @@ export const ru: Dictionary = {
   'Import from Zen': 'Импорт из Zen',
   'Containers stay in Zen': 'Контейнеры остаются в Zen',
   'Zen’s tabs could not be read.': 'Не удалось прочитать вкладки Zen.',
+  // Settings: note types
+  'Page note': 'Заметка со страницами',
+  'Web note': 'Веб-заметка',
+  'Private tab': 'Приватная вкладка',
+  'Note types': 'Типы заметок',
   // Tasks: Upcoming's weeks
   'Previous week': 'Предыдущая неделя',
   // Tasks: projects placed in the panel, and their folder
@@ -1020,6 +1025,7 @@ export const ru: Dictionary = {
   Comment: 'Комментарий',
   'Always on top': 'Поверх всех окон',
   'What is new': 'Что нового',
+  'Download the app': 'Скачать приложение',
   'Report an issue': 'Сообщить о проблеме',
   'Move the line up': 'Переместить строку выше',
   'Move the line down': 'Переместить строку ниже',
@@ -1196,6 +1202,12 @@ export const ru: Dictionary = {
   'Export as PNG': 'Экспорт в PNG',
   'Export as SVG': 'Экспорт в SVG',
   'Export as PDF': 'Экспорт в PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Импорт PDF',
+  'Choose how to add the pages to the canvas.': 'Выберите, как добавить страницы на полотно.',
+  'Single page': 'Одна страница',
+  'All pages': 'Все страницы',
+  'Choose a page': 'Выбрать страницу',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Удалить выбранное',
   'Nudge left': 'Сдвинуть влево',
@@ -1256,8 +1268,8 @@ export const ru: Dictionary = {
   'Release channel': 'Канал выпусков',
   Stable: 'Стабильный',
   Unstable: 'Нестабильный',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Стабильный следует официальным выпускам, нестабильный - каждому пушу в main и может ломаться.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Стабильный следует выпущенным версиям, нестабильный - сборкам edge и может ломаться.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Импорт',
@@ -1877,16 +1889,6 @@ export const ru: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Браузер по умолчанию',
-  // The engine web tabs run on
-  Engine: 'Движок',
-  Relaunch: 'Перезапустить',
-  'Chromium did not start': 'Chromium не запустился',
-  'No connection': 'Нет подключения',
-  'Not in this release': 'Нет в этом выпуске',
-  'Needs an update': 'Нужно обновление',
-  'Signature did not match': 'Подпись не совпадает',
-  'Disk full': 'Диск заполнен',
-  'Could not be installed': 'Не удалось установить',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Отменить правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

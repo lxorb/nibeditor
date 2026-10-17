@@ -32,30 +32,29 @@
  *  these under its address field, in three lines - *"Note, Canvas, Page Note | Terminal,
  *  Remote, Online Terminal | Web Note, Private Web Note"* - each with its letter. The
  *  order below is those lines read one after another, and `line` says where each
- *  breaks; see NewHere.svelte. */
+ *  breaks; see NewHere.svelte.
+ *
+ *  Which kinds a device has, and which of those a reader turned off in Settings › Note
+ *  types, is `hiddenKinds` in settings.svelte.ts, which the places that make one without
+ *  this list - the file list, the palette, the keys - ask too. */
 
 import type { IconNode } from 'lucide'
-import { account } from './account.svelte'
 import type { FileMark } from './file-mark'
-import { t } from './i18n.svelte'
+import { hiddenKinds, type KindName, kindsHere } from './settings.svelte'
+import { kindLabel } from './kind-words'
 import { menu, type MenuEntry } from './menu.svelte'
-import { isDesktop } from './tauri'
 import { openTerminal, shellRows } from './terminal/open'
 import { shells } from './terminal/shells.svelte'
-import { viewport } from './viewport.svelte'
-import { type NewKind, workspace } from './workspace.svelte'
-
-/** What a new tab can be: the kinds the file list also makes, and a terminal here or on
- *  another machine, which is a tab and never a file. */
-type NewKindName = NewKind | 'private' | 'terminal' | 'remote' | 'online'
+import { workspace } from './workspace.svelte'
 
 /** The three lines the kinds stand in: what is written, what runs, and the web. */
 type KindLine = 'write' | 'run' | 'web'
 
 export interface NewKindRow {
-  kind: NewKindName
+  kind: KindName
   /** Which line it stands in; see `KindLine`. */
   line: KindLine
+  /** What a press on it says; see `kindLabel`. */
   label: () => string
   /** The shape the file list and the tab strip already draw for this kind, so the
    *  buttons in an empty pane wear what the rows wear; see file-mark.ts. */
@@ -85,94 +84,97 @@ function inPane(paneId: string | undefined, make: () => unknown) {
   void make()
 }
 
-/** The kinds, as they are offered now. A function rather than a constant: a phone
- *  has one fewer, and what device this is can change under a window being
- *  resized. */
+/** Every kind this device can make, Settings or no Settings: what the Note types pane
+ *  lists. A function rather than a constant: a phone has fewer, and what device this is
+ *  can change under a window being resized. Which kinds a device has is `kindsHere`. */
 export function newKinds(): NewKindRow[] {
-  return [
-    {
-      kind: 'note',
-      line: 'write',
-      label: () => t('New note'),
-      mark: 'note',
-      letter: 'n',
-      make: (paneId) => inPane(paneId, () => workspace.openBlank()),
+  return kindsHere().map((kind) => ROWS[kind]())
+}
+
+/** The kinds offered where they are made: every one this device has that nobody turned
+ *  off in Settings. See kind-choice.ts. */
+export function offeredKinds(): NewKindRow[] {
+  const shown = hiddenKinds.shown
+  return newKinds().filter((one) => shown.includes(one.kind))
+}
+
+/** Each kind's row. Which of them a device has is `kindsHere`, so nothing here asks. */
+const ROWS: Record<KindName, () => NewKindRow> = {
+  note: () => ({
+    kind: 'note',
+    line: 'write',
+    label: () => kindLabel('note'),
+    mark: 'note',
+    letter: 'n',
+    make: (paneId) => inPane(paneId, () => workspace.openBlank()),
+  }),
+  canvas: () => ({
+    kind: 'canvas',
+    line: 'write',
+    label: () => kindLabel('canvas'),
+    mark: 'canvas',
+    letter: 'c',
+    make: (paneId) => inPane(paneId, () => workspace.newCanvas()),
+  }),
+  pages: () => ({
+    kind: 'pages',
+    line: 'write',
+    label: () => kindLabel('pages'),
+    mark: 'pages',
+    letter: 'p',
+    make: (paneId) => inPane(paneId, () => workspace.newPages()),
+  }),
+  // A chat with the space's people, made by the account; M, since C is the canvas's.
+  // At the end of the things that are written, which a chat is too. See
+  // docs/chats.md 4.13.
+  chat: () => ({
+    kind: 'chat',
+    line: 'write',
+    label: () => kindLabel('chat'),
+    mark: 'chat',
+    letter: 'm',
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        inPane(paneId, () => import('./chats/view/open').then((one) => one.makeChat()))
     },
-    {
-      kind: 'canvas',
-      line: 'write',
-      label: () => t('New canvas'),
-      mark: 'canvas',
-      letter: 'c',
-      make: (paneId) => inPane(paneId, () => workspace.newCanvas()),
-    },
-    {
-      kind: 'pages',
-      line: 'write',
-      label: () => t('New page note'),
-      mark: 'pages',
-      letter: 'p',
-      make: (paneId) => inPane(paneId, () => workspace.newPages()),
-    },
-    // A chat with the space's people, made by the account; M, since C is the canvas's.
-    // At the end of the things that are written, which a chat is too. See
-    // docs/chats.md 4.13.
-    ...(__EVEN_PLUGIN__ || !account.accountToken
-      ? []
-      : [
-          {
-            kind: 'chat' as const,
-            line: 'write' as const,
-            label: () => t('New chat'),
-            mark: 'chat' as const,
-            letter: 'm',
-            make: (paneId?: string) =>
-              inPane(paneId, () => import('./chats/view/open').then((one) => one.makeChat())),
-          },
-        ]),
-    // A shell is a desktop's alone: a phone has no shell to give an app, a page in a
-    // browser has no machine under it, and the glasses' plugin carries none of it. R,
-    // because T is the new tab's own key, and R is what Run has been on Windows for
-    // thirty years. See docs/terminal.md.
-    // Another machine's shell, beside it: a host picked, not a shell. S for SSH.
-    ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalRow(), remoteRow()] : []),
-    // A shell on the reader's own machine in the cloud: on every device, since it is the
-    // one terminal a phone and a browser can have. O for Online. See
-    // docs/online-terminal.md 4.10.
-    ...(__EVEN_PLUGIN__ ? [] : [onlineRow()]),
-    // A website is a bookmark on a phone - it opens in the phone's own browser and
-    // there is no tab to make - so the row is left out there rather than offered and
-    // answering nothing. See openWeb in workspace.svelte.ts. The glasses' plugin has no
-    // web tab on any screen.
-    ...(__EVEN_PLUGIN__ || viewport.device === 'phone'
-      ? []
-      : [
-          {
-            kind: 'web' as const,
-            line: 'web' as const,
-            label: () => t('New web note'),
-            mark: 'web' as const,
-            letter: 'w',
-            make: (paneId: string | undefined) => inPane(paneId, () => workspace.openWebsite()),
-          },
-          // A private tab, beside the website it is one of: a desktop's alone, where a
-          // web tab is a page of nib's. I for Incognito, Chrome's word for it, since P is
-          // the page note's. See web-tab/private.ts.
-          ...(isDesktop
-            ? [
-                {
-                  kind: 'private' as const,
-                  line: 'web' as const,
-                  label: () => t('New private tab'),
-                  mark: 'web' as const,
-                  letter: 'i',
-                  make: (paneId: string | undefined) =>
-                    inPane(paneId, () => workspace.openWebsite(true)),
-                },
-              ]
-            : []),
-        ]),
-  ]
+  }),
+  // R, because T is the new tab's own key, and R is what Run has been on Windows for
+  // thirty years. See docs/terminal.md.
+  terminal: () => terminalRow(),
+  // Another machine's shell, beside it: a host picked, not a shell. S for SSH.
+  remote: () => remoteRow(),
+  // A shell on the reader's own machine in the cloud. O for Online. See
+  // docs/online-terminal.md 4.10.
+  online: () => onlineRow(),
+  // On the search engine this device chose, which is where a browser's new tab lands.
+  // Emil, #354: *"if you click on web note in the Ctrl + T menu, then it should open
+  // your configured search engine"*. The press was already a choice of kind, so a
+  // second empty field with the kinds under it again is a press that answered nothing.
+  // The engine is fetched with the press, as a chat's maker is: the choice reaches
+  // typed.ts, which is not in front of the first paint. See web-tab/engines.ts.
+  web: () => ({
+    kind: 'web',
+    line: 'web',
+    label: () => kindLabel('web'),
+    mark: 'web',
+    letter: 'w',
+    make: (paneId) =>
+      inPane(paneId, () =>
+        import('./web-tab/search-engine.svelte').then((one) =>
+          workspace.openPage(one.searchEngine.home),
+        ),
+      ),
+  }),
+  // A private tab, beside the website it is one of. I for Incognito, Chrome's word for
+  // it, since P is the page note's. See web-tab/private.ts.
+  private: () => ({
+    kind: 'private',
+    line: 'web',
+    label: () => kindLabel('private'),
+    mark: 'web',
+    letter: 'i',
+    make: (paneId) => inPane(paneId, () => workspace.openWebsite(true)),
+  }),
 }
 
 /** The kinds in their lines, in order, leaving out a line a device has none of: a
@@ -195,12 +197,14 @@ function onlineRow(): NewKindRow {
   return {
     kind: 'online',
     line: 'run',
-    label: () => t('Online terminal'),
+    label: () => kindLabel('online'),
     mark: 'terminal',
     icon: ONLINE,
     letter: 'o',
-    make: (paneId) =>
-      inPane(paneId, () => import('./online/open').then(({ openOnline }) => openOnline())),
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        inPane(paneId, () => import('./online/open').then(({ openOnline }) => openOnline()))
+    },
   }
 }
 
@@ -208,11 +212,13 @@ function remoteRow(): NewKindRow {
   return {
     kind: 'remote',
     line: 'run',
-    label: () => t('Remote'),
+    label: () => kindLabel('remote'),
     mark: 'remote',
     letter: 's',
-    make: (paneId) =>
-      void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.show(paneId)),
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.show(paneId))
+    },
   }
 }
 
@@ -220,7 +226,7 @@ function terminalRow(): NewKindRow {
   return {
     kind: 'terminal',
     line: 'run',
-    label: () => t('New terminal'),
+    label: () => kindLabel('terminal'),
     mark: 'terminal',
     letter: 'r',
     make: (paneId) => inPane(paneId, () => openTerminal()),
@@ -245,6 +251,11 @@ export function showOthers(
   const others = one.others
   if (!others) return false
 
+  // The rows are a question to the machine - which shells it has - so the menu opens a
+  // moment after the press rather than in it, and at the card rather than at a pointer
+  // this may not have one of. The press is still on its way to the window as it opens,
+  // and the window's own click is what shuts a menu; that the press which opened it is
+  // not the press that shuts it is `shutBy` in menu.svelte.ts (issue #244).
   const box = card.getBoundingClientRect()
   void others(paneId).then((rows) => {
     const at = new MouseEvent('contextmenu', { clientX: box.left, clientY: box.bottom })

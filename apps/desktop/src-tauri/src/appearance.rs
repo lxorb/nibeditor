@@ -72,6 +72,11 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
 
         changed.map_err(|error| format!("the frame could not be changed: {error}"))?;
 
+        // Nib's own frame back means a new top edge strip from Tauri, made as if the
+        // window were in its own size; see top_edge.rs.
+        #[cfg(not(target_os = "macos"))]
+        crate::top_edge::mind(&window);
+
         #[cfg(target_os = "macos")]
         {
             crate::lights::refresh(&window);

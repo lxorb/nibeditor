@@ -65,8 +65,10 @@ async (note) => {
 }
 """
 
+# The right side's strip: the left side's file list and tasks have a strip of their own,
+# in the page whether or not that side is out.
 TABS = (
-    "() => [...document.querySelectorAll('[role=\\'tablist\\'] [role=\\'tab\\']')]"
+    "() => [...document.querySelectorAll('aside.right [role=\\'tablist\\'] [role=\\'tab\\']')]"
     ".map((one) => one.getAttribute('aria-label'))"
 )
 
@@ -91,6 +93,11 @@ HOLD = """
   ).length
 }
 """
+#: The same button, to press: the first `.tools .tool` in the page is the file list's own
+#: (the order of the files), which the left side keeps in the page while it is shut.
+HOLD_BUTTON = (
+    '.tools .tool[aria-label="Stay on this note"], .tools .tool[aria-label="Follow the open note"]'
+)
 LINE = """
 () => {
   const view = window.nib
@@ -196,33 +203,34 @@ def the_panel_behaves_like_the_others(page: Page) -> None:
     show(page, "footnotes")
     is_true(page.evaluate(HOLD) == 1, "the Footnotes panel offers no hold button")
 
-    page.locator(".tools .tool").first.click()
+    page.locator(HOLD_BUTTON).first.click()
     quiet(page)
     is_true(
         page.evaluate("() => !!window.nibApp.workspace.heldTabId"),
         "pressing the hold button held nothing",
     )
     shot(page, "04-held")
-    page.locator(".tools .tool").first.click()
+    page.locator(HOLD_BUTTON).first.click()
     quiet(page)
     is_true(
         not page.evaluate("() => !!window.nibApp.workspace.heldTabId"),
         "pressing it again did not let go",
     )
 
-    # And it moves to the other side, which every panel does.
-    page.evaluate("() => window.nibApp.workspace.movePanel('footnotes', 'right')")
+    # And it moves to the other side, which every panel does: to the left, since it
+    # starts on the right.
+    page.evaluate("() => window.nibApp.workspace.movePanel('footnotes', 'left')")
     quiet(page)
     is_true(
-        page.evaluate("() => window.nibApp.workspace.sideOf('footnotes')") == "right",
+        page.evaluate("() => window.nibApp.workspace.sideOf('footnotes')") == "left",
         "the panel would not move to the other side",
     )
     is_true(
-        page.evaluate("() => window.nibApp.workspace.openOn('right')") == "footnotes",
+        page.evaluate("() => window.nibApp.workspace.openOn('left')") == "footnotes",
         "it did not stay open over there",
     )
-    shot(page, "05-right")
-    page.evaluate("() => window.nibApp.workspace.movePanel('footnotes', 'left')")
+    shot(page, "05-left")
+    page.evaluate("() => window.nibApp.workspace.movePanel('footnotes', 'right')")
     quiet(page)
 
 
@@ -242,13 +250,29 @@ def a_handheld(browser: Browser, panel: str, at: int) -> None:
 
     tabs = page.evaluate(TABS)
     rows = len(page.evaluate(ROWS))
-    say(f"[phone] {panel}: {len(tabs)} tabs, {rows} rows, {page.evaluate(HOLD)} hold buttons")
+    # A tab under a thumb keeps the touch floor, so on a phone's drawer the ones with no
+    # room beside a panel's tools go behind More (Sidebar.svelte), and are counted there.
+    behind: list[str] = []
+    if "More" in tabs:
+        page.locator("aside.right [role=tab][aria-label=More]").click()
+        quiet(page)
+        behind = page.evaluate(
+            "() => [...document.querySelectorAll('[role=menu] [role=menuitem]')]"
+            ".map((one) => one.textContent.trim())"
+        )
+        page.keyboard.press("Escape")
+        quiet(page)
+    held = [one for one in tabs if one != "More"] + behind
+    say(
+        f"[phone] {panel}: {len(tabs)} tabs ({len(behind)} behind More), {rows} rows,"
+        f" {page.evaluate(HOLD)} hold buttons"
+    )
 
-    # The panel itself is there - the strip holds the same five tabs - which is what makes
-    # the absence of the hold below a fact about the hold rather than about a sidebar
-    # nobody drew. The existing check in panels.py counts `.tools .tool` on a phone and
-    # would pass just as happily with no sidebar at all.
-    is_true(len(tabs) == 5, f"a phone's strip holds {len(tabs)} tabs rather than five")
+    # The panel itself is there - the strip holds the same five panels - which is what
+    # makes the absence of the hold below a fact about the hold rather than about a
+    # sidebar nobody drew. The existing check in panels.py counts `.tools .tool` on a
+    # phone and would pass just as happily with no sidebar at all.
+    is_true(len(held) == 5, f"a phone's strip holds {len(held)} panels rather than five")
     is_true(page.evaluate(HOLD) == 0, f"the hold button is offered on a phone's {panel} panel")
     if panel == "footnotes":
         is_true(rows == 3, "a phone draws no footnote rows")

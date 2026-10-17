@@ -34,9 +34,7 @@
  *  And when the state goes up (section 6.5): in full on a handover, on letting go, on
  *  going idle and as the window closes; while somebody is using the site, its cookies
  *  and localStorage every couple of minutes if they changed, and after a page settles at
- *  most once a minute. Everything behind the account's `web_sync` switch, and only where
- *  this engine can carry a site's state at all: nib's own Chromium cannot yet, and there
- *  nothing here runs, so nothing is ever held that could not be handed over. */
+ *  most once a minute. Everything behind the account's `web_sync` switch. */
 
 import { LEASE_WAITS, LIGHT_AT_MOST, LIGHT_EVERY, RELEASE_AFTER } from '../backoff'
 import type { Hub } from '../sync2/hub.svelte'

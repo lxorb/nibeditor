@@ -21,6 +21,11 @@ export const ur: Dictionary = {
   'Import from Zen': 'Zen سے امپورٹ کریں',
   'Containers stay in Zen': 'کنٹینر Zen ہی میں رہتے ہیں',
   'Zen’s tabs could not be read.': 'Zen کے ٹیب پڑھے نہیں جا سکے۔',
+  // Settings: note types
+  'Page note': 'صفحات والا نوٹ',
+  'Web note': 'ویب نوٹ',
+  'Private tab': 'نجی ٹیب',
+  'Note types': 'نوٹ کی اقسام',
   // Tasks: Upcoming's weeks
   'Previous week': 'پچھلا ہفتہ',
   // Tasks: projects placed in the panel, and their folder
@@ -983,6 +988,7 @@ export const ur: Dictionary = {
   Comment: 'تبصرہ',
   'Always on top': 'ہمیشہ اوپر',
   'What is new': 'کیا نیا ہے',
+  'Download the app': 'ایپ ڈاؤن لوڈ کریں',
   'Report an issue': 'مسئلہ رپورٹ کریں',
   'Move the line up': 'سطر اوپر لے جائیں',
   'Move the line down': 'سطر نیچے لے جائیں',
@@ -1159,6 +1165,12 @@ export const ur: Dictionary = {
   'Export as PNG': 'PNG میں ایکسپورٹ کریں',
   'Export as SVG': 'SVG میں ایکسپورٹ کریں',
   'Export as PDF': 'PDF میں ایکسپورٹ کریں',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF امپورٹ کریں',
+  'Choose how to add the pages to the canvas.': 'منتخب کریں کہ صفحات کینوس پر کیسے شامل ہوں۔',
+  'Single page': 'ایک صفحہ',
+  'All pages': 'تمام صفحات',
+  'Choose a page': 'ایک صفحہ منتخب کریں',
   // The canvas: what its own keys are called
   'Delete what is picked': 'منتخب حذف کریں',
   'Nudge left': 'بائیں سرکائیں',
@@ -1219,8 +1231,8 @@ export const ur: Dictionary = {
   'Release channel': 'ریلیز چینل',
   Stable: 'مستحکم',
   Unstable: 'غیر مستحکم',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'مستحکم سرکاری ریلیز کے ساتھ چلتا ہے، غیر مستحکم main پر ہر پش کے ساتھ اور خراب ہو سکتا ہے۔',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'مستحکم جاری کردہ ورژن کے ساتھ چلتا ہے، غیر مستحکم ایج بلڈ کے ساتھ اور خراب ہو سکتا ہے۔',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'امپورٹ',
@@ -1798,16 +1810,6 @@ export const ur: Dictionary = {
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
   // Orden as the default browser
   'Default browser': 'طے شدہ براؤزر',
-  // The engine web tabs run on
-  Engine: 'انجن',
-  Relaunch: 'دوبارہ شروع کریں',
-  'Chromium did not start': 'Chromium شروع نہیں ہوا',
-  'No connection': 'کنکشن نہیں',
-  'Not in this release': 'اس ریلیز میں نہیں',
-  'Needs an update': 'اپ ڈیٹ درکار ہے',
-  'Signature did not match': 'دستخط میل نہیں کھاتے',
-  'Disk full': 'ڈسک بھر گئی',
-  'Could not be installed': 'انسٹال نہیں ہو سکا',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} کی ترامیم کالعدم کریں',
   // The archive: a row put away and taken back, and what refuses to delete it

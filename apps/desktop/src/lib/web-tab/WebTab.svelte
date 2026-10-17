@@ -27,7 +27,7 @@
   import { dur } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
-  import { settings } from '../settings.svelte'
+  import { hiddenKinds, settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
@@ -68,7 +68,7 @@
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
-  import { readWebFile } from './shortcut'
+  import { apartOf } from './shortcut'
   import { searchEngine } from './search-engine.svelte'
   import { HISTORY_MARK, isOwnPage } from './own-pages'
   import { clearingAsked } from './clearing-asked.svelte'
@@ -380,8 +380,8 @@
   const space = $derived(workspace.spaceOf(tab.note))
   const book = webData.history()
 
-  /** The web note's own web data, as its file says; see web-data.svelte.ts. */
-  const apart = $derived(tab.path !== null ? (readWebFile(tab.path, tab.doc)?.own ?? null) : null)
+  /** The tab's own web data, or null for the shared store; see `apartOf`. */
+  const apart = $derived(apartOf(tab))
 
   // Turned on or off, here or on another computer, a running page moves store.
   $effect(() => {
@@ -584,7 +584,7 @@
     untrack(() =>
       keepPage({
         path,
-        text: tab.doc,
+        text: () => tab.doc,
         url,
         icon,
         wrote: (text: string) => tab.note.replace(text, false),
@@ -607,8 +607,8 @@
   /** Whether the list of downloads under the bar is open. */
   let showingDownloads = $state(false)
 
-  /** Whether this engine runs extensions: `WebView2`, and nib's own Chromium, which is
-   *  Windows' alone for now; see src-tauri/src/extensions.rs. */
+  /** Whether this engine runs extensions: `WebView2`, Windows' alone; see
+   *  src-tauri/src/extensions.rs. */
   const extending = isDesktop && platform() === 'windows'
 
   /** Whether the list of extensions under the puzzle is open. */
@@ -739,10 +739,12 @@
 
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
-    newTab: () => workspace.openWebsite(),
-    newPrivate: isDesktop
-      ? () => void import('./private').then(({ openPrivate }) => openPrivate())
-      : undefined,
+    newTab: () => workspace.newTab(tab.paneId),
+    get newPrivate() {
+      return hiddenKinds.offers('private')
+        ? () => void import('./private').then(({ openPrivate }) => openPrivate())
+        : undefined
+    },
     history: () => void import('./history-open').then(({ openHistory }) => openHistory(tab)),
     clearData: () => clearingAsked.ask(tab.id),
     // Chrome's Bookmarks. Here they are the space's own kept files, at the top of the

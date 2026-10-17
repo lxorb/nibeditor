@@ -21,6 +21,11 @@ export const de: Dictionary = {
   'Import from Zen': 'Aus Zen importieren',
   'Containers stay in Zen': 'Container bleiben in Zen',
   'Zen’s tabs could not be read.': 'Die Tabs von Zen konnten nicht gelesen werden.',
+  // Settings: note types
+  'Page note': 'Seitennotiz',
+  'Web note': 'Webnotiz',
+  'Private tab': 'Privater Tab',
+  'Note types': 'Notiztypen',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherige Woche',
   // Tasks: projects placed in the panel, and their folder
@@ -994,6 +999,7 @@ export const de: Dictionary = {
   Comment: 'Kommentar',
   'Always on top': 'Immer im Vordergrund',
   'What is new': 'Was ist neu',
+  'Download the app': 'App herunterladen',
   'Report an issue': 'Problem melden',
   'Move the line up': 'Zeile nach oben schieben',
   'Move the line down': 'Zeile nach unten schieben',
@@ -1171,6 +1177,12 @@ export const de: Dictionary = {
   'Export as PNG': 'Als PNG exportieren',
   'Export as SVG': 'Als SVG exportieren',
   'Export as PDF': 'Als PDF exportieren',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF importieren',
+  'Choose how to add the pages to the canvas.': 'Wähle, wie die Seiten auf die Leinwand kommen.',
+  'Single page': 'Einzelne Seite',
+  'All pages': 'Alle Seiten',
+  'Choose a page': 'Seite wählen',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Auswahl löschen',
   'Nudge left': 'Nach links schieben',
@@ -1231,8 +1243,8 @@ export const de: Dictionary = {
   'Release channel': 'Update-Kanal',
   Stable: 'Stabil',
   Unstable: 'Instabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil folgt den offiziellen Releases, Instabil jedem Push auf main und kann kaputtgehen.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil folgt veröffentlichten Versionen, Instabil folgt Edge-Builds und kann kaputtgehen.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importieren',
@@ -1841,16 +1853,6 @@ export const de: Dictionary = {
   'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },
   // Orden as the default browser
   'Default browser': 'Standardbrowser',
-  // The engine web tabs run on
-  Engine: 'Engine',
-  Relaunch: 'Neu starten',
-  'Chromium did not start': 'Chromium ist nicht gestartet',
-  'No connection': 'Keine Verbindung',
-  'Not in this release': 'Nicht in dieser Version',
-  'Needs an update': 'Braucht ein Update',
-  'Signature did not match': 'Signatur stimmt nicht',
-  'Disk full': 'Festplatte voll',
-  'Could not be installed': 'Konnte nicht installiert werden',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderungen von {name} rückgängig machen',
   // The archive: a row put away and taken back, and what refuses to delete it

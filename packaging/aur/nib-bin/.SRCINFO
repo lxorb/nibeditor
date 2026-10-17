@@ -7,8 +7,12 @@ pkgbase = orden-bin
 	arch = aarch64
 	license = AGPL-3.0-only
 	depends = gtk3
-	depends = webkit2gtk-4.1
+	depends = webkit2gtk-4.1>=2.40
+	depends = gst-plugins-base
+	depends = gst-plugins-good
 	depends = hicolor-icon-theme
+	optdepends = gst-libav: play AAC and H.264 - a recording made on a Mac, a video from a phone
+	optdepends = gst-plugins-bad: play the remaining formats WebKitGTK hands to it
 	optdepends = pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends
 	optdepends = xdg-utils: open links and attachments in the desktop default application
 	provides = orden=0.15.0

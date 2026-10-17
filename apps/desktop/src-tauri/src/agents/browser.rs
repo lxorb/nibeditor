@@ -1,7 +1,7 @@
-//! The browser verbs, answered on `WebView2` and nib's own Chromium alike - both speak the
-//! `DevTools` Protocol, and `engines` hands every verb the page whichever it is
-//! (docs/agent-native.md 5.2 and 12): which tab, whether
-//! this agent may act there, what the page says it would be doing, and then the act.
+//! The browser verbs, answered on `WebView2` - it speaks the `DevTools` Protocol, and
+//! `engines` hands every verb the page (docs/agent-native.md 5.2 and 12): which tab,
+//! whether this agent may act there, what the page says it would be doing, and then the
+//! act.
 //!
 //! Every verb on a tab goes through the same gate, in this order: the tab is this agent's
 //! own or a reader's tab it may reach (`browser.reader`, its spaces); the page is not

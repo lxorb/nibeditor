@@ -11,6 +11,7 @@
 
 import { may } from '@nib/chats'
 import { account } from '../account.svelte'
+import { hiddenKinds } from '../settings.svelte'
 import { t } from '../i18n.svelte'
 import { prompt } from '../prompt.svelte'
 import { nameOf, within, withoutExtension } from '../space-paths'
@@ -46,7 +47,7 @@ export async function sendToChat(
     placeholder: t('Chat'),
     options: [
       ...open.map((one) => ({ id: one.id, label: one.name ?? '', mark: 'chat' as const })),
-      ...(space ? [{ id: NEW, label: t('New chat') }] : []),
+      ...(space && hiddenKinds.offers('chat') ? [{ id: NEW, label: t('New chat') }] : []),
     ],
   })
   if (!chosen) return

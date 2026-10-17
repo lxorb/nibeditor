@@ -198,7 +198,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         for one in page.evaluate(ROWS):
             say(f"[{label}] {one}")
 
-        page.locator("aside").screenshot(path=str(SHOTS / f"tree-{where}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-{where}.png"))
         say(f"[{label}] wrote tree-{where}.png")
 
         check(
@@ -232,7 +232,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         check(worn == "rocket", f"[{label}] the canvas kept `{worn}` in its own file")
 
         page.wait_for_timeout(300)
-        page.locator("aside").screenshot(path=str(SHOTS / f"tree-chosen-{where}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-chosen-{where}.png"))
         say(f"[{label}] wrote tree-chosen-{where}.png")
     finally:
         page.context.close()

@@ -223,8 +223,36 @@ pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
     )
 }
 
+/// Places a page in the window's own units at `scale`: screen pixels where the runtime
+/// positions child webviews, and GTK's layout pixels on Linux, where the page is in an
+/// overlay. The Linux runtime bounds leave it beside the app's webview, where GTK shares
+/// their height; see `web_overlay.rs`.
+#[cfg_attr(
+    target_os = "linux",
+    allow(
+        clippy::unnecessary_wraps,
+        reason = "placement on other platforms can fail"
+    )
+)]
+pub fn put(view: &tauri::Webview, bounds: Bounds, scale: f64) -> tauri::Result<()> {
+    #[cfg(target_os = "linux")]
+    {
+        let _ = scale;
+        crate::web_overlay::page_over(view, edges(bounds, 1.0));
+        Ok(())
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        view.set_bounds(rect_of(edges(bounds, scale)))
+    }
+}
+
 /// A page's window as `edges` says it, in the runtime's own terms.
 #[must_use]
+#[cfg_attr(
+    target_os = "linux",
+    allow(dead_code, reason = "GTK uses its own layout pixels")
+)]
 pub fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
     Rect {
         position: PhysicalPosition::new(left, top).into(),
@@ -269,9 +297,9 @@ pub fn heard(window: &Window, event: &WindowEvent) {
     });
     for (label, one) in mine {
         if let Some(view) = window.app_handle().get_webview(&label) {
-            let placed = edges(fitted(one.hole, &one.frame, now), scale);
-            let (_, _, width, height) = placed;
-            let _ = view.set_bounds(rect_of(placed));
+            let bounds = fitted(one.hole, &one.frame, now);
+            let (_, _, width, height) = edges(bounds, scale);
+            let _ = put(&view, bounds, scale);
             // A page under one of the app's layers keeps the layer cut out of it at its
             // new size; see web_cut.rs.
             crate::web_cut::refit(&view, width, height, scale);

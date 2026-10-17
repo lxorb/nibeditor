@@ -76,6 +76,12 @@
     },
     "linux": {
       "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0 (>= 2.40.0)",
+          "gstreamer1.0-plugins-base",
+          "gstreamer1.0-plugins-good"
+        ],
+        "recommends": ["gstreamer1.0-libav", "gstreamer1.0-plugins-bad"],
         "conflicts": ["nib", "nibeditor"],
         "replaces": ["nib", "nibeditor"],
         "desktopTemplate": "linux/main.desktop"

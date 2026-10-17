@@ -14,6 +14,9 @@ Then, from the repository root:
     python apps/desktop/test/e2e/shell.py before
     python apps/desktop/test/e2e/shell.py after
 
+`NIB_FIRST_LOOK=1` photographs what a new reader opens in - glass, in green -
+rather than the built-in every other drive is held to.
+
 Screenshots go beside this file under `shots/shell/<name>/`, which is ignored.
 This is a scratch drive rather than a test: it photographs the app and says what
 it saw.
@@ -21,6 +24,7 @@ it saw.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -220,6 +224,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         # than half the pixels on the screen. What the motion itself looks like is
         # touch-move.py and motion.test.ts, which are about exactly that.
         reduced_motion="reduce",
+        first_look=bool(os.environ.get("NIB_FIRST_LOOK")),
     )
     page = context.new_page()
     page.add_init_script(HIDE_CARET)
@@ -233,6 +238,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
+    if os.environ.get("NIB_FIRST_LOOK"):
+        DRIVE.wait_for(
+            page,
+            "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')",
+            "glass's sheet",
+        )
     say(f"[{name}] the space holds {page.evaluate(SEED)}")
     page.wait_for_timeout(600)
 

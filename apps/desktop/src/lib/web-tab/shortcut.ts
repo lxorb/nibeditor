@@ -208,6 +208,18 @@ export function readWebFile(path: string, text: string | null | undefined): Shor
   return url === null ? null : { url, title: null, added: null, home: null, icon: null, own: null }
 }
 
+/** A web tab's own web data, or null for the store every page shares: what its file says,
+ *  and for a tab with no file made at a web note's page, that note's (`Tab.apart`). The
+ *  one answer every way of opening a page asks, so a page never changes store by how it
+ *  was opened; see web-data.svelte.ts. */
+export function apartOf(tab: {
+  path: string | null
+  doc: string
+  apart?: string | null
+}): string | null {
+  return tab.path === null ? (tab.apart ?? null) : (readWebFile(tab.path, tab.doc)?.own ?? null)
+}
+
 /** The address in a macOS `.webloc`, or null.
  *
  *  A plist is XML, and the whole of what this needs out of one is the string after

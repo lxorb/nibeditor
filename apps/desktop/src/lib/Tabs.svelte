@@ -19,6 +19,7 @@
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
   import type { ClosingWidths } from './tab-strip/closing.svelte'
+  import { revealed } from './tab-strip/scroll'
   import { wheelAlong } from './tab-strip/wheel'
   import {
     arrival,
@@ -51,7 +52,7 @@
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
   import { initial } from './icons'
-  import { dur } from './motion'
+  import { dur, stillness } from './motion'
   import Cross from './Cross.svelte'
 
   /** `caption` is the window's own titlebar: there the empty stretch of the strip is
@@ -234,6 +235,18 @@
     return { boxes, end: endOf(base) }
   })
 
+  /** How long the strip is, out past the plus: as far as it scrolls, and no further.
+   *  Room it no longer needs goes at the tabs' own pace, so a tab closed at its end
+   *  draws the rest in rather than throwing them along; room it needs comes at once, so
+   *  a tab opened there can be scrolled to straight away. */
+  const span = $derived(LEAD + layout.end + (viewport.touch ? 0 : PLUS))
+  let shrinking = $state(false)
+  let spanWas = 0
+  $effect.pre(() => {
+    shrinking = span < spanWas
+    spanWas = span
+  })
+
   /** The hairlines between tabs, in the order they are drawn in. */
   const lines = $derived.by(() => {
     const ids =
@@ -291,15 +304,26 @@
     return () => cancelAnimationFrame(frame)
   })
 
-  // The tab being read is kept in view in a strip too full to show every tab.
+  // The tab being read is kept in view in a strip too full to show every tab, its
+  // feet included, and the strip goes no further than that; see tab-strip/scroll.ts.
+  // Read off where the tab is meant to be rather than where it is drawn, which may
+  // still be easing there. Again as the strip is resized, which may hide it.
   $effect(() => {
     const id = activeId
     const node = strip
-    if (!id || !node || node.scrollWidth <= node.clientWidth) return
+    if (!id || !node || stripWidth <= 0) return
 
-    node
-      .querySelector<HTMLElement>(`[data-box="${CSS.escape(id)}"]`)
-      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    untrack(() => {
+      const box = layout.boxes[id]
+      if (!box) return
+      const at = node.scrollLeft * i18n.factor
+      const to = revealed(at, stripWidth, span, box.x, box.x + box.width + 2 * LEAD)
+      if (Math.abs(to - at) < 1) return
+      node.scrollTo({
+        left: to * i18n.factor,
+        behavior: stillness() || resizing ? 'instant' : 'smooth',
+      })
+    })
   })
 
   /* ── Closing ─────────────────────────────────────────────────────── */
@@ -812,227 +836,232 @@
     oncontextmenu={showStripMenu}
     use:longPress={showStripMenu}
   >
-    {#each tabs as tab, at (tab.id)}
-      <!-- Who else is in this note, once and at most three of each: the other people,
+    <div class="lane" class:shrinking style:width="max(100%, {span}px)">
+      {#each tabs as tab, at (tab.id)}
+        <!-- Who else is in this note, once and at most three of each: the other people,
            and this account's own other devices. The expression below it allocated a
            fresh array-like per tab per render. -->
-      {@const seen = rooms.seen[tab.note.key]}
-      {@const faces = seen?.people.slice(0, 3) ?? []}
-      {@const elsewhere = Math.min(seen?.mine ?? rooms.present[tab.note.key] ?? 0, 3)}
-      {@const box = layout.boxes[tab.id] ?? { x: 0, width: 0 }}
-      {@const parts = partsFor(
-        box.width,
-        { pinned: tab.pinned, active: tab.id === activeId },
-        viewport.touch,
-      )}
-      <!-- Placed by hand: a width, and a transform along the strip. The tab being
+        {@const seen = rooms.seen[tab.note.key]}
+        {@const faces = seen?.people.slice(0, 3) ?? []}
+        {@const elsewhere = Math.min(seen?.mine ?? rooms.present[tab.note.key] ?? 0, 3)}
+        {@const box = layout.boxes[tab.id] ?? { x: 0, width: 0 }}
+        {@const parts = partsFor(
+          box.width,
+          { pinned: tab.pinned, active: tab.id === activeId },
+          viewport.touch,
+        )}
+        <!-- Placed by hand: a width, and a transform along the strip. The tab being
            dragged is drawn where the pointer has it; see `layout`. -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="tab"
-        data-box={tab.id}
-        class:active={tab.id === activeId}
-        class:pinned={tab.pinned}
-        class:preview={tab.id === workspace.previewTabId}
-        class:line={lines.has(tab.id)}
-        class:closable={parts.close}
-        class:chosen={picked.has(tab.id)}
-        class:carried={lifted.includes(tab.id) && !drag.out}
-        class:gone={lifted.includes(tab.id) && drag.out}
-        class:settling={settling === tab.id}
-        class:onbar={tab.kind === 'web'}
-        data-theme={tab.id === activeId ? chrome.tabTheme(tab.id) : undefined}
-        style:--web-ground={chrome.barOf(tab.id)?.colour}
-        style:width="{box.width}px"
-        style:transform="translateX({box.x * i18n.factor}px)"
-        style:--w="{box.width}px"
-        onpointerenter={(event) => {
-          if (event.pointerType !== 'mouse') return
-          hovered = tab.id
-          card(tab, event.currentTarget)
-        }}
-        onpointerleave={() => {
-          if (hovered === tab.id) hovered = null
-          card(tab, null)
-        }}
-        in:arrive={{ id: tab.id, x: box.x * i18n.factor }}
-        out:leave
-      >
-        <!-- The tab's shape: the rounded body with its feet when it is the one
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          class="tab"
+          data-box={tab.id}
+          class:active={tab.id === activeId}
+          class:pinned={tab.pinned}
+          class:preview={tab.id === workspace.previewTabId}
+          class:line={lines.has(tab.id)}
+          class:closable={parts.close}
+          class:chosen={picked.has(tab.id)}
+          class:carried={lifted.includes(tab.id) && !drag.out}
+          class:gone={lifted.includes(tab.id) && drag.out}
+          class:settling={settling === tab.id}
+          class:onbar={tab.kind === 'web'}
+          data-theme={tab.id === activeId ? chrome.tabTheme(tab.id) : undefined}
+          style:--web-ground={chrome.barOf(tab.id)?.colour}
+          style:width="{box.width}px"
+          style:transform="translateX({box.x * i18n.factor}px)"
+          style:--w="{box.width}px"
+          onpointerenter={(event) => {
+            if (event.pointerType !== 'mouse') return
+            hovered = tab.id
+            card(tab, event.currentTarget)
+          }}
+          onpointerleave={() => {
+            if (hovered === tab.id) hovered = null
+            card(tab, null)
+          }}
+          in:arrive={{ id: tab.id, x: box.x * i18n.factor }}
+          out:leave
+        >
+          <!-- The tab's shape: the rounded body with its feet when it is the one
              being read, nothing on the frame when it is not; and its edge. -->
-        <span class="fill" aria-hidden="true"></span>
-        <span class="edge" aria-hidden="true"></span>
-        <!-- A double click keeps a preview, the way VS Code does it, and renames a
+          <span class="fill" aria-hidden="true"></span>
+          <span class="edge" aria-hidden="true"></span>
+          <!-- A double click keeps a preview, the way VS Code does it, and renames a
              terminal. A long press stands in for the right click on a touch screen,
              and the middle button closes, as it does on every browser's tab. Dragged,
              it goes along its own strip, into another pane's strip, or against a side
              of a pane to make one there. -->
-        <!-- Named by the note, and named on the button. A pinned tab is a mark and
+          <!-- Named by the note, and named on the button. A pinned tab is a mark and
              no words, and the name used to be put on the `span` around the mark -
              which has no role, so nothing read it and the tab was a button with
              nothing to call it. No `title`: the hover card says the name. -->
-        <button
-          class="pick"
-          class:centred={parts.centred}
-          data-tab={tab.id}
-          aria-label={tab.shown}
-          onfocus={(event) => {
-            if (event.currentTarget.matches(':focus-visible')) card(tab, event.currentTarget, true)
-          }}
-          onblur={() => card(tab, null)}
-          onclick={(event) => {
-            resumes(tab.id)
-            // A click with Ctrl or Shift was a pick, and its press answered it.
-            if (event.detail > 0 && picksWith(event)) return
-            workspace.activate(tab.id)
-            if (event.target instanceof Element && event.target.closest('.nib-unsaved')) {
-              askPlace(tab.id)
-            }
-          }}
-          ondblclick={() => doubled(tab)}
-          oncontextmenu={(event) => showMenu(event, tab)}
-          onauxclick={(event) => {
-            if (event.button === 1) closeTab(tab, 'mouse')
-          }}
-          onpointerdown={(event) => {
-            onMark = event.target instanceof Element && !!event.target.closest('.face')
-            pressed(event, tab, at)
-          }}
-          onpointermove={movedTo}
-          onpointerup={released}
-          onpointercancel={giveUp}
-          onlostpointercapture={() => {
-            if (drag.on) giveUp()
-          }}
-          use:longPress={(event) => showMenu(event, tab)}
-        >
-          <!-- What this tab is looking at, on every tab: a strip of a note, a
+          <button
+            class="pick"
+            class:centred={parts.centred}
+            data-tab={tab.id}
+            aria-label={tab.shown}
+            onfocus={(event) => {
+              if (event.currentTarget.matches(':focus-visible'))
+                card(tab, event.currentTarget, true)
+            }}
+            onblur={() => card(tab, null)}
+            onclick={(event) => {
+              resumes(tab.id)
+              // A click with Ctrl or Shift was a pick, and its press answered it.
+              if (event.detail > 0 && picksWith(event)) return
+              workspace.activate(tab.id)
+              if (event.target instanceof Element && event.target.closest('.nib-unsaved')) {
+                askPlace(tab.id)
+              }
+            }}
+            ondblclick={() => doubled(tab)}
+            oncontextmenu={(event) => showMenu(event, tab)}
+            onauxclick={(event) => {
+              if (event.button === 1) closeTab(tab, 'mouse')
+            }}
+            onpointerdown={(event) => {
+              onMark = event.target instanceof Element && !!event.target.closest('.face')
+              pressed(event, tab, at)
+            }}
+            onpointermove={movedTo}
+            onpointerup={released}
+            onpointercancel={giveUp}
+            onlostpointercapture={() => {
+              if (drag.on) giveUp()
+            }}
+            use:longPress={(event) => showMenu(event, tab)}
+          >
+            <!-- What this tab is looking at, on every tab: a strip of a note, a
                canvas and two websites says which is which before any of the names
                are read. The icon the file chose for its row where it chose one,
                because it is the same file and one file wears one mark - which is the
                whole of what a pinned tab is reduced to. See TabMark.svelte. -->
-          <span class="face" class:hidden={!parts.mark}
-            ><TabMark {tab} />{#if isDraft(tab.note) && (tab.pinned || !parts.title)}<UnsavedDot
-                corner
-                pressable
-              />{/if}</span
-          >
-          {#if tab.reading}
-            <!-- An open book, quietly: the tab says which face of the note is up
-                 without spending a word on it. -->
-            <!-- A drawing that says something, so it says what: an `svg` carrying a
-                 name and no role is a graphic nothing reads. -->
-            <svg
-              class="reading"
-              class:hidden={!parts.title}
-              viewBox="0 0 14 12"
-              role="img"
-              aria-label={t('Reading')}
-              transition:fade={{ duration: dur(140) }}
+            <span class="face" class:hidden={!parts.mark}
+              ><TabMark {tab} />{#if isDraft(tab.note) && (tab.pinned || !parts.title)}<UnsavedDot
+                  corner
+                  pressable
+                />{/if}</span
             >
-              <path d="M7 3.2v7.3M7 3.2C5.6 2 3.9 1.6 1.5 1.6v7.3c2.4 0 4.1.4 5.5 1.6" />
-              <path d="M7 3.2c1.4-1.2 3.1-1.6 5.5-1.6v7.3c-2.4 0-4.1.4-5.5 1.6" />
-            </svg>
-          {/if}
-          <!-- The name, which takes whatever the tab has left and fades out at its
+            {#if tab.reading}
+              <!-- An open book, quietly: the tab says which face of the note is up
+                 without spending a word on it. -->
+              <!-- A drawing that says something, so it says what: an `svg` carrying a
+                 name and no role is a graphic nothing reads. -->
+              <svg
+                class="reading"
+                class:hidden={!parts.title}
+                viewBox="0 0 14 12"
+                role="img"
+                aria-label={t('Reading')}
+                transition:fade={{ duration: dur(140) }}
+              >
+                <path d="M7 3.2v7.3M7 3.2C5.6 2 3.9 1.6 1.5 1.6v7.3c2.4 0 4.1.4 5.5 1.6" />
+                <path d="M7 3.2c1.4-1.2 3.1-1.6 5.5-1.6v7.3c-2.4 0-4.1.4-5.5 1.6" />
+              </svg>
+            {/if}
+            <!-- The name, which takes whatever the tab has left and fades out at its
                end rather than being cut with an ellipsis, as Chrome's does. A pinned
                tab is its mark and nothing else: a tab kept open all day is one
                somebody knows by sight. The name is still what it says to a reader
                who cannot see it, and what the title shows. -->
-          {#if !tab.pinned}
-            <span class="label" class:hidden={!parts.title} class:naming={tab.naming}
-              >{tab.shown}</span
-            >
-          {/if}
-          {#if isDraft(tab.note) && !tab.pinned && parts.title}
-            <UnsavedDot pressable />
-          {/if}
-          <!-- A private tab wears Chrome's mark for one; see web-tab/private.ts. -->
-          {#if tab.inPrivate}
-            {#await import('./web-tab/PrivateMark.svelte') then Private}<Private.default />{/await}
-          {/if}
-          <!-- Chrome's speaker, struck through on a muted site. -->
-          {#if tab.kind === 'web' && parts.title}
-            {@const heard = pages.of(tab.id)}
-            {#if heard.playing}
-              {#await soundMark() then Sound}<Sound muted={heard.muted} />{/await}
+            {#if !tab.pinned}
+              <span class="label" class:hidden={!parts.title} class:naming={tab.naming}
+                >{tab.shown}</span
+              >
             {/if}
-          {/if}
-          <!-- Not yours: this document is one somebody else shared on its own, and
+            {#if isDraft(tab.note) && !tab.pinned && parts.title}
+              <UnsavedDot pressable />
+            {/if}
+            <!-- A private tab wears Chrome's mark for one; see web-tab/private.ts. -->
+            {#if tab.inPrivate}
+              {#await import('./web-tab/PrivateMark.svelte') then Private}<Private.default
+                />{/await}
+            {/if}
+            <!-- Chrome's speaker, struck through on a muted site. -->
+            {#if tab.kind === 'web' && parts.title}
+              {@const heard = pages.of(tab.id)}
+              {#if heard.playing}
+                {#await soundMark() then Sound}<Sound muted={heard.muted} />{/await}
+              {/if}
+            {/if}
+            <!-- Not yours: this document is one somebody else shared on its own, and
                the tab says so in the mark the whole app says it with. On the tab
                because there is nowhere else it could be said - a shared file has no
                row in the tree to carry it. See SharedMark.svelte. -->
-          {#if tab.note.shared && parts.title}
-            <SharedMark label={t('Shared with you')} />
-          {/if}
-          {#if syncMark.asked && parts.title}
-            {#await syncMark.asked then Held}<Held path={tab.path} />{/await}
-          {/if}
-          <!-- Who else is in this note: a face per other person and a dot per other
+            {#if tab.note.shared && parts.title}
+              <SharedMark label={t('Shared with you')} />
+            {/if}
+            {#if syncMark.asked && parts.title}
+              {#await syncMark.asked then Held}<Held path={tab.path} />{/await}
+            {/if}
+            <!-- Who else is in this note: a face per other person and a dot per other
                device of this account, in the accent, and nothing at all while
                nobody is. No word, because the faces and dots are the sentence. -->
-          {#if (elsewhere || faces.length) && parts.title}
-            <span
-              class="here"
-              role="img"
-              aria-label={t('Also open elsewhere')}
-              title={t('Also open elsewhere')}
-            >
-              {#each faces as one (one.key)}
-                <span
-                  class="who face"
-                  style:--fill={one.fill}
-                  style:background-image={one.face && `url("${one.face}")`}
-                  transition:fade={{ duration: dur(190) }}>{one.face ? '' : initial(one.name)}</span
-                >
-              {/each}
-              {#each { length: elsewhere } as _, at (at)}
-                <span class="who" transition:fade={{ duration: dur(190) }}></span>
-              {/each}
-            </span>
+            {#if (elsewhere || faces.length) && parts.title}
+              <span
+                class="here"
+                role="img"
+                aria-label={t('Also open elsewhere')}
+                title={t('Also open elsewhere')}
+              >
+                {#each faces as one (one.key)}
+                  <span
+                    class="who face"
+                    style:--fill={one.fill}
+                    style:background-image={one.face && `url("${one.face}")`}
+                    transition:fade={{ duration: dur(190) }}
+                    >{one.face ? '' : initial(one.name)}</span
+                  >
+                {/each}
+                {#each { length: elsewhere } as _, at (at)}
+                  <span class="who" transition:fade={{ duration: dur(190) }}></span>
+                {/each}
+              </span>
+            {/if}
+          </button>
+          <!-- The name being typed, over where it is written; see TabNameField.svelte. -->
+          {#if tab.naming && parts.title}
+            {#await tabNameField() then Field}<Field {tab} />{/await}
           {/if}
-        </button>
-        <!-- The name being typed, over where it is written; see TabNameField.svelte. -->
-        {#if tab.naming && parts.title}
-          {#await tabNameField() then Field}<Field {tab} />{/await}
-        {/if}
-        <!-- A pinned tab has no cross: what is kept is not closed by the hand that
+          <!-- A pinned tab has no cross: what is kept is not closed by the hand that
              happened to be passing over it. Ctrl+W, the middle button and the row
              in the tab's own menu still close it, which is what Emil asked for and
              what a browser does. Any other tab shows it while it is the one being
              read or has the room for it, as Chrome's do. -->
-        {#if !tab.pinned}
-          <button
-            class="shut"
-            class:hidden={!parts.close}
-            title={shortcuts.tooltip(t('Close'), 'app.close')}
-            aria-label={t('Close')}
-            onclick={(event) => closeTab(tab, pointerOf(event))}
-          >
-            <Cross small />
-          </button>
-        {/if}
-      </div>
-    {/each}
+          {#if !tab.pinned}
+            <button
+              class="shut"
+              class:hidden={!parts.close}
+              title={shortcuts.tooltip(t('Close'), 'app.close')}
+              aria-label={t('Close')}
+              onclick={(event) => closeTab(tab, pointerOf(event))}
+            >
+              <Cross small />
+            </button>
+          {/if}
+        </div>
+      {/each}
 
-    <!-- A new tab, as Ctrl+T makes one (Emil, issue #213): the kinds a tab can be under
+      <!-- A new tab, as Ctrl+T makes one (Emil, issue #213): the kinds a tab can be under
          an address field, in this pane, and no menu of its own any more. Right after the
          last tab, and moving with it, as Chrome's does.
          Left out on a phone and a tablet, which hold one document at a time: a
          plus has no second tab to open, and the round button over the note is
          what makes one there. Left out rather than hidden, so no key reaches it
          and nothing reads it out. -->
-    {#if !viewport.touch}
-      <button
-        class="new"
-        title={shortcuts.tooltip(t('New tab'), 'app.new-kind')}
-        aria-label={t('New tab')}
-        style:transform="translateX({(layout.end + PLUS_GAP) * i18n.factor}px)"
-        onclick={() => workspace.newTab(paneId)}
-      >
-        <svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg>
-      </button>
-    {/if}
+      {#if !viewport.touch}
+        <button
+          class="new"
+          title={shortcuts.tooltip(t('New tab'), 'app.new-kind')}
+          aria-label={t('New tab')}
+          style:transform="translateX({(layout.end + PLUS_GAP) * i18n.factor}px)"
+          onclick={() => workspace.newTab(paneId)}
+        >
+          <svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg>
+        </button>
+      {/if}
+    </div>
   </div>
   <span class="reach" class:quiet aria-hidden="true"></span>
 
@@ -1103,6 +1132,22 @@
     display: none;
   }
 
+  /* What the strip scrolls along: its tabs and the plus, or the whole strip where they
+     fit. What is drawn past them - the line the open tab stands on, which runs out to
+     the strip's ends - is cut at its end rather than being somewhere to scroll to. Only
+     a box: the empty stretch is still the strip's, to drag the window by. */
+  .lane {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    overflow: clip;
+    pointer-events: none;
+  }
+
+  .tabs.live .lane.shrinking {
+    transition: width var(--dur-base) var(--ease-out);
+  }
+
   /* The bar's line, out to the bar's ends. Under the tabs the open one draws it, leaving
      itself out, as its body may be see-through. */
   .reach {
@@ -1146,6 +1191,7 @@
     top: 0;
     bottom: 0;
     inset-inline-start: var(--lead);
+    pointer-events: auto;
     user-select: none;
     -webkit-user-select: none;
     /* The top corners round less on a narrow tab, so a third of its top is always
@@ -1559,6 +1605,7 @@
     padding: 0;
     border-radius: var(--radius-row);
     color: var(--muted);
+    pointer-events: auto;
   }
 
   .new:hover {

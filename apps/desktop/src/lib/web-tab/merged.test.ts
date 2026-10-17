@@ -122,13 +122,6 @@ describe('the merge', () => {
     expect(kept.has(MERGED)).toBe(false)
     expect(kept.has('nib:web-data')).toBe(true)
   })
-
-  test('nib’s own Chromium, which cannot reach the stores, is done at once', async () => {
-    kept.set('nib:web-data', JSON.stringify({ w: 'space' }))
-    failing = 'web state cannot be carried on this engine yet'
-    await mergeOld()
-    expect(kept.get(MERGED)).toBeTruthy()
-  })
 })
 
 describe('two histories as one', () => {

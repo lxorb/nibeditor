@@ -16,18 +16,16 @@
 //!
 //! One list for every store, global, per space and per site: an extension somebody
 //! installed is installed, and "install it again over there" is not a sentence this app
-//! makes anybody read (docs/browser.md, section 3).
+//! makes anybody read.
 
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
-#[cfg(not(feature = "cef"))]
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
 use super::link::Store;
-#[cfg(not(feature = "cef"))]
 use super::{crx, manifest, unzip};
 
 /// The list's file.
@@ -35,7 +33,7 @@ const LIST: &str = "library.json";
 
 /// Which version each engine store has, kept per store.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(
         dead_code,
         reason = "WebView2 cannot say which version it holds, so only it needs this written down"
@@ -58,7 +56,6 @@ pub struct Kept {
 }
 
 /// The folder the extensions live in.
-#[cfg(not(feature = "cef"))]
 pub fn folder_of(root: &Path, id: &str, version: &str) -> PathBuf {
     root.join(id).join(version)
 }
@@ -84,7 +81,7 @@ pub fn write(root: &Path, list: &[Kept]) -> Result<(), String> {
 
 /// Which version of each extension each engine store was last given: store, then id.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(
         dead_code,
         reason = "WebView2 cannot say which version it holds, so only it needs this written down"
@@ -94,7 +91,7 @@ pub type Applied = BTreeMap<String, BTreeMap<String, String>>;
 
 /// The versions each store was given, as written down.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(
         dead_code,
         reason = "WebView2 cannot say which version it holds, so only it needs this written down"
@@ -109,7 +106,7 @@ pub fn applied(root: &Path) -> Applied {
 
 /// Writes down the versions each store was given.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(
         dead_code,
         reason = "WebView2 cannot say which version it holds, so only it needs this written down"
@@ -145,14 +142,12 @@ pub fn plain_version(version: &str) -> bool {
 
 /// Checks a store's file for extension `id` and unpacks it into its version's folder,
 /// answering the version. A version already there is kept as it is.
-#[cfg(not(feature = "cef"))]
 pub fn unpack(root: &Path, store: Store, id: &str, bytes: &[u8]) -> Result<String, String> {
     let checked = crx::checked(bytes, id, Some(store))?;
     unpack_checked(root, &checked)
 }
 
 /// The second half of `unpack`, for a file already checked.
-#[cfg(not(feature = "cef"))]
 pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String, String> {
     // A name of its own per install, so two at once never write into one folder.
     static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -194,9 +189,8 @@ pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String,
 }
 
 /// Every version folder of `id` but `keep`, and anything an install cut short left.
-#[cfg(not(feature = "cef"))]
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(dead_code, reason = "the tidy that calls it is WebView2's alone")
 )]
 pub fn prune(root: &Path, id: &str, keep: &str) {
@@ -211,9 +205,8 @@ pub fn prune(root: &Path, id: &str, keep: &str) {
 }
 
 /// An extension's folders, all of them.
-#[cfg(not(feature = "cef"))]
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(dead_code, reason = "the tidy that calls it is WebView2's alone")
 )]
 pub fn forget(root: &Path, id: &str) {
@@ -222,7 +215,7 @@ pub fn forget(root: &Path, id: &str) {
     }
 }
 
-#[cfg(all(test, not(feature = "cef")))]
+#[cfg(test)]
 mod tests {
     use super::super::crx::tests::crx;
     use super::super::unzip::tests::zip;

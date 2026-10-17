@@ -21,6 +21,11 @@ export const pl: Dictionary = {
   'Import from Zen': 'Importuj z Zen',
   'Containers stay in Zen': 'Kontenery zostają w Zen',
   'Zen’s tabs could not be read.': 'Nie udało się odczytać kart Zen.',
+  // Settings: note types
+  'Page note': 'Notatka ze stronami',
+  'Web note': 'Notatka internetowa',
+  'Private tab': 'Karta prywatna',
+  'Note types': 'Typy notatek',
   // Tasks: Upcoming's weeks
   'Previous week': 'Poprzedni tydzień',
   // Tasks: projects placed in the panel, and their folder
@@ -1018,6 +1023,7 @@ export const pl: Dictionary = {
   Comment: 'Komentarz',
   'Always on top': 'Zawsze na wierzchu',
   'What is new': 'Co nowego',
+  'Download the app': 'Pobierz aplikację',
   'Report an issue': 'Zgłoś problem',
   'Move the line up': 'Przenieś wiersz wyżej',
   'Move the line down': 'Przenieś wiersz niżej',
@@ -1194,6 +1200,12 @@ export const pl: Dictionary = {
   'Export as PNG': 'Eksportuj do PNG',
   'Export as SVG': 'Eksportuj do SVG',
   'Export as PDF': 'Eksportuj do PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importuj PDF',
+  'Choose how to add the pages to the canvas.': 'Wybierz, jak dodać strony do kanwy.',
+  'Single page': 'Jedna strona',
+  'All pages': 'Wszystkie strony',
+  'Choose a page': 'Wybierz stronę',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Usuń zaznaczenie',
   'Nudge left': 'Przesuń w lewo',
@@ -1254,8 +1266,8 @@ export const pl: Dictionary = {
   'Release channel': 'Kanał wydań',
   Stable: 'Stabilny',
   Unstable: 'Niestabilny',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabilny idzie za oficjalnymi wydaniami, Niestabilny za każdym pushem na main i może się psuć.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabilny idzie za wydanymi wersjami, Niestabilny za buildami edge i może się psuć.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importuj',
@@ -1879,16 +1891,6 @@ export const pl: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Domyślna przeglądarka',
-  // The engine web tabs run on
-  Engine: 'Silnik',
-  Relaunch: 'Uruchom ponownie',
-  'Chromium did not start': 'Chromium się nie uruchomił',
-  'No connection': 'Brak połączenia',
-  'Not in this release': 'Nie ma w tym wydaniu',
-  'Needs an update': 'Wymaga aktualizacji',
-  'Signature did not match': 'Podpis się nie zgadza',
-  'Disk full': 'Dysk pełny',
-  'Could not be installed': 'Nie udało się zainstalować',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Cofnij zmiany {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

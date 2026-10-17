@@ -247,6 +247,12 @@ def dial(page: Any, id: str, value: Any) -> None:
 
 def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a picture") -> Any:
     page = DRIVE.page(browser, viewport={"width": 1240, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
+    # Every hint already put away. A session's one hint comes up a few seconds in, and
+    # the first is Sign in's card over the foot of the list (hints.svelte.ts, after this
+    # drive was written): it sat in the stretch of the side measured for the quiet ink,
+    # which then met its own colour, and its blur counted as a filter on the frame. The
+    # card is not part of the frame either theme draws, so it is kept out of this.
+    page.add_init_script("localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'graph', 'palette']))")
     DRIVE.open(page)
     DRIVE.seed(page, note)
     DRIVE.open_note(page, name)

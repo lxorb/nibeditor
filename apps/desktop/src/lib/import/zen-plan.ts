@@ -21,7 +21,7 @@
  *  - **A split view** is two tabs side by side; they come over as two tabs, in
  *    the folder the split was in.
  *  - **Containers** have nothing to become: nib browses in one profile, with
- *    private tabs for the rest (docs/browser.md). Said once, where any tab had one.
+ *    private tabs for the rest (docs/web-tabs.md). Said once, where any tab had one.
  *
  *  Nothing but web pages: a tab on `about:`, a file or an extension's page is not
  *  somewhere a web note can point. A site's mark comes along where the session kept

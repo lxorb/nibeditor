@@ -293,21 +293,17 @@ describe('the bundle a package is made of', () => {
     expect(surfaces).toEqual([])
   })
 
-  test('and none of what only a desktop does: its plans, its engine, its updater', () => {
+  test('and none of what only a desktop does: its plans and its updater', () => {
     // Each came in with a feature of the desktop's and had the plugin carry it: the
     // Claude Code, Codex and ChatGPT plan rows in Settings > AI with the modules that
-    // ask the programs, the Engine row's Chromium fetch, and the updater that fetches
-    // it. 66,155 bytes between them, and with their words in 24 catalogues. Named by
-    // the crate commands they call, which no minifier renames.
+    // ask the programs, and the updater. 66,155 bytes between them, and with their words
+    // in 24 catalogues. Named by the crate commands they call, which no minifier renames.
     const commands = [
       'ai_cli_status',
       'ai_cli_ask',
       'chatgpt_sign_in',
       'chatgpt_account',
       'chatgpt_token',
-      'engine_state',
-      'engine_fetch',
-      'engine_choose',
       'check_update',
       // The AI panel, its threads and the engine behind them: the glasses' plugin has
       // no right side to ask in. See surfaces.svelte.ts.

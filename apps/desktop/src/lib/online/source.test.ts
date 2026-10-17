@@ -13,7 +13,9 @@ const seen = vi.hoisted((): { words: string | null; written: string[]; passes: n
   passes: 0,
 }))
 
-vi.mock('../account.svelte', () => ({ account: { accountToken: 'token' } }))
+vi.mock('../account.svelte', () => ({
+  account: { accountToken: 'token', forgetWithSession: () => undefined },
+}))
 vi.mock('../sync.svelte', () => ({ sync: { version: 2 } }))
 vi.mock('../sync2/runner.svelte', () => ({
   runner: {

@@ -205,10 +205,10 @@ each one not in use; the palette lists `AI account: Claude · Work` for each, th
 use ticked.
 
 The accounts are one file, `<local data>/ai/accounts.json` (`src-tauri/src/ai_accounts.rs`),
-not the page's storage, which is one browsing profile's: the system's engine and nib's own
-Chromium are two profiles, and before this file an engine switch started with no providers
-while every key was still in the keychain. Every window, both engines and every space read
-the same file; a write names the stamp of the text it changed, is refused over a newer one
+not the page's storage, which is one browsing profile's: while the app could run on nib's
+own Chromium as well, the two engines were two profiles, and before this file an engine
+switch started with no providers while every key was still in the keychain. Every window
+and every space read the same file; a write names the stamp of the text it changed, is refused over a newer one
 and made again over it, and is heard by every window. A build under another identifier (a
 probe) has a file of its own, which is what keeps a test away from the reader's accounts.
 The window still keeps a copy (`nib:ai-accounts`) to start from before the crate answers;

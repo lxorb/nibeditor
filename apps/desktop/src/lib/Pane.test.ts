@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
 /** What fills a pane is fetched the first time a tab of its kind is in front: a
- *  canvas, a PDF, a website, the reading view, the buttons of an empty pane. A fetch
+ *  canvas, a set of pages, a website, the reading view, the buttons of an empty pane. A fetch
  *  can fail - in the browser build the site is deployed again under a tab that stayed
  *  open, and the chunk it names is gone - and a surface whose fetch failed drew
  *  nothing at all: a blank pane, no word, and nothing that would ever fill it, because
@@ -25,7 +25,8 @@ describe('a surface a pane is filled with', () => {
       'emptySurface',
       'graphSurface',
       'pagesSurface',
-      'pdfSurface',
+      // No paper of its own: a PDF opens the page note beside it, which the pages
+      // surface draws with the paper behind it. See `openPdf` in workspace.svelte.ts.
       'readingSurface',
       'terminalSurface',
       'viewSurface',

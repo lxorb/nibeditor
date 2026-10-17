@@ -13,7 +13,7 @@
 //!
 //! The same commands answer, with the same checks: the thread calls `list_spaces`,
 //! `read_tree` and `read_note` itself, so nothing here is a second way of reading a
-//! space. On both engines alike: nothing below knows which one this build runs.
+//! space.
 //!
 //! What it does not change is what is true. The answers are taken once, by the launch
 //! that read them; a tree read ahead is at most the webview's start older than one

@@ -26,7 +26,7 @@ const EVERY = 6 * 60 * 60 * 1000
 const TICK = 10 * 60 * 1000
 
 /** Which channel this machine follows, written here rather than sent up to the
- *  account: one machine can run the build of main while another stays on the
+ *  account: one machine can run the unstable build while another stays on the
  *  releases, which is the whole point of the choice. */
 const CHANNEL_KEY = 'nib:channel'
 
@@ -72,7 +72,12 @@ class Updates {
    *  somebody asks for the other one on this machine. */
   /** What was chosen here last, or the stable channel for a machine that has
    *  never chosen - which is also what a machine that cannot remember follows. */
-  channel = $state<Channel>(asChannel(storedText(CHANNEL_KEY)))
+  // A prerelease build is already on the unstable stream. This also covers
+  // edge packages installed outside the app's own updater, regardless of the
+  // package manager that delivered them or a stale saved channel preference.
+  channel = $state<Channel>(
+    __APP_VERSION__.includes('-') ? 'unstable' : asChannel(storedText(CHANNEL_KEY)),
+  )
 
   /** When the last look happened, so that however often the timer and the window
    *  being come back to ask, nothing looks twice inside one interval. Zero before
@@ -196,10 +201,10 @@ class Updates {
    *  the choice answers instead of waiting hours for the next look.
    *
    *  Whatever was downloaded from the stream being left is thrown away rather than
-   *  installed: a build of main is not what somebody who has just asked for the
+   *  installed: an unstable build is not what somebody who has just asked for the
    *  releases wants started next time. Nothing is installed the other way round
    *  either - the updater only ever offers a higher version, so a machine on a
-   *  build of main that asks for the releases stays on it until a release passes
+   *  unstable build that asks for the releases stays on it until a release passes
    *  it, while one on a release is offered the next push. */
   setChannel(channel: Channel) {
     if (channel === this.channel) return

@@ -72,8 +72,8 @@ fn working_set(pid: u32) -> u64 {
     }
 }
 
-/// Elsewhere (nib's own Chromium on a Mac or Linux) the ceiling is not asked yet: the
-/// engine counts as nothing, so no tab is refused for memory there.
+/// Elsewhere the ceiling is not asked: the engine counts as nothing, so no tab is
+/// refused for memory there.
 #[cfg(not(windows))]
 pub fn engine_bytes() -> u64 {
     0

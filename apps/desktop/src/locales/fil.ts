@@ -21,6 +21,11 @@ export const fil: Dictionary = {
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
+  // Settings: note types
+  'Page note': 'Talang may pahina',
+  'Web note': 'Talang web',
+  'Private tab': 'Pribadong tab',
+  'Note types': 'Mga uri ng tala',
   // Tasks: Upcoming's weeks
   'Previous week': 'Nakaraang linggo',
   // Tasks: projects placed in the panel, and their folder
@@ -994,6 +999,7 @@ export const fil: Dictionary = {
   Comment: 'Komento',
   'Always on top': 'Laging nasa itaas',
   'What is new': 'Ano ang bago',
+  'Download the app': 'I-download ang app',
   'Report an issue': 'Mag-ulat ng problema',
   'Move the line up': 'Iakyat ang linya',
   'Move the line down': 'Ibaba ang linya',
@@ -1171,6 +1177,13 @@ export const fil: Dictionary = {
   'Export as PNG': 'I-export bilang PNG',
   'Export as SVG': 'I-export bilang SVG',
   'Export as PDF': 'I-export bilang PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'I-import ang PDF',
+  'Choose how to add the pages to the canvas.':
+    'Piliin kung paano idadagdag ang mga pahina sa canvas.',
+  'Single page': 'Isang pahina',
+  'All pages': 'Lahat ng pahina',
+  'Choose a page': 'Pumili ng pahina',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Tanggalin ang pinili',
   'Nudge left': 'Itulak pakaliwa',
@@ -1231,8 +1244,8 @@ export const fil: Dictionary = {
   'Release channel': 'Channel ng release',
   Stable: 'Matatag',
   Unstable: 'Hindi matatag',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Sinusundan ng Matatag ang opisyal na release, ang Hindi matatag ay bawat push sa main at puwedeng masira.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Sinusundan ng Matatag ang mga inilabas na bersyon, ang Hindi matatag ay mga edge build at puwedeng masira.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'I-import',
@@ -1838,16 +1851,6 @@ export const fil: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Default na browser',
-  // The engine web tabs run on
-  Engine: 'Engine',
-  Relaunch: 'I-relaunch',
-  'Chromium did not start': 'Hindi nagsimula ang Chromium',
-  'No connection': 'Walang koneksyon',
-  'Not in this release': 'Wala sa release na ito',
-  'Needs an update': 'Kailangan ng update',
-  'Signature did not match': 'Hindi tugma ang lagda',
-  'Disk full': 'Puno na ang disk',
-  'Could not be installed': 'Hindi ma-install',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'I-undo ang mga edit ni {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

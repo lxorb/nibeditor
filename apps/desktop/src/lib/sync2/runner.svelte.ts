@@ -4,8 +4,9 @@
  *  - **When it runs.** After the first paint, at the launch's `rooms` turn, never
  *    before. A pass over a space when the account's hub pokes about it (about a second
  *    after another device wrote), when something changed here, when the window comes
- *    back, and every five minutes in case a poke went missing; at v1's cadence while
- *    the hub cannot be reached (docs/sync-v2.md 5.12).
+ *    back, every thirty seconds while visible in case a poke went missing (five minutes
+ *    while hidden), and at v1's cadence while the hub cannot be reached
+ *    (docs/sync-v2.md 5.12).
  *  - **Which folder is which space**, worked out as v1 does (space-pairing.ts), kept in
  *    the sync store; a space's first pass is migrate.ts.
  *  - **What this device does**, heard as the workspace says it (workspace/file-ops.ts),
@@ -53,8 +54,10 @@ type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
  *  pass. */
 const NUDGE = 2_000
 
-/** How often a space is passed with nothing said about it, while the hub can poke. */
-const FALLBACK = 5 * 60_000
+/** The hub's poke is immediate; this catches one that went missing while someone is
+ *  looking at the window. Hidden windows keep the quieter five-minute fallback. */
+const FALLBACK = 30_000
+const HIDDEN_FALLBACK = 5 * 60_000
 
 /** v1's mirrors: what the first pass of each space starts from, never written while v2
  *  runs, and written from the store only when the account goes back to v1 or this device
@@ -401,7 +404,9 @@ class Runner {
     const delay = waiting
       ? NUDGE
       : hub.state === 'open'
-        ? FALLBACK
+        ? document.hidden
+          ? HIDDEN_FALLBACK
+          : FALLBACK
         : pollDelay(this.quiet, document.hidden)
     this.timer = setTimeout(() => this.kick(), delay)
   }
@@ -562,6 +567,10 @@ class Runner {
       this.own.add(`removed:${path}`)
       try {
         await workspace.fileGone(path, kind)
+        // Remote deletions update every path-based store above, but unlike a
+        // downloaded document they do not call `written`. Refresh the sidebar
+        // after the deletion has reached those stores so its row disappears now.
+        this.treeStale()
       } finally {
         this.own.delete(`removed:${path}`)
       }

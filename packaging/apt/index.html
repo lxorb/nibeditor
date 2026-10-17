@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Orden for apt</title>
+    <style>
+      body {
+        max-width: 46rem;
+        margin: 3rem auto;
+        padding: 0 1rem;
+        font: 16px/1.5 system-ui, sans-serif;
+        color: #222;
+        background: #fff;
+      }
+      pre {
+        overflow-x: auto;
+        padding: 0.75rem 1rem;
+        background: #f4f4f4;
+        border-radius: 6px;
+      }
+      code {
+        font: 14px/1.45 ui-monospace, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #ddd;
+          background: #1b1b1b;
+        }
+        pre {
+          background: #262626;
+        }
+        a {
+          color: #8ab4f8;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Orden for apt</h1>
+    <p>
+      The apt repository of <a href="https://orden.so">Orden</a>, a markdown editor: Debian,
+      Ubuntu and everything built on them, on x86_64 and arm64. Two suites:
+      <code>stable</code>, the newest release, and <code>unstable</code>, the newest build of
+      the <code>unstable</code> branch. Each holds the newest version alone; every release's
+      <code>.deb</code> stays on its
+      <a href="https://github.com/lxorb/orden/releases">release page</a>.
+    </p>
+
+    <h2>Add it</h2>
+    <pre><code>sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL @BASE@/orden-archive-keyring.asc | sudo tee /etc/apt/keyrings/orden.asc &gt;/dev/null
+sudo tee /etc/apt/sources.list.d/orden.sources &gt;/dev/null &lt;&lt;'EOF'
+Types: deb
+URIs: @BASE@
+Suites: stable
+Components: main
+Signed-By: /etc/apt/keyrings/orden.asc
+EOF
+sudo apt update
+sudo apt install orden</code></pre>
+    <p>
+      For the unstable builds, <code>Suites: unstable</code> instead. On an apt older than 2.3,
+      which reads no <code>.sources</code> file, the same in one line:
+    </p>
+    <pre><code>echo "deb [signed-by=/etc/apt/keyrings/orden.asc] @BASE@ stable main" | sudo tee /etc/apt/sources.list.d/orden.list</code></pre>
+    <p>
+      The key: <code>Orden packages &lt;emil@emilvinu.ch&gt;</code>, ed25519, fingerprint
+      <code>4440 4B19 539F B2C5 3F31 0869 41F0 1034 48A1 94DE</code>
+      (<a href="orden-archive-keyring.asc">armored</a>,
+      <a href="orden-archive-keyring.gpg">binary</a>).
+    </p>
+  </body>
+</html>

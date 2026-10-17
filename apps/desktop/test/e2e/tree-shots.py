@@ -115,7 +115,7 @@ def shoot(browser: Browser, scheme: str) -> None:
         for one in page.evaluate(ROWS):
             say(f"[{scheme}] {one}")
 
-        page.locator("aside").screenshot(path=str(SHOTS / f"tree-{scheme}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-{scheme}.png"))
         say(f"[{scheme}] wrote tree-{scheme}.png")
 
         # The two marks no file listing can produce, once each, beside the three
@@ -123,7 +123,7 @@ def shoot(browser: Browser, scheme: str) -> None:
         if scheme == "light":
             say(f"[{scheme}] with the unlisted kinds: {page.evaluate(UNLISTED)}")
             page.wait_for_timeout(300)
-            page.locator("aside").screenshot(path=str(SHOTS / "tree-every-mark.png"))
+            page.locator("aside:not(.right)").screenshot(path=str(SHOTS / "tree-every-mark.png"))
             say(f"[{scheme}] wrote tree-every-mark.png")
     finally:
         page.context.close()

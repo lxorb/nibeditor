@@ -2,8 +2,10 @@
 
 Emil asked for an icon on every window: the file's own, for a note, a canvas, a
 page note and a PDF, the space's own picture for the graph, and for a website the
-site's own favicon. What a unit test cannot say is whether the seven of them come
-out as one strip - the same box, in the same place inside the tab, at the same
+site's own favicon. A PDF no longer has a tab of its own: it opens as its page note,
+which wears the page note's mark, so a window holds six tabs here - a note, a canvas, a
+page note, the graph and two websites. What a unit test cannot say is whether the six
+of them come out as one strip - the same box, in the same place inside the tab, at the same
 weight - so that is what this measures, in a real browser, and photographs.
 
 The proof that a tab and a row are one answer: `Plan.md` says `icon: rocket` in
@@ -68,9 +70,8 @@ def shortcut(url: str, title: str, icon: str | None) -> str:
     return "[InternetShortcut]\r\n" + "\r\n".join(rows) + "\r\n"
 
 
-# The space these tabs come out of. A `.url` and a `.pages` are written by renaming a
-# note onto the extension, which is how the drives already make a PDF: the words are the
-# file, and the name is what the app reads the kind off.
+# The space these tabs come out of. A `.url` is written by renaming a note onto the
+# extension: the words are the file, and the name is what the app reads the kind off.
 SEED = """
 async (site) => {
   const ws = window.nibApp.workspace
@@ -79,8 +80,6 @@ async (site) => {
   for (const one of [...ws.tabs]) ws.close(one.id)
 
   const plan = await ws.noteFrom(site.dressed, root)
-  const paper = await ws.noteFrom('# paper\\n', root)
-  await ws.rename(paper, 'Deep Learning.pdf')
   const marked = await ws.noteFrom(site.marked, root)
   await ws.rename(marked, 'A site with a mark.url')
   const plain = await ws.noteFrom(site.plain, root)
@@ -92,14 +91,16 @@ async (site) => {
   return {
     held: ws.files.map((one) => one.name),
     plan,
-    pdf: at('Deep Learning.pdf'),
     marked: at('A site with a mark.url'),
     plain: at('A site with no mark.url'),
   }
 }
 """
 
-# Seven tabs, one of every kind a window can hold, in the order the strip keeps them.
+# Six tabs, one of every kind a window can hold, in the order the strip keeps them. A
+# PDF is not one of them any more: it opens as its page note (workspace.openPdf), the
+# kind `Lecture.pages` already is, and a renamed note is no paper pdf.js can read the
+# pages of, so it would open nothing at all.
 OPEN = """
 async (where) => {
   const ws = window.nibApp.workspace
@@ -108,7 +109,6 @@ async (where) => {
   await ws.openEntry(where.plan, {})
   await ws.createCanvas(root, 'Roadmap.canvas')
   await ws.createPages(root, 'Lecture.pages')
-  await ws.openEntry(where.pdf, {})
   ws.openGraph()
 
   // A web note in a browser build opens a browser tab rather than one of nib's
@@ -231,19 +231,13 @@ def marks(request: harness.Files) -> bool:
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
     page = context.new_page()
-    # The PDF is a note renamed, which pdf.js cannot read and the pane says so in
-    # words: "That PDF could not be opened". The refusal is the drive's own doing and
-    # is the only thing on the console this run allows; see Pdf.svelte.
-    page.on(
-        "pageerror",
-        lambda error: None
-        if "pdf" in str(error).lower()
-        else wrong(f"[{scheme}] page error: {error}"),
-    )
+    # Nothing on the console is allowed. There used to be one exception, a renamed note
+    # opened as a PDF that pdf.js refused; there is no PDF here any more.
+    page.on("pageerror", lambda error: wrong(f"[{scheme}] page error: {error}"))
     page.on(
         "console",
         lambda message: wrong(f"[{scheme}] console error: {message.text}")
-        if message.type == "error" and "pdf" not in message.text.lower()
+        if message.type == "error"
         else None,
     )
     # A mark that was asked for and never came is the one failure this drive exists to
@@ -360,8 +354,8 @@ def drive(page: Page, scheme: str) -> list[dict]:
     shot(page, f"01-the-strip-{scheme}", ".strip")
     shot(page, f"02-the-window-{scheme}")
 
-    if len(strip) != 7:
-        wrong(f"[{scheme}] the strip holds {len(strip)} tabs rather than seven")
+    if len(strip) != 6:
+        wrong(f"[{scheme}] the strip holds {len(strip)} tabs rather than six")
         return strip
 
     for one in strip:
@@ -370,7 +364,7 @@ def drive(page: Page, scheme: str) -> list[dict]:
         if one["kind"] == "nothing":
             wrong(f"[{scheme}] {one['name']} wears no mark at all")
 
-    # One box, and one place in the tab: which is what makes seven kinds read as a strip
+    # One box, and one place in the tab: which is what makes six kinds read as a strip
     # and every name in it start at the same place.
     boxes = {(one["width"], one["height"]) for one in strip}
     seats = {(one["at"], one["middle"]) for one in strip}
@@ -440,7 +434,7 @@ def main() -> int:
             wrong(f"the strip is not the same shape in both schemes: {shapes}")
 
     return DRIVE.verdict(
-        "seven kinds of tab, one mark each, one box, one weight, one place - and the"
+        "six kinds of tab, one mark each, one box, one weight, one place - and the"
         " file's own mark in the strip as in the list, down to the pinned chip"
     )
 

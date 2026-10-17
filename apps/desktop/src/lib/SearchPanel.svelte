@@ -271,7 +271,7 @@
     // A row with a page is a paper: it opens where the words are rather than at a
     // line, which a paper has not got. See pdf/papers.ts.
     if (hit.page !== undefined) {
-      workspace.openPdf(hit.path, hit.page, how)
+      await workspace.openPdf(hit.path, hit.page, how)
       return
     }
     // A note with no file is its tab; see search/unsaved.ts.

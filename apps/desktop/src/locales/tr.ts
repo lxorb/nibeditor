@@ -21,6 +21,11 @@ export const tr: Dictionary = {
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
+  // Settings: note types
+  'Page note': 'Sayfalı not',
+  'Web note': 'Web notu',
+  'Private tab': 'Gizli sekme',
+  'Note types': 'Not türleri',
   // Tasks: Upcoming's weeks
   'Previous week': 'Önceki hafta',
   // Tasks: projects placed in the panel, and their folder
@@ -985,6 +990,7 @@ export const tr: Dictionary = {
   Comment: 'Açıklama',
   'Always on top': 'Her zaman üstte',
   'What is new': 'Yenilikler',
+  'Download the app': 'Uygulamayı indir',
   'Report an issue': 'Sorun bildir',
   'Move the line up': 'Satırı yukarı taşı',
   'Move the line down': 'Satırı aşağı taşı',
@@ -1162,6 +1168,12 @@ export const tr: Dictionary = {
   'Export as PNG': 'PNG olarak aktar',
   'Export as SVG': 'SVG olarak aktar',
   'Export as PDF': 'PDF olarak aktar',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF içe aktar',
+  'Choose how to add the pages to the canvas.': 'Sayfaların tuvale nasıl ekleneceğini seçin.',
+  'Single page': 'Tek sayfa',
+  'All pages': 'Tüm sayfalar',
+  'Choose a page': 'Bir sayfa seçin',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Seçileni sil',
   'Nudge left': 'Sola it',
@@ -1222,8 +1234,8 @@ export const tr: Dictionary = {
   'Release channel': 'Sürüm kanalı',
   Stable: 'Kararlı',
   Unstable: 'Kararsız',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Kararlı resmî sürümleri izler, Kararsız main’e her gönderimi izler ve bozulabilir.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Kararlı yayımlanan sürümleri izler, Kararsız edge yapılarını izler ve bozulabilir.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'İçe aktar',
@@ -1810,16 +1822,6 @@ export const tr: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Öntanımlı tarayıcı',
-  // The engine web tabs run on
-  Engine: 'Motor',
-  Relaunch: 'Yeniden başlat',
-  'Chromium did not start': 'Chromium başlamadı',
-  'No connection': 'Bağlantı yok',
-  'Not in this release': 'Bu sürümde yok',
-  'Needs an update': 'Güncelleme gerekiyor',
-  'Signature did not match': 'İmza eşleşmedi',
-  'Disk full': 'Disk dolu',
-  'Could not be installed': 'Yüklenemedi',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} düzenlemelerini geri al',
   // The archive: a row put away and taken back, and what refuses to delete it

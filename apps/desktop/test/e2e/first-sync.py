@@ -163,13 +163,19 @@ def drive(browser, token: str) -> dict[str, float]:
     # A device with the file list open and nothing whatever in it: no space, no
     # note, nothing of anybody's. That is the moment the whole waiting state exists
     # for, and the one the app used to spend on a blank screen - a browser that has
-    # been introduced and then had its notes erased, which is the answer somebody
-    # gives on signing in when they want only what the account holds.
+    # been introduced and then had its notes erased, which is what somebody who
+    # wants only what the account holds does before signing in.
     page.goto(ORIGIN, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=60000)
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
-    page.evaluate("async () => await window.nibApp.workspace.eraseLocalSpaces()")
+    # Each space deleted the way the space's own menu deletes it: the erase-everything
+    # answer that did this in one call went with the sign-in question it answered
+    # (be28f5e9), and a browser emptied by hand is the same browser.
+    page.evaluate(
+        "async () => { const ws = window.nibApp.workspace;"
+        " for (const one of [...ws.spaces]) await ws.deleteSpace(one.id) }"
+    )
     page.wait_for_function("() => window.nibApp.workspace.spaces.length === 0", timeout=60000)
     page.wait_for_timeout(1500)
 

@@ -65,7 +65,12 @@ function makers(): string[] {
   // named file. See newCanvas in workspace.svelte.ts.
   vi.spyOn(workspace, 'openBlank').mockImplementation(() => void made.push('note'))
   vi.spyOn(workspace, 'newCanvas').mockImplementation(async () => void made.push('canvas'))
-  vi.spyOn(workspace, 'openWebsite').mockImplementation(() => void made.push('web'))
+  // A web note lands on the search engine this device chose, so it is the opener a
+  // known address goes through rather than the one that makes an empty tab (#354).
+  vi.spyOn(workspace, 'openPage').mockImplementation((url: string) => {
+    made.push(`web ${url}`)
+    return null
+  })
   vi.spyOn(workspace, 'newPages').mockImplementation(async () => void made.push('pages'))
   online.made = made
 
@@ -121,10 +126,34 @@ describe('the kinds a new tab can be', () => {
     const made = makers()
     for (const one of newKinds()) one.make()
 
-    // The online terminal's maker is fetched, so it arrives after the ones behind it.
+    // The online terminal's maker and the search engine are fetched, so they arrive
+    // after the ones behind them.
     await vi.waitFor(() =>
-      expect([...made].sort()).toEqual(['canvas', 'note', 'online', 'pages', 'web']),
+      expect([...made].sort()).toEqual([
+        'canvas',
+        'note',
+        'online',
+        'pages',
+        'web https://www.google.com/',
+      ]),
     )
+  })
+
+  /** Emil, #354: *"if you click on web note in the Ctrl + T menu, then it should open
+   *  your configured search engine"*. The press was already the choice, so a second
+   *  empty field with the same kinds under it again answered nothing. The engine's own
+   *  page, not its results page for no words; see `engineHome` in web-tab/engines.ts. */
+  test('a web note opens the search engine this device chose', async () => {
+    const made = makers()
+    const { searchEngine } = await import('./web-tab/search-engine.svelte')
+    searchEngine.choose('duckduckgo')
+
+    newKinds()
+      .find((one) => one.kind === 'web')
+      ?.make()
+
+    await vi.waitFor(() => expect(made).toEqual(['web https://duckduckgo.com/']))
+    searchEngine.choose('google')
   })
 
   /** The pane whose plus was pressed takes the keyboard first, so a plus in the other

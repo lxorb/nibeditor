@@ -1,11 +1,16 @@
 import type { EditorView } from '@nib/editor'
 import { CODE_PALETTES } from '@nib/editor'
+import type { IconNode } from 'lucide'
 import { panelDrawable } from './even/panel-words'
 import { glassesGroups, wordFields } from './even/settings'
+import { MARKS } from './file-mark'
 import { CATALOGUES_URL, i18n, plural, t } from './i18n.svelte'
 import { languageOptions, machineSaid } from './language-options'
 import { method } from './mobile/bridge'
 import { modes, REMIND_BEFORE } from './modes.svelte'
+import { locked, setKind } from './kind-choice'
+import { kindName } from './kind-words'
+import { kindLines, newKinds } from './new-kinds'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
 import { isPlugin } from './plugin'
@@ -16,7 +21,7 @@ import { recovery } from './recovery.svelte'
 import { hasTray, residency } from './reminders/residency.svelte'
 import { chatsGroups } from './chats-settings'
 import { resetFields } from './reset-fields'
-import { settings } from './settings.svelte'
+import { hiddenKinds, settings } from './settings.svelte'
 import { tabCycle } from './tab-cycle.svelte'
 import { isDesktop, isMobile, platform } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
@@ -74,6 +79,9 @@ interface Common {
    *  somebody who already knows the word; one that explains itself has none, and
    *  shows no glyph at all. */
   hint?: string
+  /** A drawing before the name, for a row about a thing that has one: a kind of tab in
+   *  Note types wears the mark its cards and its files wear. */
+  icon?: IconNode
 }
 
 /** One colour among a row of them, drawn as the colour itself. The only control
@@ -113,7 +121,15 @@ export interface Segment {
  *  all can offers a reset. */
 export type Field = Common &
   (
-    | { kind: 'switch'; initial?: boolean; get(): boolean; set(on: boolean): void }
+    | {
+        kind: 'switch'
+        initial?: boolean
+        /** Out of anybody's hands right now: the last kind of tab still offered, which
+         *  cannot be turned off. Drawn faded, and a press does nothing. */
+        locked?: () => boolean
+        get(): boolean
+        set(on: boolean): void
+      }
     | {
         kind: 'slider'
         min: number
@@ -346,7 +362,8 @@ function ownFields(): Field[] {
 
 /** The panes that are only about settings. The account and the LLM connector are
  *  their own thing and stay written out by hand. */
-type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance' | 'glasses' | 'export'
+type PaneId =
+  'general' | 'editor' | 'kinds' | 'spelling' | 'markdown' | 'appearance' | 'glasses' | 'export'
 
 export interface Pane {
   id: PaneId
@@ -511,6 +528,27 @@ function remindersGroup(): Group {
         : []),
     ],
   }
+}
+
+/** The kinds this device can make, one switch each, in their lines under the word each
+ *  line already has elsewhere. On to begin with, so the pane's reset turns every one back
+ *  on. */
+function kindGroups(): Group[] {
+  const titles = { write: t('Notes'), run: t('Terminal'), web: t('Web') }
+
+  return kindLines(newKinds()).map((line) => ({
+    title: titles[line[0]?.line ?? 'write'],
+    fields: line.map((one): Field => ({
+      kind: 'switch',
+      label: kindName(one.kind),
+      words: ['type', 'kind', 'new', 'create', 'hide', 'show', one.kind],
+      icon: one.icon ?? MARKS[one.mark],
+      initial: true,
+      locked: () => locked(one.kind),
+      get: () => hiddenKinds.offers(one.kind),
+      set: (on) => setKind(one.kind, on),
+    })),
+  }))
 }
 
 /** Built against a live view so a change lands in the editor on screen. */
@@ -757,7 +795,7 @@ export function preferences(view?: EditorView): Pane[] {
                     label: t('Release channel'),
                     words: ['beta', 'updates', 'nightly'],
                     hint: t(
-                      'Stable follows the official releases, Unstable every push to main and can break.',
+                      'Stable follows released versions; Unstable follows edge builds and can break.',
                     ),
                     options: [
                       { value: 'stable', label: t('Stable') },
@@ -1001,6 +1039,15 @@ export function preferences(view?: EditorView): Pane[] {
           ],
         },
       ],
+    },
+
+    {
+      // Which kinds of tab anything offers to make, in the lines the new tab draws them
+      // in. Only the making: a file of a kind turned off opens, edits and syncs as it
+      // always did. See kind-choice.ts.
+      id: 'kinds',
+      label: t('Note types'),
+      groups: kindGroups(),
     },
 
     {

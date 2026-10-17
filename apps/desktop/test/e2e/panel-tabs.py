@@ -12,7 +12,7 @@ tab outside the pill. Measured here rather than clicked:
   - the tab showing is always drawn.
 
 On the right side at its narrowest, at 300 and at its widest, with the five panels it
-starts with and again with eight, in both schemes. Shots under `shots/panel-tabs/`.
+starts with and again with seven, in both schemes. Shots under `shots/panel-tabs/`.
 
 Run it from the repository root:
 
@@ -147,26 +147,29 @@ def drive(browser: Browser, scheme: str) -> None:
     page.wait_for_timeout(400)
     shot(page, f"{scheme}-window")
 
-    # Eight panels on the one side: at its narrowest some go behind More.
+    # Seven panels on the one side: at its narrowest some go behind More. The file list
+    # and the tasks moved over to the five; not the search, which has had no tab since
+    # 6de7fcf4 (a search bar over the file list instead), and not the chats or the
+    # agents, whose tabs wait for an account and for an agent that has spoken.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
-          for (const one of ['tree', 'search', 'tasks']) ws.movePanel(one, 'right')
+          for (const one of ['tree', 'tasks']) ws.movePanel(one, 'right')
           ws.showPanel('ask')
         }"""
     )
     page.wait_for_timeout(500)
     for pixels in (180, 300, 520):
         width(page, pixels)
-        at = f"{scheme} {pixels} eight"
+        at = f"{scheme} {pixels} seven"
         row = page.evaluate(MEASURE)
         judge(at, row)
         labels = [one["label"] for one in row["tabs"]]
         if pixels == 520 and "More" in labels:
-            wrong(f"[{at}] More at the widest, where all eight fit")
+            wrong(f"[{at}] More at the widest, where all seven fit")
         if pixels == 180:
             if "More" not in labels:
-                wrong(f"[{at}] eight tabs at the narrowest and no More")
+                wrong(f"[{at}] seven tabs at the narrowest and no More")
             else:
                 page.locator("aside.right [role=tab][aria-label=More]").click()
                 page.wait_for_timeout(300)
@@ -176,12 +179,12 @@ def drive(browser: Browser, scheme: str) -> None:
                 )
                 say(f"[{at}] behind More: {json.dumps(rows, ensure_ascii=False)}")
                 shot(page, f"{scheme}-{pixels}-more-menu")
-                hidden = 8 - (len(labels) - 1)
+                hidden = 7 - (len(labels) - 1)
                 if len(rows) != hidden:
                     wrong(f"[{at}] More lists {len(rows)} panels, not the {hidden} not drawn")
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(200)
-        shot(page, f"{scheme}-{pixels}-eight", clip=strip_clip(page))
+        shot(page, f"{scheme}-{pixels}-seven", clip=strip_clip(page))
 
     page.context.close()
 

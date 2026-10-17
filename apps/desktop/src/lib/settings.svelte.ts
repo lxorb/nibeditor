@@ -1,10 +1,12 @@
 import { setSnippets } from '@nib/editor'
+import { account } from './account.svelte'
 import { connectors } from './connectors.svelte'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
-import { isRecord, isString, keep, stored, storedText } from './stored'
+import { isRecord, isString, keep, stored, storedText, stringList } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
+import { viewport } from './viewport.svelte'
 
 const PAGE_KEY = 'nib:page'
 const APPEARANCE_KEY = 'nib:export-appearance'
@@ -16,6 +18,7 @@ type ExportAppearance = 'light' | 'dark' | 'app'
 export type Section =
   | 'general'
   | 'editor'
+  | 'kinds'
   | 'shortcuts'
   | 'mobile'
   | 'spelling'
@@ -167,3 +170,48 @@ class Settings {
 }
 
 export const settings = new Settings()
+
+/** Kinds of tab Settings › Note types turned off: nothing offers to make one, and a file
+ *  of one still opens. Here, with the settings the first paint reads; set and synced in
+ *  kind-choice.ts. */
+export const KINDS_KEY = 'nib:hidden-kinds'
+
+export type KindName =
+  'note' | 'canvas' | 'pages' | 'chat' | 'terminal' | 'remote' | 'online' | 'web' | 'private'
+
+export function kindsHere(): KindName[] {
+  if (__EVEN_PLUGIN__) return ['note', 'canvas', 'pages']
+
+  const web = viewport.device !== 'phone'
+  const here: KindName[] = ['note', 'canvas', 'pages']
+  if (account.accountToken) here.push('chat')
+  if (isDesktop) here.push('terminal', 'remote')
+  here.push('online')
+  if (web) here.push('web')
+  if (web && isDesktop) here.push('private')
+  return here
+}
+
+/** Or the first, if none is left. */
+export function shownOf(here: readonly KindName[], hidden: readonly string[]): KindName[] {
+  const shown = here.filter((kind) => !hidden.includes(kind))
+  return shown.length ? shown : here.slice(0, 1)
+}
+
+class HiddenKinds {
+  hidden = $state<readonly string[]>([])
+
+  get shown(): KindName[] {
+    return shownOf(kindsHere(), this.hidden)
+  }
+
+  offers(kind: KindName): boolean {
+    return this.shown.includes(kind)
+  }
+
+  restore() {
+    this.hidden = stringList(stored(KINDS_KEY)) ?? []
+  }
+}
+
+export const hiddenKinds = new HiddenKinds()

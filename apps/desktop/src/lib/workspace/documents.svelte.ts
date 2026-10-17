@@ -450,6 +450,11 @@ export class Tab {
    *  written into the session so a restart comes back on the page it was on. */
   address = $state<string | undefined>(undefined)
 
+  /** For a website with no file made at a web note's page - a second tab of it, a link
+   *  out of it: that note's own web data, so the page stays signed in where the note is.
+   *  Read through `apartOf` in web-tab/shortcut.ts, never on its own. */
+  apart = $state<string | null>(null)
+
   /** For a website: a private tab, whose page writes nothing down and is never written
    *  down itself - not in the session, not on the closed stack, never saved as a web
    *  note. Set as the tab is made; see web-tab/private.ts. */

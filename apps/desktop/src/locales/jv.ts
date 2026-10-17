@@ -21,6 +21,11 @@ export const jv: Dictionary = {
   'Import from Zen': 'Impor saka Zen',
   'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
   'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
+  // Settings: note types
+  'Page note': 'Cathetan kaca',
+  'Web note': 'Cathetan web',
+  'Private tab': 'Tab pribadi',
+  'Note types': 'Jinis cathetan',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sadurunge',
   // Tasks: projects placed in the panel, and their folder
@@ -980,6 +985,7 @@ export const jv: Dictionary = {
   Comment: 'Komentar',
   'Always on top': 'Tansah ing ndhuwur',
   'What is new': 'Apa sing anyar',
+  'Download the app': 'Undhuh aplikasine',
   'Report an issue': 'Lapurake masalah',
   'Move the line up': 'Munggahake larike',
   'Move the line down': 'Mudhunake larike',
@@ -1154,6 +1160,12 @@ export const jv: Dictionary = {
   'Export as PNG': 'Ekspor minangka PNG',
   'Export as SVG': 'Ekspor minangka SVG',
   'Export as PDF': 'Ekspor minangka PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Impor PDF',
+  'Choose how to add the pages to the canvas.': 'Pilih carane nambahake kaca menyang kanvas.',
+  'Single page': 'Siji kaca',
+  'All pages': 'Kabeh kaca',
+  'Choose a page': 'Pilih kaca',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Busak sing dipilih',
   'Nudge left': 'Sunggi ngiwa',
@@ -1214,8 +1226,8 @@ export const jv: Dictionary = {
   'Release channel': 'Saluran wedalan',
   Stable: 'Mantep',
   Unstable: 'Ora mantep',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Mantep ngetutake wedalan resmi, Ora mantep ngetutake saben dorongan menyang main lan bisa rusak.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Mantep ngetutake versi sing wis diwedalake, Ora mantep ngetutake build edge lan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',
@@ -1794,16 +1806,6 @@ export const jv: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Orden as the default browser
   'Default browser': 'Panjelajah gawan',
-  // The engine web tabs run on
-  Engine: 'Mesin',
-  Relaunch: 'Bukak maneh',
-  'Chromium did not start': 'Chromium ora miwiti',
-  'No connection': 'Ora ana sambungan',
-  'Not in this release': 'Ora ana ing rilis iki',
-  'Needs an update': 'Butuh nganyari',
-  'Signature did not match': 'Tandha tangan ora cocog',
-  'Disk full': 'Disk kebak',
-  'Could not be installed': 'Ora bisa dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Wurungaké suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

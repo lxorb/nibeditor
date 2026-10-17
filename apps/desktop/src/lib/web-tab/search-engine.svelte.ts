@@ -3,12 +3,16 @@
  *  Google until somebody chooses otherwise (Emil's call; see typed.ts), one of Chrome's
  *  list for the reader's region, or a custom address with `%s` where the words go. This
  *  device's, like Memory saver beside it: Chrome keeps it with the profile, and nib's
- *  profile is the machine's. What the list is and what a choice makes of the words is
- *  engines.ts. */
+ *  profile is the machine's. What the list is, what a choice makes of the words and
+ *  where the engine's own page is, is engines.ts.
+ *
+ *  Asked for with the press rather than imported where it is wanted: this reaches
+ *  typed.ts, which is deliberately not in front of the first paint. See the web row in
+ *  new-kinds.ts and test/weight.test.ts. */
 
 import { isRecord, isString, keep, stored } from '../stored'
 import { SEARCH } from './typed'
-import { engineById, isEngineAddress } from './engines'
+import { engineById, engineHome, isEngineAddress } from './engines'
 
 const KEY = 'nib:search-engine'
 
@@ -49,6 +53,14 @@ class SearchEngine {
   get url(): string {
     if (this.choice.id === CUSTOM) return this.choice.custom || SEARCH
     return engineById(this.choice.id)?.url ?? SEARCH
+  }
+
+  /** The chosen engine's own page: where a new web note goes, since a reader asking for
+   *  one is asking for somewhere to start. Emil, #354: *"if you click on web note in the
+   *  Ctrl + T menu, then it should open your configured search engine"*. See
+   *  `engineHome`, and the web row in new-kinds.ts. */
+  get home(): string {
+    return engineHome(this.url)
   }
 
   /** One of the list, or `CUSTOM` once a custom address is written. */

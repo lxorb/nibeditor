@@ -98,7 +98,7 @@ def named(page: Page, what: str, name: str, shot: str | None = None) -> None:
         raise SystemExit(f"{what}: the name field lost the keyboard before a name was typed")
 
     if shot:
-        page.locator("aside").screenshot(path=str(SHOTS / shot))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / shot))
         say(f"wrote {shot}")
 
     field.fill(name)

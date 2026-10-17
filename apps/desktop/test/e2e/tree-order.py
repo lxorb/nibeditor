@@ -244,7 +244,7 @@ def desktop(playwright, profile: Path) -> list[str]:
             names = page.evaluate(TOP_NAMES)
             orders[mode] = names
             say(f"{mode}: {' | '.join(names)}")
-            page.locator("aside").screenshot(path=str(SHOTS / f"order-{mode}.png"))
+            page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"order-{mode}.png"))
 
         # The one thing a name order has to get right.
         by_name = orders["name"]
@@ -287,7 +287,7 @@ def desktop(playwright, profile: Path) -> list[str]:
         elif after.index(moving) != after.index(onto) - 1:
             wrong(f"{moving} did not land above {onto}: {after}")
 
-        page.locator("aside").screenshot(path=str(SHOTS / "order-dragged.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / "order-dragged.png"))
         kept = page.evaluate(WHAT_IS_KEPT)
         say(f"kept: {json.dumps(kept, ensure_ascii=False)}")
         if not kept["arranged"]:
@@ -317,7 +317,7 @@ def desktop(playwright, profile: Path) -> list[str]:
         if mixed[: len(FOLDERS)] == after[: len(FOLDERS)]:
             wrong(f"the folders were put back on top of the notes: {mixed}")
 
-        page.locator("aside").screenshot(path=str(SHOTS / "order-folder-moved.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / "order-folder-moved.png"))
 
         return mixed
     finally:
@@ -347,7 +347,7 @@ def relaunched(playwright, profile: Path, want: list[str]) -> None:
         if names != want:
             wrong(f"the arranged order did not survive the relaunch:\n  was {want}\n  now {names}")
 
-        page.locator("aside").screenshot(path=str(SHOTS / "order-relaunched.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / "order-relaunched.png"))
         say("wrote order-relaunched.png")
     finally:
         context.close()

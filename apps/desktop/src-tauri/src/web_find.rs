@@ -6,7 +6,7 @@
 //! one is lit, which is Chrome's own find with the dialog left out. The window types, the
 //! engine finds, and the count comes back as `nib://web-found`.
 //!
-//! An engine without it - an older runtime, the other two desktops, nib's own Chromium -
+//! An engine without it - an older runtime, the other two desktops -
 //! is asked by a line of script in the page instead: the browser's own `window.find`
 //! walks and selects the matches, and the page's text is counted for the tally. It marks
 //! one match rather than all of them, which is the honest difference.
@@ -16,7 +16,6 @@
 //! and nothing else, for the tab it came from and no other.
 
 use serde::{Deserialize, Serialize};
-#[cfg(not(feature = "cef"))]
 use tauri::Webview;
 use tauri::{AppHandle, Emitter};
 
@@ -95,7 +94,7 @@ fn looked(term: &str, look: Look) -> String {
 pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result<(), String> {
     let view = crate::web_tabs::found(&app, &tab)?;
 
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     {
         let asking = view.clone();
         app.run_on_main_thread(move || {
@@ -106,25 +105,9 @@ pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result
         .map_err(|error| format!("that page could not be reached: {error}"))
     }
 
-    #[cfg(all(not(windows), not(feature = "cef")))]
+    #[cfg(not(windows))]
     {
         script(&view, tab, &term, look);
-        Ok(())
-    }
-
-    // nib's own Chromium has no find to lend either, and runs the page's in nib's own
-    // world, where the page cannot see what it leaves behind; see web_worlds.rs.
-    #[cfg(feature = "cef")]
-    {
-        let script = looked(&term, look);
-        std::thread::spawn(move || {
-            let found = crate::web_worlds::value(&view, &script)
-                .and_then(|said| serde_json::from_value::<Found>(said).ok());
-            if let Some(mut found) = found {
-                found.tab = tab;
-                let _ = view.emit_to(view.window().label(), FOUND, found);
-            }
-        });
         Ok(())
     }
 }
@@ -134,7 +117,7 @@ pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result
 pub fn web_find_stop(app: AppHandle, tab: String) -> Result<(), String> {
     let view = crate::web_tabs::found(&app, &tab)?;
 
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     {
         let asking = view.clone();
         app.run_on_main_thread(move || {
@@ -145,20 +128,13 @@ pub fn web_find_stop(app: AppHandle, tab: String) -> Result<(), String> {
         .map_err(|error| format!("that page could not be reached: {error}"))
     }
 
-    #[cfg(all(not(windows), not(feature = "cef")))]
+    #[cfg(not(windows))]
     return view
         .eval(LEFT)
         .map_err(|error| format!("that page could not be reached: {error}"));
-
-    #[cfg(feature = "cef")]
-    {
-        std::thread::spawn(move || crate::web_worlds::value(&view, LEFT));
-        Ok(())
-    }
 }
 
 /// The page's own find, and its answer said to the window the way the engine's is.
-#[cfg(not(feature = "cef"))]
 fn script(view: &Webview, tab: String, term: &str, look: Look) {
     let telling = view.clone();
     let _ = view.eval_with_callback(looked(term, look), move |answer| {
@@ -171,7 +147,7 @@ fn script(view: &Webview, tab: String, term: &str, look: Look) {
 }
 
 /// Every engine but `WebView2` finds through the page; see the top of this file.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: AppHandle,
@@ -180,13 +156,13 @@ pub fn listen(
 ) {
 }
 
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn forget(_tab: &str) {}
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub use native::{forget, listen};
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod native {
     use std::cell::RefCell;
     use std::collections::HashMap;

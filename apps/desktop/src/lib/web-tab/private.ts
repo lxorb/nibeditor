@@ -7,7 +7,7 @@
  *
  *  **What it keeps is nothing.** The page runs in the engine's own private mode - the
  *  InPrivate profile of `WebView2`, a data store of the page's own that nothing writes
- *  to disk on a Mac and on Linux, a profile with no folder on nib's own Chromium - so
+ *  to disk on a Mac and on Linux - so
  *  its cookies, storage and cache are in memory and go with it. And nib writes nothing
  *  about it either: no history, no favicon, no place on the page, no `.url`, no session
  *  that would bring it back after a restart, no closed tab that Ctrl+Shift+T would
@@ -16,8 +16,8 @@
  *
  *  **Closing the last one forgets everything**, which is `WebView2`'s own rule for its
  *  InPrivate profile: one session for every private page of the run, ended when the
- *  last of them closes. A Mac's and Linux's engine, and nib's own Chromium, give each
- *  private page a store of its own, so there two private tabs do not share a sign-in;
+ *  last of them closes. A Mac's and Linux's engine give each private page a store of
+ *  its own, so there two private tabs do not share a sign-in;
  *  said in docs/web-tabs.md. */
 
 import { workspace } from '../workspace.svelte'

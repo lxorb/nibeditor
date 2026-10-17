@@ -1,9 +1,16 @@
 name: check
 
+# On a pull request into main once it is ready for review, and on main itself, which
+# is what the deploy below is gated on. Not on `unstable`: its pushes are built by
+# release.yml, and checked here when they come to main as a pull request.
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: check-${{ github.ref }}
@@ -20,6 +27,8 @@ permissions:
 
 jobs:
   test:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     # Every job in this file says what its token may do, and every one of them
     # only reads: nothing here writes a release, opens a pull request or touches
@@ -50,6 +59,8 @@ jobs:
   # three read the source and nothing else, and one after the other they were a
   # minute and a half of the test job's wall time.
   lint:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -91,6 +102,8 @@ jobs:
   # run walks new seeds (walks.yml). Not in front of the deploy: v2 is behind
   # `sync_version`.
   walks:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -124,6 +137,8 @@ jobs:
   # night in drives.yml, which is far too long for a pull request; the floor is what
   # a pull request can afford. See apps/desktop/test/e2e/smoke.py.
   smoke:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -139,7 +154,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The runner's own Python, the way cef.yml takes it: one package, and the
+      # The runner's own Python: one package, and the
       # browser it drives. `--with-deps` because a bare Chromium on a runner is
       # missing half the shared libraries it needs to start.
       - name: The browser the drive holds
@@ -209,6 +224,86 @@ jobs:
             apps/desktop/test/e2e/shots/layout-sweep
           if-no-files-found: ignore
 
+  # The drives a Mac breaks first, in WebKit, which is what a Mac, an iPhone and Linux
+  # run the app in. Everything above is Chromium's, and Chromium is WebView2: the editor
+  # once stopped drawing after the first keystroke on every Mac (`cancelIdleCallback`,
+  # which WebKit does not have), with every gate here green. `NIB_ENGINE=webkit` presses
+  # every key the way a Mac does - Cmd for Ctrl, Option for a word, the registry's own
+  # Mac key where it has one - so these also say that each of those keys works there.
+  # On Linux, where WebKit is cheap; the same drives on a Mac's own WebKit are below.
+  # See apps/desktop/test/e2e/harness.py and test/webkit.test.ts for the static half.
+  webkit:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install --with-deps webkit
+
+      - name: The core drives, as a Mac
+        env:
+          NIB_ENGINE: webkit
+        run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,new-tabs,find-bar,hover-preview,frames,handed,callouts,highlights-links-breaks,task-rows
+
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: webkit-shots
+          path: apps/desktop/test/e2e/shots
+          if-no-files-found: ignore
+
+  # The floor in a Mac's own WebKit, on a Mac: what WKWebView draws with, which the
+  # Linux port above is not - its fonts, its scrollbars, its keyboard events.
+  webkit-mac:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install webkit
+
+      - name: The floor, on a Mac
+        env:
+          NIB_ENGINE: webkit
+        run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,find-bar,hover-preview
+
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: webkit-mac-shots
+          path: apps/desktop/test/e2e/shots
+          if-no-files-found: ignore
+
   # All three platforms, because the crate is not one body of code. The taskbar's
   # recent documents list, Explorer's New menu and the PDF printer are behind a
   # Windows cfg gate, the Apple Notes reader is behind a macOS one - SQLite,
@@ -216,6 +311,8 @@ jobs:
   # runner does not compile is code no lint reads and no test runs. No row waits
   # on another: a lint that only fires on one platform should say which.
   rust:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     permissions:
       contents: read
     strategy:
@@ -300,6 +397,8 @@ jobs:
   # first push to a branch all leave nothing to compare against, and spending ten
   # minutes for nothing is cheaper than letting a broken manifest through.
   android-touched:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

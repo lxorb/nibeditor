@@ -258,8 +258,10 @@ export function released<T extends Held>(tabs: readonly T[], kept: readonly stri
 }
 
 /** A press on an essential's tile: its own tab, which the strip leaves out, brought
- *  forward as it was left; else a view of its own of a file already open, or the file
- *  opened with its tab an essential as it lands. One view an essential. */
+ *  forward as it was left; else a view of its own of a file already open - for a web
+ *  note, which is open in one tab only (`secondWebTabs`), that tab, its page and its web
+ *  data with it - or the file opened with its tab an essential as it lands. One view an
+ *  essential. */
 export async function openEssential(path: string) {
   const ws = workspace
   const held = essentialTab(ws.tabs, path, (paneId) => ws.panes.at(paneId) !== null)
@@ -269,6 +271,12 @@ export async function openEssential(path: string) {
   }
 
   const open = ws.opened.at(path)
+  const web = open?.kind === 'web' ? ws.tabs.find((one) => one.note === open) : undefined
+  if (web) {
+    web.essential = path
+    ws.front(web.id)
+    return
+  }
   if (open) {
     ws.secondView(open, {}, path)
     return

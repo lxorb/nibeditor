@@ -8,6 +8,12 @@
 # helpers built from a different WebKit, which is how a Tauri window ends up
 # blank.
 #
+# What the program needs of that platform: WebKitGTK 2.40 or newer, and GStreamer's
+# -base and -good plugins for a recording and its playback. gnome-46-2404 carries
+# WebKitGTK 2.52 and both plugin sets (and PipeWire's), so nothing is added for
+# them. It carries neither -bad nor gst-libav, so AAC and H.264 - a recording made
+# on a Mac, a video from a phone - do not play in the snap; see packaging/linux.md.
+#
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
 # account and `snapcraft upload --release=stable orden_0.15.0_amd64.snap`; see
 # packaging/linux.md.
@@ -54,7 +60,7 @@ apps:
     command: usr/bin/nib
     desktop: usr/share/applications/nib.desktop
     extensions: [gnome]
-    common-id: ch.emilvinu.nib
+    common-id: so.orden.Orden
     plugs:
       - home
       - removable-media
@@ -83,12 +89,16 @@ parts:
     # other packaging path here pins a digest - scoop, chocolatey, homebrew, the
     # AUR, nix, and flathub by commit - and this one did not: a tampered release
     # asset, or a proxy on the runner, went into the snap and to the Snap Store
-    # under this name with nothing to notice it. The publish workflow rewrites both
-    # lines per release from the digests the release page reports; see
-    # packaging/linux.md.
-    source-checksum:
-      - on amd64: sha256/c3dc5252c62c144451c2484a29f05f570762ff3fc728340cda3fd2dedd274441
-      - on arm64: sha256/fa276143e8fe1d63f8da427b8e5c8ed4609dd47d33fc3306770334b2987c3601
+    # under this name with nothing to notice it.
+    #
+    # One line, for the architecture being built: snapcraft takes no `on <arch>:`
+    # list here, though it takes one for `source` ("Input should be a valid string",
+    # snapcraft 8.11.1). Both digests are written down below, and the snap workflow
+    # copies the one for its runner into the line; as committed it holds amd64's,
+    # for a build on an amd64 machine. See packaging/linux.md.
+    #   on amd64: sha256/c3dc5252c62c144451c2484a29f05f570762ff3fc728340cda3fd2dedd274441
+    #   on arm64: sha256/fa276143e8fe1d63f8da427b8e5c8ed4609dd47d33fc3306770334b2987c3601
+    source-checksum: sha256/c3dc5252c62c144451c2484a29f05f570762ff3fc728340cda3fd2dedd274441
     override-build: |
       craftctl default
 

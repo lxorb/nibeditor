@@ -217,10 +217,11 @@ describe('the menu, the palette and the shortcut settings', () => {
     expect(menuLabels()).toEqual(['Export as PNG', 'Export as SVG', 'Export as PDF'])
   })
 
-  test('offer a paper one row: its own bytes', async () => {
+  /** A paper has no tab of its own: it opens the page note beside it, so what
+   *  Export offers is what a set of pages offers. */
+  test('offer a paper what its page note offers', async () => {
     await only(() => workspace.openPdf('/space/paper.pdf'))
-    expect(offeredIds()).toEqual(['copy'])
-    expect(menuLabels()).toEqual(['Save a copy'])
+    expect(offeredIds()).toEqual([...offeredBy('pages')])
   })
 
   /** Greying out rather than vanishing: the menu keeps its shape, and the reason

@@ -32,6 +32,7 @@
 import { loadFind, loadLineCommands, setBlocks } from '@nib/editor'
 import { door } from '@nib/markdown/door'
 import { warmCalls } from './api'
+import { breathe } from './breathe'
 import { startup } from './startup.svelte'
 
 /** One lazy component, held. The default export rather than the module, because that
@@ -109,14 +110,6 @@ export const pagesSurface = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no page notes in the Even Realities plugin'))
     : import('./Pages.svelte'),
-)
-
-/** A paper being read, beside the notes about it. Brings pdf.js with it, which is why
- *  the glasses' plugin has neither; see vite.even.config.ts. */
-export const pdfSurface = held(() =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no PDF viewer in the Even Realities plugin'))
-    : import('./Pdf.svelte'),
 )
 
 /** A website in a tab. See docs/web-tabs.md. Never the glasses' plugin's, which opens
@@ -436,21 +429,23 @@ export const firstSpaceDoor = () =>
  *  pages, the graph and a website are each hundreds of kilobytes and each is a kind of
  *  document a reader either keeps or does not, so each waits to be opened. Nor are the
  *  sheets: every one of them opens behind a scrim with its own way in to play, which is
- *  the frame its fetch happens in. */
+ *  the frame its fetch happens in.
+ *
+ *  Asked one at a time, with the thread handed back between them; see `knock`. */
 export async function warmDoors(): Promise<void> {
   await startup.turn('doors')
-  await Promise.all([
-    findBar(),
-    searchPanel(),
-    linksPanel(),
-    appMenuRows(),
-    appMenuPanel.ask(),
-    readingSurface(),
-    loadFind(),
+  await knock([
+    () => findBar(),
+    () => searchPanel(),
+    () => linksPanel(),
+    () => appMenuRows(),
+    () => appMenuPanel.ask(),
+    () => readingSurface(),
+    () => loadFind(),
     // The line, case and grow-the-selection commands, so that the first Ctrl+J or
     // Shift+Alt+Right is answered in the frame it is pressed; see line-door.ts in
     // @nib/editor.
-    loadLineCommands(),
+    () => loadLineCommands(),
     // The blocks the editor's `/` menu offers, which are the app's rows rather than a
     // list the editor keeps: handed over as a function so the words follow the
     // language without anything having to hand them over again. Here rather than in
@@ -458,61 +453,87 @@ export async function warmDoors(): Promise<void> {
     // reaches half the app - exports, printing, the recorder, dictation - for a `/`
     // nobody has typed yet. Until it lands a `/` offers nothing; see slash.ts in
     // @nib/editor.
-    import('./commands').then(({ blockRows }) => setBlocks(blockRows)),
-    spacePickerDialog.ask(),
-    spacesMenu(),
-    paletteDoor.ask(),
-    promptSheet.ask(),
+    () => import('./commands').then(({ blockRows }) => setBlocks(blockRows)),
+    () => spacePickerDialog.ask(),
+    () => spacesMenu(),
+    () => paletteDoor.ask(),
+    () => promptSheet.ask(),
     // The menu a right click opens and the bar a selection brings up, which are the
     // two things a pointer can ask for at any moment; and the sign-in and join
     // sheets, which a single press or a followed link can. Mounted here so that each
     // plays its way in the first time rather than arriving already open.
-    contextMenu.ask(),
-    formatBar.ask(),
-    signInSheet.ask(),
-    joinSheet.ask(),
+    () => contextMenu.ask(),
+    () => formatBar.ask(),
+    () => signInSheet.ask(),
+    () => joinSheet.ask(),
     // The Undo toast, and the menu of a text field so the first right click in one
     // does not wait for it. Neither in the glasses' plugin, which is a phone's and
     // has no room left in its package; see even/bundle.test.ts.
-    __EVEN_PLUGIN__ ? undefined : undoToastNotice.ask(),
-    __EVEN_PLUGIN__ ? undefined : import('./field-menu'),
+    __EVEN_PLUGIN__ ? undefined : () => undoToastNotice.ask(),
+    __EVEN_PLUGIN__ ? undefined : () => import('./field-menu'),
     // The AI providers, which are not a door but the same bargain: two rows ask whether
     // anything of the reader's own can turn sound into words, and they are asked the
     // moment a menu opens. Restoring them costs fifteen kilobytes nobody waits for here
     // and answers that question right from the first menu; see ai/hears.ts.
-    import('./ai/store.svelte'),
+    () => import('./ai/store.svelte'),
     // A tab's own menu, a row's, the editor's, and Ctrl+Tab in order of use, asked for
     // at any moment.
-    import('./tab-strip/menu'),
-    import('./tab-strip/strip-menu'),
-    import('./row-menu'),
-    import('./editor-menu'),
-    import('./tab-cycle.svelte'),
+    () => import('./tab-strip/menu'),
+    () => import('./tab-strip/strip-menu'),
+    () => import('./row-menu'),
+    () => import('./editor-menu'),
+    () => import('./tab-cycle.svelte'),
     // The tabs' numbers while Alt is held.
-    __EVEN_PLUGIN__ ? undefined : import('./tab-strip/numbers.svelte'),
+    __EVEN_PLUGIN__ ? undefined : () => import('./tab-strip/numbers.svelte'),
     // The bar a tab filling the window keeps, so the first Shift+F11 is one layout and
     // not two; the command itself comes with a tab's menu above.
-    __EVEN_PLUGIN__ ? undefined : fillBar(),
+    __EVEN_PLUGIN__ ? undefined : () => fillBar(),
     // The editor in the card a pointer resting on a link opens, which a hand can ask
     // for at any moment; see `previewCard` in Editor.svelte.
-    import('./preview-card'),
+    () => import('./preview-card'),
     // And what a cover row in a note's menu writes, so the file chooser it opens is
     // opened in the press that asked; see `coverEntries` in menu.svelte.ts.
-    import('./note-cover'),
+    () => import('./note-cover'),
     // The table of the service's calls, so the first sign-in, share or pass of sync
     // is a request and not a fetch and then a request; see api.ts.
-    warmCalls(),
+    () => warmCalls(),
     // What keeps the note in front for the next launch to draw before its editor is
     // up; see first-screen.svelte.ts.
     __EVEN_PLUGIN__
       ? undefined
-      : import('./first-screen/keep.svelte').then((one) => one.keepFirstScreens()),
+      : () => import('./first-screen/keep.svelte').then((one) => one.keepFirstScreens()),
     // Before a deploy can take it away; see reloading.svelte.ts.
-    import('./reload-when'),
+    () => import('./reload-when'),
     // Where the keyboard was, put back as the window or a layer gives it back.
-    import('./keyboard-home'),
+    () => import('./keyboard-home'),
     // Two fingers sideways, or one from a pane's side, for back and forward; see
     // back-swipe/swipes.ts. Not in the glasses' plugin, which is a phone's.
-    __EVEN_PLUGIN__ ? undefined : import('./back-swipe/swipes').then((one) => one.listen()),
+    __EVEN_PLUGIN__ ? undefined : () => import('./back-swipe/swipes').then((one) => one.listen()),
   ])
+}
+
+/** Each door asked for in a task of its own, and all of them awaited together.
+ *
+ *  A fetch is not free in the task that asks for it: before the request goes out,
+ *  the build's preload helper walks the chunk's whole list of dependencies and, for
+ *  every one it has not seen, looks through every `<link>` already in the document
+ *  and adds another. Thirty doors asked in one breath were one task of that - hundreds
+ *  of links added and each looked for in a head that grows as it goes, eighty to a
+ *  hundred and thirty milliseconds in the launch's profile, most of it in
+ *  `appendChild` and the helper's own loop - and a key pressed during it waited for
+ *  all thirty. One door at a time
+ *  with `breathe` between them is the same requests in the same order, each a task
+ *  short enough to let a key through. */
+async function knock(doors: readonly ((() => unknown) | undefined)[]): Promise<void> {
+  const asked: Promise<unknown>[] = []
+  for (const open of doors) {
+    if (!open) continue
+    const one = Promise.resolve().then(open)
+    // Awaited below with the rest; caught here so a door that fails while the later
+    // ones are still being asked is not reported as unhandled in between.
+    one.catch(() => undefined)
+    asked.push(one)
+    await breathe()
+  }
+  await Promise.all(asked)
 }

@@ -11,13 +11,11 @@ name: agents
 # with the probe built as scripts/probe_app.py says.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - scripts/probe_app.py
-      - apps/desktop/test/agents/**
-      - .github/workflows/agents.yml
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - scripts/probe_app.py
       - apps/desktop/test/agents/**
@@ -38,7 +36,8 @@ jobs:
   # What the watch decides, over windows and screens that are only numbers. Pure Python,
   # so the runner's own interpreter, and any system.
   watch:
-    if: github.event_name != 'schedule'
+    # Not on the schedule, and not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'schedule' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

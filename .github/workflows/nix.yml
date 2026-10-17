@@ -8,30 +8,36 @@ name: nix
 # has to stay up, with nothing in its log about a missing library or a display it
 # could not open.
 #
-# On a pull request it builds the flake in the checkout. On main, and by hand, it
-# builds the flake from GitHub, the way `nix run github:lxorb/orden?dir=packaging/nix`
-# does. packaging-bump.yml and nix-edge.yml call it twice each: on the rewritten
-# flake before it lands, and from GitHub after.
+# On a pull request into main it builds the flake in the checkout. By hand, and when
+# packaging-bump.yml calls it, it builds the flake it is handed - from GitHub, the way
+# `nix run github:lxorb/orden?dir=packaging/nix` does - or the checkout's.
+#
+# One flake now holds both channels: `default` is the release out of its .deb, and
+# `orden-unstable` compiles the sources beside it. The release build is what is
+# started here; `resolve_source_hashes` validates the source one instead.
 on:
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - packaging/nix/**
+      - flake.nix
+      - flake.lock
       - scripts/bump-packaging.mjs
       - .github/workflows/nix.yml
       - .github/workflows/packaging-bump.yml
-      - .github/workflows/nix-edge.yml
       - scripts/nix-start.sh
-  push:
-    branches: [main]
-    paths:
-      - packaging/nix/**
-      - scripts/nix-start.sh
-      - .github/workflows/nix.yml
   workflow_dispatch:
     inputs:
       flake:
-        description: The flake to start, as `nix run` takes it
-        default: github:lxorb/orden?dir=packaging/nix
+        description: The flake to start, as `nix run` takes it; empty uses the checked-out branch
+        default: ''
+      resolve_source_hashes:
+        description: Resolve fake Cargo and pnpm hashes during source-flake validation
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       flake:
@@ -42,6 +48,10 @@ on:
         description: An artifact of the calling run laid over packaging/ first
         type: string
         default: ''
+      resolve_source_hashes:
+        description: Resolve fake Cargo and pnpm hashes during source-flake validation
+        type: boolean
+        default: false
 
 concurrency:
   group: nix-${{ github.workflow }}-${{ github.ref }}-${{ inputs.flake }}-${{ inputs.artifact }}
@@ -53,6 +63,8 @@ permissions:
 
 jobs:
   start:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     name: ${{ matrix.system }}
     strategy:
       fail-fast: false
@@ -65,11 +77,29 @@ jobs:
             system: aarch64-linux
             other: x86_64-linux
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 40
+    timeout-minutes: 90
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      # The root flake.nix is a link to packaging/nix/flake.nix, and the root
+      # flake.lock is a copy of the lock beside it rather than a link (008b48cc).
+      # The same flake has to be pinned to the same nixpkgs from either place - a pull
+      # request builds `path:$PWD`, which reads the root's, and `?dir=packaging/nix`
+      # reads the other - and nothing else keeps the copy from falling behind. Read
+      # before the artifact below lays anything over packaging/, so it is the two
+      # committed files that are compared.
+      - name: The root flake.lock is packaging/nix/flake.lock
+        run: |
+          if [ ! -e flake.nix ]; then
+            echo "no root flake on this branch"
+            exit 0
+          fi
+          if ! cmp flake.lock packaging/nix/flake.lock; then
+            echo "::error::flake.lock and packaging/nix/flake.lock differ: they lock one flake, so copy packaging/nix/flake.lock over the root's"
+            exit 1
+          fi
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         if: inputs.artifact != ''
@@ -90,7 +120,13 @@ jobs:
         run: |
           if [ -n "$ASKED" ]; then
             flake="$ASKED"
-          elif [ "$GITHUB_EVENT_NAME" = push ]; then
+          elif [ -f "$PWD/flake.nix" ]; then
+            # The root flake.nix is a link to packaging/nix/flake.nix, so a local
+            # path copies the whole source tree with it and orden-unstable has the
+            # workspace it compiles. Pointed straight at packaging/nix instead, the
+            # release outputs still build and the source one says what is missing.
+            flake="path:$PWD"
+          elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             flake="github:$GITHUB_REPOSITORY/$SHA?dir=packaging/nix"
           else
             flake="path:$PWD/packaging/nix"
@@ -124,25 +160,90 @@ jobs:
       - name: nix build
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
+          RESOLVE_HASHES: ${{ inputs.resolve_source_hashes }}
         run: |
-          nix build --print-build-logs "$FLAKE" -o result
-          # orden, or orden-edge on the nix-edge branch: every file a profile gets
-          # is named after it, so the two never collide.
-          pname=$(nix eval --raw "$FLAKE#default.pname")
-          echo "### $pname $(nix eval --raw "$FLAKE#default.version")" >>"$GITHUB_STEP_SUMMARY"
-          find result/bin result/share -type f -o -type l | sort | tee files.txt
-          if [ "$pname" = orden ]; then
-            test "$(readlink result/bin/nib)" = orden
-            expected=2
+          # The release build unless the source one was asked for: both live in the
+          # one flake, and they are named apart all the way down, so whichever is
+          # built here the assertions below read off its own pname.
+          if [ "$RESOLVE_HASHES" = true ]; then
+            attr=orden-unstable
           else
-            expected=1
+            attr=default
           fi
+          # orden or orden-unstable: every file a profile gets is
+          # named after it, so installed streams never collide.
+          pname=$(nix eval --raw "$FLAKE#$attr.pname")
+          echo "### $pname $(nix eval --raw "$FLAKE#$attr.version")" >>"$GITHUB_STEP_SUMMARY"
+
+          if [ "$pname" = orden-unstable ]; then
+            for attempt in 1 2 3; do
+              set +e
+              nix build --print-build-logs "$FLAKE#$attr" -o result 2>&1 | tee nix-build.log
+              status=${PIPESTATUS[0]}
+              set -e
+              [ "$status" -eq 0 ] && break
+
+              hash=$(sed -n 's/.*got: *\(sha256-[^[:space:]]*\).*/\1/p' nix-build.log | tail -1)
+              derivation=$(sed -n "s/.*fixed-output derivation '\([^']*\)'.*/\1/p" nix-build.log | head -1)
+              if [ -z "$hash" ] || [ -z "$derivation" ]; then
+                cat nix-build.log
+                exit "$status"
+              fi
+
+              case "$derivation" in
+                *pnpm*) kind=pnpm ;;
+                # The Cargo dependencies are vendored out of Cargo.lock itself and
+                # carry no hash, so a mismatch here is something else entirely.
+                *vendor*|*cargo*)
+                  echo "::error::the cargo dependencies have no hash to resolve: $derivation"
+                  cat nix-build.log; exit "$status" ;;
+                *) echo "::error::unknown fixed-output input: $derivation"; cat nix-build.log; exit "$status" ;;
+              esac
+              python - "$hash" <<'PY'
+          import re, sys
+          from pathlib import Path
+
+          digest, = sys.argv[1:]
+          flake = Path('packaging/nix/flake.nix')
+          source = flake.read_text()
+          # Whatever stands there: the pinned hash, or a placeholder if one ever does.
+          source, count = re.subn(
+              r'(pnpmDeps = pkgs\.fetchPnpmDeps \{.*?hash = )(?:"[^"]*"|lib\.fakeHash);',
+              rf'\1"{digest}";',
+              source,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise SystemExit('could not fill the pnpm hash')
+          flake.write_text(source)
+          print(f'Pinned pnpm dependencies to {digest}')
+          PY
+              echo "Retrying the source build after pinning its $kind hash (attempt $attempt)."
+            done
+            test -x "result/bin/$pname"
+          else
+            nix build --print-build-logs "$FLAKE#$attr" -o result
+          fi
+
+          test -x "result/bin/$pname"
+          find result/bin result/share -type f -o -type l | sort | tee files.txt
+          case "$pname" in
+            orden)
+              test "$(readlink result/bin/nib)" = orden
+              expected=2
+              ;;
+            orden-unstable) expected=1 ;;
+            *) echo "::error::unexpected Nix package name: $pname"; exit 1 ;;
+          esac
           test "$(find result/bin -mindepth 1 | wc -l)" -eq "$expected"
           # What the wrapper sets: no display backend forced on anyone, and the
           # DMA-BUF renderer off on NVIDIA's driver alone.
           cat "result/bin/$pname"
           if grep -n GDK_BACKEND "result/bin/$pname"; then exit 1; fi
-          grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
+          if [ "$pname" != orden-unstable ]; then
+            grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
+          fi
           nix shell nixpkgs#pax-utils -c lddtree "result/libexec/$pname/nib" | head -80
           nix shell nixpkgs#desktop-file-utils -c desktop-file-validate "result/share/applications/$pname.desktop"
           cat "result/share/applications/$pname.desktop"
@@ -213,4 +314,5 @@ jobs:
             files.txt
             stranger.log
             packaging/nix/flake.lock
+            packaging/nix/flake.nix
           if-no-files-found: warn

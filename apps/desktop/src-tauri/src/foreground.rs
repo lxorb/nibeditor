@@ -26,8 +26,7 @@
 //!   stands: the price of a probe that could have come forward, and paid only then.
 //! - **No window of the app's own thread is ever activated.** A computer-based-training
 //!   hook on that thread refuses every activation before it happens, whoever asked for
-//!   it: tao's, winit's, and nib's own Chromium's, whose windows are made and focused on
-//!   that same thread (its message pump is the app's; see src-tauri/cef).
+//!   it: tao's and winit's.
 //! - **Every top-level window is one the system never activates either**: made
 //!   `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW` and without `WS_EX_APPWINDOW`, so a click,
 //!   Alt+Tab or the window in front closing never lands on it and there is no taskbar
@@ -44,9 +43,7 @@
 //!   then on: any move or show that would put a pixel of it on a screen is sent to the
 //!   corner a minimised window is parked in instead, before it happens. A dialog that
 //!   centres itself, a menu, a tooltip and a window put back where it was all go there.
-//!   nib's own Chromium's other processes - the GPU's, a utility's - hold theirs the same
-//!   way (`hold_helper`); its switches keep the dialogs it can be talked out of from being
-//!   raised at all (see src-tauri/cef). Some systems refuse every in-context event hook,
+//!   Some systems refuse every in-context event hook,
 //!   whatever the module (`in_context_refusal`); there the process says so on stderr at
 //!   its start, and only the watch in `scripts/probe_app.py` stands behind such a dialog.
 //!
@@ -85,17 +82,6 @@ pub fn hold() -> bool {
         return locked;
     }
     false
-}
-
-/// Holds every window of one of nib's own Chromium's other processes off the screen,
-/// where the run is a probe's: what `hold` does for the app's windows, for the windows a
-/// GPU process or a utility makes. Called first thing in such a process. A renderer is
-/// never asked: it makes no window, and a sandbox may refuse it the window manager.
-pub fn hold_helper() {
-    #[cfg(windows)]
-    if crate::placement::asked_away() {
-        held::every_thread_or_say();
-    }
 }
 
 /// The corner a probe's window is held in: where Windows parks a minimised window, well
@@ -484,9 +470,8 @@ mod tests {
         assert_eq!(kept_back(0x0010_0000) & 0x0010_0000, 0x0010_0000);
     }
 
-    /// Held back before anything in the process can make a window or start an engine,
-    /// on either engine: `run_on` is where both builds start, and the plugins, the
-    /// context and the runtime's own windows all come after it.
+    /// Held back before anything in the process can make a window or start an engine:
+    /// the plugins, the context and the runtime's own windows all come after it.
     #[test]
     fn the_app_holds_itself_back_before_it_makes_anything() {
         let lib = include_str!("lib.rs");
@@ -494,11 +479,7 @@ mod tests {
         let held = lib[start..]
             .find("foreground::hold()")
             .expect("run_on holds the process back");
-        for later in [
-            "generate_context!",
-            ".plugin(",
-            "engine_switch::handed_over",
-        ] {
+        for later in ["generate_context!", ".plugin("] {
             let at = lib[start..].find(later).expect(later);
             assert!(held < at, "{later} comes before the process is held back");
         }

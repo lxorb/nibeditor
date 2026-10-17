@@ -50,9 +50,10 @@
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
   import { DEEPEST, SHALLOWEST } from './workspace/graph-settings.svelte'
-  import { search, type SearchSort } from './search.svelte'
+  import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
+  import { hiddenKinds } from './settings.svelte'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
@@ -225,13 +226,20 @@
   let rowWidth = $state(0)
   let toolsWidth = $state(0)
   let markWidth = $state(0)
+  /** The least a tab may be, which is nothing with a pointer and a thumb's width on a
+   *  touch screen (the stylesheet's `min-width` below): a tab cannot give below it, so
+   *  the count of tabs that fit is made with it. */
+  let floorWidth = $state(0)
   let tablist = $state<HTMLElement>()
   $effect(() => {
-    if (rowWidth) markWidth = tablist?.querySelector('svg')?.getBoundingClientRect().width ?? 0
+    if (!rowWidth) return
+    markWidth = tablist?.querySelector('svg')?.getBoundingClientRect().width ?? 0
+    const tab = tablist?.querySelector('button')
+    floorWidth = tab ? parseFloat(getComputedStyle(tab).minWidth) || 0 : 0
   })
   const strip = $derived.by(() => {
     const room = rowWidth - 8 - (toolsWidth ? toolsWidth + 4 : 0)
-    const shown = tabsShown(mine.length, room, markWidth + 8)
+    const shown = tabsShown(mine.length, room, Math.max(markWidth + 8, floorWidth))
     return splitTabs(mine, shown, (item) => item.id === showing)
   })
 
@@ -277,107 +285,33 @@
     )
   }
 
-  /** A press on a panel's own tab. The file list's tab leads with the order rows,
-   *  which is where the list's sorting has always been, so that one press fetches them
-   *  and every other tab answers at once. */
+  /** A press on a panel's own tab: its rows, which panel-menu.ts holds, and for the file
+   *  list the order rows and what the list makes ahead of them. Behind doors, as the order
+   *  is, so the press is spent before the await. */
   function showTabMenu(event: MouseEvent, id: Panel, label: string) {
     event.preventDefault()
+    const own = import('./panel-menu')
+    const shown = (rows: MenuEntry[]) => menu.show(event, rows, { title: label })
     if (id !== 'tree') {
-      menu.show(event, tabMenu(id), { title: label })
+      void own.then(({ panelMenu }) => shown(panelMenu(id, side)))
       return
     }
 
-    void import('./order-menu').then(({ orderMenu }) =>
-      menu.show(event, [...orderMenu(), DIVIDER, ...tabMenu(id)], { title: label }),
+    void Promise.all([import('./order-menu'), import('./row-menu'), own]).then(
+      ([{ orderMenu }, { newFileRows }, { panelMenu }]) =>
+        shown([...orderMenu(), DIVIDER, ...panelMenu(id, side, newFileRows())]),
     )
   }
 
-  /** What the Files tab offers besides the order: which files are shown at all, and
-   *  what the list makes. */
-  function sortMenu(): MenuEntry[] {
-    return [
-      {
-        label: workspace.treeOptions.showHidden ? t('Hide hidden files') : t('Show hidden files'),
-        run: () => workspace.toggleHidden(),
-      },
-      DIVIDER,
-      { label: t('New note'), run: () => void workspace.createNote() },
-      { label: t('New canvas'), run: () => void workspace.createCanvas() },
-      ...(viewport.device === 'phone'
-        ? []
-        : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
-      ...newChat(),
-    ]
-  }
-
-  /** The order the results are read in. The same menu the file list's sort is,
-   *  in the same place - a press on the tab - because it is the same question
-   *  about the same space asked of a different list. */
-  function resultsMenu(): MenuEntry[] {
-    const arrow = (key: SearchSort) =>
-      search.ordering.sort === key ? (search.ordering.descending ? '↓' : '↑') : undefined
-
-    return [
-      {
-        label: t('Sort by relevance'),
-        hint: arrow('relevance'),
-        run: () => search.setSort('relevance'),
-      },
-      { label: t('Sort by name'), hint: arrow('name'), run: () => search.setSort('name') },
-      {
-        label: t('Sort by modified'),
-        hint: arrow('modified'),
-        run: () => search.setSort('modified'),
-      },
-      {
-        label: t('Sort by created'),
-        hint: arrow('created'),
-        run: () => search.setSort('created'),
-      },
-    ]
-  }
-
-  /** What a press on a panel's own tab offers, for the two panels that have
-   *  something to say about the order of what they show. */
-  function tabMenu(id: Panel): MenuEntry[] {
-    const own = id === 'tree' ? sortMenu() : id === 'search' ? resultsMenu() : []
-    const there: PanelSide = side === 'right' ? 'left' : 'right'
-
-    // On every tab, and last: which side a panel sits on is a thing to do to the
-    // tab rather than a thing the panel is about, so it goes under whatever the
-    // panel's own rows are. A phone has no two sides to speak of - the right one
-    // is a drawer of its own there - and the row is offered all the same: the
-    // choice travels with the window, and a phone in a dock is a wide screen.
-    return [
-      ...own,
-      ...(own.length ? [DIVIDER] : []),
-      {
-        label: there === 'right' ? t('Move to the right') : t('Move to the left'),
-        run: () => workspace.movePanel(id, there),
-      },
-    ]
-  }
-
-  function newChat(): MenuEntry[] {
-    if (__EVEN_PLUGIN__ || !account.accountToken) return []
-    const run = () => void import('./chats/view/open').then(({ makeChat }) => makeChat())
-    return [{ label: t('New chat'), run }]
-  }
-
-  /** What the space itself offers, wherever in the panel you ask for it.
-   *
-   *  The kinds of note to make. A folder is not one of them: a note that holds notes
-   *  is how a space is organised, and that is a note made inside another note's row.
-   *  See folder-notes.ts and docs/tree.md. */
-  function spaceMenu(): MenuEntry[] {
-    return [
-      { label: t('New note'), run: () => void workspace.createNote() },
-      { label: t('New canvas'), run: () => void workspace.createCanvas() },
-      ...(viewport.device === 'phone'
-        ? []
-        : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
-      ...newChat(),
-    ]
+  /** What the space itself offers, wherever in the panel you ask for it: the kinds of
+   *  note to make, behind the door the row menus are behind. A folder is not one of
+   *  them; see folder-notes.ts and docs/tree.md. The press is spent before the await. */
+  function showSpaceMenu(event: MouseEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./row-menu').then(({ newFileRows }) =>
+      menu.show(event, newFileRows(), titleOfSpace()),
+    )
   }
 
   /** What a phone's menu sheet is headed with. Left out entirely when there is
@@ -869,7 +803,7 @@
             title={t('Sort')}
             aria-label={t('Sort')}
             aria-haspopup="menu"
-            onclick={(event) => menu.show(event, tabMenu('search'), { title: t('Search') })}
+            onclick={(event) => showTabMenu(event, 'search', t('Search'))}
           >
             <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
           </button>
@@ -960,7 +894,7 @@
               <!-- A space with nothing in it says what to do about it. Folders can
              still be there, which is why this counts files and not rows. Nor is a
              space with notes on their way an empty one. -->
-              {#if !workspace.files.length && !arriving.coming.size}
+              {#if !workspace.files.length && !arriving.coming.size && hiddenKinds.offers('note')}
                 <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
                 >
               {/if}
@@ -980,7 +914,7 @@
                 class="rest"
                 data-space-rest
                 class:dropping={rootDrop}
-                oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+                oncontextmenu={showSpaceMenu}
                 onclick={() => workspace.cancelNaming()}
                 ondragover={overRoot}
                 ondragleave={() => dropTarget.clear()}
@@ -1341,6 +1275,14 @@
      is drawn is not. See test/one-of-each.test.ts. */
   .switch .nib-segmented button {
     min-width: 0;
+  }
+
+  /* Except under a thumb, where a tab is a target like every other and keeps the touch
+     floor however narrow the row: the pill sized to its tabs drew them forty pixels
+     wide on a phone, under the floor the app holds every target to (access.py). The
+     ones with no room go behind More instead; see `floorWidth` above. */
+  :global([data-touch]) .switch .nib-segmented button {
+    min-width: var(--touch-target);
   }
 
   /* The mark in a tab is the one thing in the row that does not give: a squeezed

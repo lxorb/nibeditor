@@ -12,12 +12,6 @@
 //! On a Mac the print dialog itself comes through here as well, because the window's
 //! own road to it - `print()` in a frame - is one `WKWebView` ignores; see
 //! `print_page`.
-//!
-//! And on nib's own Chromium - the `cef` feature, off in everything that ships -
-//! neither system engine is there any more, so the one call this module makes into
-//! it is not there to make: the printer here says no and the window falls back to
-//! the panel, exactly as it does on Linux. Chromium's own `PrintToPDF` is the answer
-//! and it is batch 6's; see docs/browser.md.
 
 use serde::Deserialize;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -47,10 +41,7 @@ static PRINTS: AtomicU32 = AtomicU32::new(0);
 /// Only the two system engines that can print to a file read the fields; elsewhere
 /// `print_pdf` is a stub, so the Linux runner's clippy would otherwise refuse them as
 /// dead code.
-#[cfg_attr(
-    any(not(any(windows, target_os = "macos")), feature = "cef"),
-    allow(dead_code)
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 #[derive(Clone, Deserialize)]
 pub struct PdfPage {
     /// The width of the sheet, in inches.
@@ -72,14 +63,14 @@ pub fn pdf_supported() -> bool {
 }
 
 /// One inch in the unit `AppKit` measures paper in, the `PostScript` point.
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(any(test, target_os = "macos"))]
 const POINTS_PER_INCH: f64 = 72.0;
 
 /// The sheet as `AppKit` is handed it: width, height and the margin, in points, with
 /// the sheet already turned for a landscape page. `NSPrintInfo` takes the paper as it
 /// lies rather than upright plus a flag, and a landscape note given an upright sheet
 /// comes out as a portrait page with its lines cut off at the side.
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(any(test, target_os = "macos"))]
 fn sheet_in_points(page: &PdfPage) -> (f64, f64, f64) {
     // A sheet that already lies on its side - a plane on its own paper, as wide as
     // the drawing - was never upright, so there is nothing to turn.
@@ -101,7 +92,7 @@ fn sheet_in_points(page: &PdfPage) -> (f64, f64, f64) {
 /// sheet is sixteen by nine as it stands and says nothing about lying down, and told
 /// "portrait" beside a paper wider than it is tall, `AppKit` stood the paper upright
 /// and every slide came out small in the corner of a tall page.
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(any(test, target_os = "macos"))]
 fn on_its_side(width: f64, height: f64) -> bool {
     width > height
 }
@@ -140,7 +131,7 @@ pub async fn print_pdf(
 /// How long the system's print dialog may stay open before the hidden page behind it
 /// is taken away. Somebody choosing a printer takes their time; an hour is the point at
 /// which the dialog has been forgotten rather than considered.
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[cfg(target_os = "macos")]
 const DIALOG_PATIENCE: Duration = Duration::from_secs(60 * 60);
 
 /// What the wait says when the clock ran out before the engine answered.
@@ -158,7 +149,7 @@ const TOO_LONG: &str = "the print took too long";
 /// paper the dialog opens on, from the app's settings; the dialog can change it.
 #[tauri::command]
 #[cfg_attr(
-    not(all(target_os = "macos", not(feature = "cef"))),
+    not(target_os = "macos"),
     allow(
         clippy::unused_async,
         reason = "one signature for every platform; only a Mac has a dialog to wait for"
@@ -169,7 +160,7 @@ pub async fn print_page(
     html: String,
     page: Option<PdfPage>,
 ) -> Result<(), String> {
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    #[cfg(target_os = "macos")]
     {
         use tauri::Manager as _;
 
@@ -181,7 +172,7 @@ pub async fn print_page(
         .await
     }
 
-    #[cfg(not(all(target_os = "macos", not(feature = "cef"))))]
+    #[cfg(not(target_os = "macos"))]
     {
         let _ = (webview, html, page);
         Err("the print dialog here is the page's own".into())
@@ -230,7 +221,7 @@ where
 
     // The same switches as the app's own window, which is running on the same user data
     // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     let building = building.additional_browser_args(crate::engine::BROWSER_ARGS);
 
     let window = building
@@ -289,7 +280,7 @@ fn give_up(window: &tauri::WebviewWindow, error: &str) {
     let _ = window.destroy();
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod printer {
     use super::PdfPage;
     use std::sync::mpsc::Sender;
@@ -391,7 +382,7 @@ mod printer {
 /// pages in another process and answers asynchronously, and the synchronous call
 /// comes back with blank sheets. And the view the operation prints through has to be
 /// given the webview's frame, or it has none and every page is blank as well.
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[cfg(target_os = "macos")]
 mod printer {
     use super::{on_its_side, sheet_in_points, PdfPage};
     use std::cell::{Cell, RefCell};
@@ -706,12 +697,12 @@ mod printer {
 /// The system's print dialog for a page already on screen; see `printer::sheet`. A
 /// web tab's Print row reaches it, because the page's own `window.print()` is Tauri's
 /// on a Mac - a call into the app that a site's origin is refused.
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[cfg(target_os = "macos")]
 pub(crate) fn print_sheet(webview: &PlatformWebview) -> Result<(), String> {
     printer::sheet(webview)
 }
 
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+#[cfg(not(any(windows, target_os = "macos")))]
 mod printer {
     use super::PdfPage;
     use std::sync::mpsc::Sender;

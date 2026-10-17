@@ -38,6 +38,20 @@ class ContextMenu {
   /** The row a key lit while the keyboard stays in a field, or -1. */
   lit = $state(-1)
 
+  /** When it opened, on the clock a press's own `timeStamp` is read from.
+   *
+   *  A press anywhere on the window shuts whatever menu is open, which is how a menu
+   *  is dismissed by clicking past it. A menu opened *during* a press was being shut
+   *  by the very press that asked for it: the chevron on a new tab's terminal card has
+   *  to ask the machine for its shells before it has any rows to show, and once the
+   *  answer is in hand it arrives while that press is still on its way to the window,
+   *  so the list opened and vanished again in the same click (issue #244).
+   *
+   *  So the moment is kept, and a press that began before it is read as the press that
+   *  opened the menu rather than one aimed past it; see `shutBy`. A caller that opens
+   *  the menu in the press itself is already safe, because `show` spends that event. */
+  private openedAt = 0
+
   /** Opens at the pointer. The caller has already decided what belongs here,
    *  so an empty list means "no menu" rather than an empty box. */
   show(event: MouseEvent, items: MenuEntry[], options: MenuOptions = {}) {
@@ -54,7 +68,14 @@ class ContextMenu {
     this.lit = -1
     this.x = event.clientX
     this.y = event.clientY
+    this.openedAt = performance.now()
     this.open = true
+  }
+
+  /** Shuts it on a press aimed past it, which is every press but the one that opened
+   *  it: a press that began before it opened is that one. See `openedAt`. */
+  shutBy(event: Event) {
+    if (event.timeStamp > this.openedAt) this.hide()
   }
 
   /** The same menu, with its rows said again. For a row that keeps the menu open and
