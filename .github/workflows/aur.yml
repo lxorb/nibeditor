@@ -1,0 +1,100 @@
+name: aur
+
+# orden-git builds the newest main on the installing machine, so nothing is built
+# here: AUR helpers see new commits on main themselves. This pushes its recipe when
+# the recipe changes. orden-bin, the release package, is publish-linux.yml's.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/aur.yml
+      - packaging/aur/orden-git/**
+  pull_request:
+    paths:
+      - .github/workflows/aur.yml
+      - packaging/aur/orden-git/**
+  workflow_dispatch:
+
+# Keep AUR pushes in order; a running one finishes.
+concurrency:
+  group: aur-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Write .SRCINFO and lint the recipe without deployment credentials
+        env:
+          ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
+        run: |
+          cp -r packaging/aur/orden-git aur-package
+          docker run --rm -v "$PWD/aur-package:/build" "$ARCH_IMAGE" bash -euo pipefail -c '
+            pacman -Syu --noconfirm --needed namcap
+            useradd -m builduser
+            chown -R builduser: /build
+            cd /build
+            sudo -u builduser makepkg --printsrcinfo > .SRCINFO
+            namcap PKGBUILD
+          '
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: aur-checked
+          path: aur-package
+          include-hidden-files: true
+          if-no-files-found: error
+
+  publish:
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: aur
+    permissions:
+      contents: read
+    env:
+      HAS_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: aur-checked
+          path: aur-package
+      - name: Push the checked recipe to AUR
+        if: env.HAS_KEY == 'true'
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          KEY="$RUNNER_TEMP/aur-key"
+          trap 'rm -f "$KEY"' EXIT
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$KEY"
+          unset AUR_SSH_PRIVATE_KEY
+          printf '%s\n' 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN' > "$RUNNER_TEMP/aur-known-hosts"
+          export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/aur-known-hosts"
+          git clone ssh://aur@aur.archlinux.org/orden-git.git aur-repo
+          cp aur-package/{PKGBUILD,.SRCINFO} aur-repo/
+          git -C aur-repo config user.name 'Bendik Arbogast'
+          git -C aur-repo config user.email 'arbobendik@gmail.com'
+          git -C aur-repo add PKGBUILD .SRCINFO
+          # A workflow-only change leaves the recipe as it is on the AUR.
+          if ! git -C aur-repo diff --cached --quiet; then
+            git -C aur-repo commit -m "orden-git from $GITHUB_REPOSITORY@$GITHUB_SHA"
+            git -C aur-repo push origin HEAD:master
+          fi
+      - name: No AUR key yet
+        if: env.HAS_KEY != 'true'
+        run: |
+          echo "### AUR not published" >> "$GITHUB_STEP_SUMMARY"
+          echo "The recipe checks out, but AUR_SSH_PRIVATE_KEY is not set in the aur environment, so nothing was pushed." >> "$GITHUB_STEP_SUMMARY"

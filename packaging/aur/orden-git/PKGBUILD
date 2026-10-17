@@ -1,0 +1,58 @@
+# Maintainer: Bendik Arbogast <bendik@arbogast.dev>
+
+# Builds the newest main on the installing machine. AUR helpers find new commits
+# themselves (`yay -Syu --devel`), so this recipe changes only when the build does.
+# It bundles the same .deb a release ships and unpacks it as orden-bin does: the
+# bundler stamps the program as a .deb's, which tells the app that pacman, not its
+# own updater, keeps this install.
+
+pkgname=orden-git
+_pkgname=nib
+pkgver=0.15.0.r27.ga15da34
+pkgrel=1
+pkgdesc="Lightweight markdown editor with realtime inline preview (latest main)"
+arch=('x86_64' 'aarch64')
+url="https://orden.so"
+license=('AGPL-3.0-only')
+depends=('gtk3' 'webkit2gtk-4.1' 'hicolor-icon-theme')
+makedepends=('git' 'cargo' 'nodejs>=24' 'pnpm')
+optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
+            'xdg-utils: open links and attachments in the desktop default application')
+provides=("orden=${pkgver}" "${_pkgname}=${pkgver}")
+conflicts=('orden' "${_pkgname}" 'nib-bin' 'nibeditor')
+# makepkg's LTO turns the C in SQLite and ring into GCC objects rustc's lld cannot
+# link. The release profile strips the program already, so a debug package is empty.
+options=('!lto' '!debug')
+source=('orden::git+https://github.com/lxorb/orden.git')
+sha256sums=('SKIP')
+
+pkgver() {
+  cd orden
+  git describe --long --tags --abbrev=7 --match 'v*' | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd orden
+  # Only the desktop app and what it is built from, as the Flatpak does.
+  pnpm install --frozen-lockfile --filter '@nib/desktop...'
+}
+
+build() {
+  cd orden
+  pnpm --filter @nib/desktop exec tauri build --bundles deb \
+    --config '{"bundle":{"createUpdaterArtifacts":false}}'
+}
+
+package() {
+  bsdtar -O -xf orden/apps/desktop/src-tauri/target/release/bundle/deb/*.deb data.tar.gz |
+    bsdtar -xf - -C "${pkgdir}" usr
+
+  install -Dm644 orden/packaging/aur/nib-bin/nib.desktop \
+    "${pkgdir}/usr/share/applications/${_pkgname}.desktop"
+  rm -f "${pkgdir}/usr/share/applications/Orden.desktop"
+
+  # As in orden-bin: the 256x256@2 icon is a plain 256x256 image.
+  install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/${_pkgname}.png" \
+    "${pkgdir}/usr/share/icons/hicolor/256x256/apps/${_pkgname}.png"
+  rm -rf "${pkgdir}/usr/share/icons/hicolor/256x256@2"
+}
